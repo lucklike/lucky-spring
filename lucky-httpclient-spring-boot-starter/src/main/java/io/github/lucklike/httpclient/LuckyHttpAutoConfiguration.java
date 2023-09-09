@@ -25,8 +25,6 @@ import io.github.lucklike.httpclient.convert.RequestAfterProcessorsFactoryInstan
 import io.github.lucklike.httpclient.convert.ResponseAfterProcessorsFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
@@ -57,17 +55,13 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
  * @date 2023/8/30 03:35
  */
 @Configuration
-public class LuckyHttpAutoConfiguration implements BeanFactoryAware, ApplicationContextAware {
+public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
-    private BeanFactory beanFactory;
-
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
-    }
+    private ApplicationContext applicationContext;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
         ApplicationContextUtils.setApplicationContext(applicationContext);
     }
 
@@ -119,7 +113,7 @@ public class LuckyHttpAutoConfiguration implements BeanFactoryAware, Application
         SpELRuntime spELRuntime;
         io.github.lucklike.httpclient.config.SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpelruntimeFactory();
         if (spELRuntimeFactory == null) {
-            spELRuntime = new SpELRuntimeFactory(beanFactory).createSpELRuntime();
+            spELRuntime = new SpELRuntimeFactory(applicationContext).createSpELRuntime();
         } else {
             spELRuntime = spELRuntimeFactory.getSpELRuntime();
         }
@@ -148,7 +142,7 @@ public class LuckyHttpAutoConfiguration implements BeanFactoryAware, Application
     private void httpExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpExecutorFactory httpExecutorFactory = factoryConfig.getHttpExecutorFactory();
         if (httpExecutorFactory == null) {
-            factory.setHttpExecutor(beanFactory.getBean(HttpExecutor.class));
+            factory.setHttpExecutor(applicationContext.getBean(HttpExecutor.class));
         } else {
             factory.setHttpExecutor(httpExecutorFactory.getHttpExecutor());
         }
@@ -164,7 +158,7 @@ public class LuckyHttpAutoConfiguration implements BeanFactoryAware, Application
     private void objectCreateSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         ObjectCreatorFactory objectCreatorFactory = factoryConfig.getObjectCreatorFactory();
         if (objectCreatorFactory == null) {
-            factory.setObjectCreator(new BeanObjectCreator(beanFactory));
+            factory.setObjectCreator(new BeanObjectCreator(applicationContext));
         } else {
             factory.setObjectCreator(objectCreatorFactory.getObjectCreator());
         }
@@ -227,9 +221,7 @@ public class LuckyHttpAutoConfiguration implements BeanFactoryAware, Application
         factory.setFormParameters(factoryConfig.getFormParams());
         ConfigurationMap resourceParams = factoryConfig.getResourceParams();
         if (resourceParams != null) {
-            resourceParams.forEach((k, v) -> {
-                factory.addResources(k, ConversionUtils.conversion(v, Resource[].class));
-            });
+            resourceParams.forEach((k, v) -> factory.addResources(k, ConversionUtils.conversion(v, Resource[].class)));
         }
     }
 
