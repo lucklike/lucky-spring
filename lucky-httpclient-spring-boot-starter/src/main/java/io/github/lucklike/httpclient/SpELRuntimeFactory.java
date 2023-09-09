@@ -28,16 +28,13 @@ import org.springframework.util.ClassUtils;
 public class SpELRuntimeFactory implements EvaluationContextFactory {
 
     private final BeanFactory beanFactory;
-    private final Environment environment;
 
-    public SpELRuntimeFactory(BeanFactory beanFactory, Environment environment) {
+    public SpELRuntimeFactory(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
-        this.environment = environment;
     }
 
     public SpELRuntime createSpELRuntime() {
         SpELRuntime spELRuntime = new SpELRuntime(this);
-        spELRuntime.getCommonParams().setRootObject(environment);
         return spELRuntime;
     }
 

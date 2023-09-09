@@ -6,7 +6,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.util.StringUtils;
 
 /**
- * 对象创建器，如果存在msg配置则使用{@link BeanFactory#getBean(String, Class)}来生成对象
+ * 对象创建器，如果存在msg配置则使用{@link BeanFactory#getBean(String)}来生成对象
  * 否则使用{@link ClassUtils#newObject(Class, Object...)}的方式来生成对象
  *
  * @author fukang
@@ -22,9 +22,10 @@ public class BeanObjectCreator extends AbstractCachedObjectCreator {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected <T> T createObject(Class<T> aClass, String createMessage) {
         if (StringUtils.hasText(createMessage)) {
-            return beanFactory.getBean(createMessage, aClass);
+            return (T) beanFactory.getBean(createMessage);
         }
         return ClassUtils.newObject(aClass);
     }
