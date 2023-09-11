@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
@@ -38,6 +39,7 @@ import org.springframework.core.io.Resource;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
@@ -111,13 +113,19 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void factorySpELConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SpELRuntime spELRuntime;
-        io.github.lucklike.httpclient.config.SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpelruntimeFactory();
+        io.github.lucklike.httpclient.config.SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringElRuntimeFactory();
         if (spELRuntimeFactory == null) {
             spELRuntime = new SpELRuntimeFactory(applicationContext).createSpELRuntime();
         } else {
             spELRuntime = spELRuntimeFactory.getSpELRuntime();
         }
-        HttpClientProxyObjectFactory.setSpELConverter(new SpELConvert(spELRuntime));
+        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
+
+        SpELConvert spELConvert = new SpELConvert(spELRuntime);
+        if (!ContainerUtils.isEmptyCollection(springElPackageImports)) {
+            springElPackageImports.forEach(spELConvert::importPackage);
+        }
+        HttpClientProxyObjectFactory.setSpELConverter(spELConvert);
     }
 
     /**

@@ -3,6 +3,8 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.threadpool.ThreadPoolParam;
 
+import java.util.List;
+
 /**
  * HttpClientProxyObjectFactory配置类
  *
@@ -20,10 +22,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * SpEL运行时环境工厂
      */
-    private SpELRuntimeFactory spelruntimeFactory;
+    private SpELRuntimeFactory springElRuntimeFactory;
 
     /**
-     * 对象创建器工厂f
+     * 向SpEL运行时环境导入的包
+     */
+    private List<String> springElPackageImports;
+
+    /**
+     * 对象创建器工厂
      */
     private ObjectCreatorFactory objectCreatorFactory;
 
@@ -109,10 +116,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置{@link SpELRuntimeFactory SpEL运行时环境工厂}
      *
-     * @param spelruntimeFactory SpEL运行时环境工厂
+     * @param springElRuntimeFactory SpEL运行时环境工厂
      */
-    public void setSpelruntimeFactory(SpELRuntimeFactory spelruntimeFactory) {
-        this.spelruntimeFactory = spelruntimeFactory;
+    public void setSpringElRuntimeFactory(SpELRuntimeFactory springElRuntimeFactory) {
+        this.springElRuntimeFactory = springElRuntimeFactory;
     }
 
     /**
@@ -241,6 +248,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.expressionParams = expressionParams;
     }
 
+    /**
+     * 向SpEL运行时环境导入的包
+     *
+     * @param springElPackageImports 向SpEL运行时环境导入的包
+     */
+    public void setSpringElPackageImports(List<String> springElPackageImports) {
+        this.springElPackageImports = springElPackageImports;
+    }
 
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
@@ -261,8 +276,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return SpEL运行时环境工厂
      */
-    public SpELRuntimeFactory getSpelruntimeFactory() {
-        return spelruntimeFactory;
+    public SpELRuntimeFactory getSpringElRuntimeFactory() {
+        return springElRuntimeFactory;
     }
 
     /**
@@ -389,5 +404,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public ConfigurationMap getExpressionParams() {
         return expressionParams;
+    }
+
+    /**
+     * 向SpEL运行时环境导入的包
+     *
+     * @return 向SpEL运行时环境导入的包
+     */
+    public List<String> getSpringElPackageImports() {
+        return springElPackageImports;
     }
 }

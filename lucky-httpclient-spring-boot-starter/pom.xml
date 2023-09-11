@@ -8,7 +8,7 @@
     <version>1.0.0</version>
     <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
     <description>lucky-httpclient模块与SpringBoot整合</description>
-    <url>https://github.com/lucklike/luckliy/lucky-httpclient</url>
+    <url>https://github.com/lucklike/lucky-spring/tree/1.0.0/lucky-httpclient-spring-boot-starter</url>
 
 
     <licenses>
@@ -39,7 +39,6 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-version>2.7.14</spring-version>
-        <lucky.version>2.0.0</lucky.version>
     </properties>
 
     <dependencies>
@@ -60,7 +59,7 @@
         <dependency>
             <groupId>io.github.lucklike</groupId>
             <artifactId>lucky-httpclient</artifactId>
-            <version>${lucky.version}</version>
+            <version>2.0.0</version>
         </dependency>
 
     </dependencies>
