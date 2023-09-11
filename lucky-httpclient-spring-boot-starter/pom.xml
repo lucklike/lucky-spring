@@ -5,8 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.lucklike</groupId>
-    <version>1.0.0</version>
     <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
+    <version>1.0.0</version>
+
+    <name>lucky-httpclient-spring-boot-starter</name>
     <description>lucky-httpclient模块与SpringBoot整合</description>
     <url>https://github.com/lucklike/lucky-spring/tree/1.0.0/lucky-httpclient-spring-boot-starter</url>
 
@@ -35,9 +37,12 @@
     <properties>
         <java.version>1.8</java.version>
         <source.encoding>UTF-8</source.encoding>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>${source.encoding}</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${source.encoding}</project.reporting.outputEncoding>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
     </properties>
 
