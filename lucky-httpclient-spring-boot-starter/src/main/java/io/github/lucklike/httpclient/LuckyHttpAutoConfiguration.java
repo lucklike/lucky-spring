@@ -9,6 +9,8 @@ import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.ObjectCreator;
+import com.luckyframework.httpclient.proxy.RequestInterceptor;
+import com.luckyframework.httpclient.proxy.ResponseInterceptor;
 import com.luckyframework.httpclient.proxy.SpELConvert;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
@@ -17,13 +19,13 @@ import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfigur
 import io.github.lucklike.httpclient.config.HttpExceptionHandleFactory;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
-import io.github.lucklike.httpclient.config.RequestAfterProcessorsFactory;
-import io.github.lucklike.httpclient.config.ResponseAfterProcessorsFactory;
+import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.convert.HttpExceptionHandleFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
-import io.github.lucklike.httpclient.convert.RequestAfterProcessorsFactoryInstanceConverter;
-import io.github.lucklike.httpclient.convert.ResponseAfterProcessorsFactoryInstanceConverter;
+import io.github.lucklike.httpclient.convert.RequestInterceptorListConverter;
+import io.github.lucklike.httpclient.convert.ResponseInterceptorListConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,16 +42,15 @@ import org.springframework.core.io.Resource;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 
 /**
  * <pre>
- * lucky-httpclient自动配置类,此类会自动向Spring容器中注入以下Bean对象：
- *     1.{@link HttpClientProxyObjectFactory}对象
- *     2.{@link SpELRuntime}对象
- *     3.{@link HttpExecutor}对象
+ * lucky-httpclient自动配置类，主要是为了生成{@link HttpClientProxyObjectFactory}对象实例
+ * 并将实例放到Spring容器中
  * </pre>
  *
  * @author fukang
@@ -68,6 +69,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
 
+    /**
+     * 转换器相关的配置
+     */
     @Bean("conversionService")
     public ConversionServiceFactoryBean conversionServiceFactoryBean() {
         ConversionServiceFactoryBean factoryBean = new ConversionServiceFactoryBean();
@@ -76,30 +80,38 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 new ObjectCreatorFactoryInstanceConverter(),
                 new HttpExecutorFactoryInstanceConverter(),
                 new HttpExceptionHandleFactoryInstanceConverter(),
-                new RequestAfterProcessorsFactoryInstanceConverter(),
-                new ResponseAfterProcessorsFactoryInstanceConverter()
+                new RequestInterceptorListConverter(),
+                new ResponseInterceptorListConverter()
         )));
         return factoryBean;
     }
 
+    /**
+     * 从环境变量获取必要的配置
+     */
     @Bean("luckyHttpClientProxyObjectFactoryConfiguration")
     @ConfigurationProperties("spring.lucky.http-client")
     public HttpClientProxyObjectFactoryConfiguration httpClientProxyObjectFactoryConfiguration() {
         return new HttpClientProxyObjectFactoryConfiguration();
     }
 
+    /**
+     * 生成并配置一个{@link HttpClientProxyObjectFactory}对象实例
+     *
+     * @param factoryConfig 配置实例
+     */
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier("luckyHttpClientProxyObjectFactoryConfiguration") HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        objectCreateSetting(factoryConfig);
         factorySpELConvertSetting(factoryConfig);
         factoryExpressionParamSetting(factoryConfig);
 
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         asyncExecuteSetting(factory, factoryConfig);
-        objectCreateSetting(factory, factoryConfig);
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
         timeoutSetting(factory, factoryConfig);
-        afterProcessorSetting(factory, factoryConfig);
+        interceptorSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
 
         return factory;
@@ -121,7 +133,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
         List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
 
-        SpELConvert spELConvert = new SpELConvert(spELRuntime);
+        SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment());
         if (!ContainerUtils.isEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(spELConvert::importPackage);
         }
@@ -149,10 +161,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void httpExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpExecutorFactory httpExecutorFactory = factoryConfig.getHttpExecutorFactory();
-        if (httpExecutorFactory == null) {
-            factory.setHttpExecutor(applicationContext.getBean(HttpExecutor.class));
-        } else {
+        HttpExecutorEnum executorEnum = factoryConfig.getHttpExecutor();
+        if (httpExecutorFactory != null) {
             factory.setHttpExecutor(httpExecutorFactory.getHttpExecutor());
+        } else if (executorEnum != null) {
+            factory.setHttpExecutor(executorEnum.getHttpExecutor());
+        } else {
+            factory.setHttpExecutor(applicationContext.getBean(HttpExecutor.class));
         }
     }
 
@@ -160,15 +175,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * 设置{@link ObjectCreator 对象创建器}，首先尝试从配置中读取用户配置的{@link ObjectCreatorFactory},
      * 如果存在则采用该工厂创建，否则使用默认对象
      *
-     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void objectCreateSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void objectCreateSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         ObjectCreatorFactory objectCreatorFactory = factoryConfig.getObjectCreatorFactory();
         if (objectCreatorFactory == null) {
-            factory.setObjectCreator(new BeanObjectCreator(applicationContext));
+            HttpClientProxyObjectFactory.setObjectCreator(new BeanObjectCreator(applicationContext));
         } else {
-            factory.setObjectCreator(objectCreatorFactory.getObjectCreator());
+            HttpClientProxyObjectFactory.setObjectCreator(objectCreatorFactory.getObjectCreator());
         }
     }
 
@@ -182,7 +196,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         ThreadPoolParam poolParam = factoryConfig.getThreadPoolParam();
         if (poolParam != null) {
-            factory.setExecutorSupplier(() -> ThreadPoolFactory.createThreadPool(poolParam));
+            factory.setAsyncExecutorSupplier(() -> ThreadPoolFactory.createThreadPool(poolParam));
         }
     }
 
@@ -201,24 +215,53 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 请求、响应处理器设置
+     * 请求、响应拦截器设置
+     *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void afterProcessorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        RequestAfterProcessorsFactory requestAfterProcessorsFactory = factoryConfig.getRequestAfterProcessorsFactory();
-        if (requestAfterProcessorsFactory != null) {
-            factory.addRequestAfterProcessors(requestAfterProcessorsFactory.getRequestAfterProcessors());
+    private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 检查是否需要注册日志打印的拦截器
+        Set<String> printLogPackages = factoryConfig.getPrintLogPackages();
+        if (!ContainerUtils.isEmptyCollection(printLogPackages)) {
+            SpecifiedInterfacePrintLogInterceptor logInterceptor = new SpecifiedInterfacePrintLogInterceptor();
+            logInterceptor.setPrintLogPackageSet(printLogPackages);
+            logInterceptor.setPrintRequestLog(factoryConfig.isEnableRequestLog());
+            logInterceptor.setPrintResponseLog(factoryConfig.isEnableResponseLog());
+            Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getAllowPrintLogBodyMimeTypes();
+            if (!ContainerUtils.isEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                logInterceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+            }
+            logInterceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
+            factory.addRequestInterceptors(logInterceptor);
+            factory.addResponseInterceptors(logInterceptor);
+
         }
 
-        ResponseAfterProcessorsFactory responseAfterProcessorsFactory = factoryConfig.getResponseAfterProcessorsFactory();
-        if (responseAfterProcessorsFactory != null) {
-            factory.addResponseAfterProcessors(responseAfterProcessorsFactory.getResponseAfterProcessors());
+        // 注册容器中的拦截器
+        for (String reqInterName : applicationContext.getBeanNamesForType(RequestInterceptor.class)) {
+            factory.addRequestInterceptors(applicationContext.getBean(reqInterName, RequestInterceptor.class));
         }
+        for (String respInterName : applicationContext.getBeanNamesForType(ResponseInterceptor.class)) {
+            factory.addResponseInterceptors(applicationContext.getBean(respInterName, ResponseInterceptor.class));
+        }
+
+        // 注册环境变量中配置的拦截器
+        RequestInterceptor[] requestInterceptors = factoryConfig.getRequestInterceptors();
+        if (!ContainerUtils.isEmptyArray(requestInterceptors)) {
+            factory.addRequestInterceptors(requestInterceptors);
+        }
+        ResponseInterceptor[] responseInterceptors = factoryConfig.getResponseInterceptors();
+        if (!ContainerUtils.isEmptyArray(responseInterceptors)) {
+            factory.addResponseInterceptors(responseInterceptors);
+        }
+
     }
 
     /**
      * 公共参数设置
+     *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */

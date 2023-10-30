@@ -1,9 +1,16 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.proxy.RequestInterceptor;
+import com.luckyframework.httpclient.proxy.ResponseInterceptor;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import sun.net.www.content.text.plain;
 
+import java.net.HttpURLConnection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -40,19 +47,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private HttpExecutorFactory httpExecutorFactory;
 
     /**
+     * 使用执行器枚举来指定执行器
+     */
+    private HttpExecutorEnum httpExecutor;
+
+    /**
      * HTTP异常处理器工厂
      */
     private HttpExceptionHandleFactory httpExceptionHandleFactory;
 
     /**
-     * 请求处理器工厂
+     * 请求拦截器集合
      */
-    private RequestAfterProcessorsFactory requestAfterProcessorsFactory;
+    private RequestInterceptor[] requestInterceptors;
 
     /**
-     * 响应处理器工厂
+     * 响应拦截器集合
      */
-    private ResponseAfterProcessorsFactory responseAfterProcessorsFactory;
+    private ResponseInterceptor[] responseInterceptors;
 
     /**
      * 连接超时时间
@@ -99,6 +111,43 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     private ConfigurationMap expressionParams = new ConfigurationMap();
 
+    /**
+     * 指定需要打印日志的包
+     */
+    private Set<String> printLogPackages = new HashSet<>();
+
+    /**
+     * 是否开启请求日志，默认开启
+     */
+    private boolean enableRequestLog = true;
+
+    /**
+     * 是否开启响应日志，默认开启
+     */
+    private boolean enableResponseLog = true;
+
+    /**
+     * MimeType为这些类型时，将打印响应体日志<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     *     <li>application/json</li>
+     *     <li>application/xml</li>
+     *     <li>text/xml</li>
+     *     <li>text/plain</li>
+     *     <li>text/html</li>
+     * </ui>
+     *
+     */
+    private Set<String> allowPrintLogBodyMimeTypes;
+
+    /**
+     * 响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
+     * 单位：字节<br/>
+     * 默认值：-1
+     */
+    private long allowPrintLogBodyMaxLength = -1L;
+
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
@@ -141,30 +190,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 使用执行器枚举来指定执行器<br/>
+     *  {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
+     *  {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp实现的执行器。<br/>
+     *  {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
+     *
+     * @param httpExecutor 执行器枚举
+     */
+    public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
+        this.httpExecutor = httpExecutor;
+    }
+
+    /**
      * 设置{@link HttpExceptionHandleFactory 异常处理器工厂}
      *
      * @param httpExceptionHandleFactory 异常处理器工厂
      */
     public void setHttpExceptionHandleFactory(HttpExceptionHandleFactory httpExceptionHandleFactory) {
         this.httpExceptionHandleFactory = httpExceptionHandleFactory;
-    }
-
-    /**
-     * 设置{@link RequestAfterProcessorsFactory 请求处理器工厂}
-     *
-     * @param requestAfterProcessorsFactory 请求处理器工厂
-     */
-    public void setRequestAfterProcessorsFactory(RequestAfterProcessorsFactory requestAfterProcessorsFactory) {
-        this.requestAfterProcessorsFactory = requestAfterProcessorsFactory;
-    }
-
-    /**
-     * 设置{@link ResponseAfterProcessorsFactory 响应处理器工厂}
-     *
-     * @param responseAfterProcessorsFactory 响应处理器工厂
-     */
-    public void setResponseAfterProcessorsFactory(ResponseAfterProcessorsFactory responseAfterProcessorsFactory) {
-        this.responseAfterProcessorsFactory = responseAfterProcessorsFactory;
     }
 
     /**
@@ -257,6 +300,75 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.springElPackageImports = springElPackageImports;
     }
 
+    /**
+     * 设置{@link RequestInterceptor}请求拦截器集合
+     *
+     * @param requestInterceptors 请求拦截器集合
+     */
+    public void setRequestInterceptors(RequestInterceptor[] requestInterceptors) {
+        this.requestInterceptors = requestInterceptors;
+    }
+
+    /**
+     * 设置{@link ResponseInterceptor}响应拦截器集合
+     *
+     * @param responseInterceptors 响应拦截器集合
+     */
+    public void setResponseInterceptors(ResponseInterceptor[] responseInterceptors) {
+        this.responseInterceptors = responseInterceptors;
+    }
+
+    /**
+     * 指定需要打印日志的包
+     *
+     * @param printLogPackages 指定需要打印日志的包
+     */
+    public void setPrintLogPackages(Set<String> printLogPackages) {
+        this.printLogPackages = printLogPackages;
+    }
+
+    /**
+     * 设置是否开启请求日志的打印，默认开启
+     * @param enableRequestLog 是否开启请求日志的打印
+     */
+    public void setEnableRequestLog(boolean enableRequestLog) {
+        this.enableRequestLog = enableRequestLog;
+    }
+
+    /**
+     * 设置是否开启响应日志的打印，默认开启
+     * @param enableResponseLog 否开启响应日志的打印
+     */
+    public void setEnableResponseLog(boolean enableResponseLog) {
+        this.enableResponseLog = enableResponseLog;
+    }
+
+    /**
+     * 设置MimeType，当MimeType为这些类型时，将打印响应体日志<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     *     <li>application/json</li>
+     *     <li>application/xml</li>
+     *     <li>text/xml</li>
+     *     <li>text/plain</li>
+     *     <li>text/html</li>
+     * </ui>
+     * @param allowPrintLogBodyMimeTypes 打印响应体内容的MimeType集合
+     */
+    public void setAllowPrintLogBodyMimeTypes(Set<String> allowPrintLogBodyMimeTypes) {
+        this.allowPrintLogBodyMimeTypes = allowPrintLogBodyMimeTypes;
+    }
+
+    /**
+     * 设置打印响应日志的阈值，响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
+     * 单位：字节<br/>
+     * 默认值：-1
+     */
+    public void setAllowPrintLogBodyMaxLength(long allowPrintLogBodyMaxLength) {
+        this.allowPrintLogBodyMaxLength = allowPrintLogBodyMaxLength;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -299,30 +411,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 获取执行器对应的执行器枚举
+     *
+     * @return 执行器枚举
+     */
+    public HttpExecutorEnum getHttpExecutor() {
+        return httpExecutor;
+    }
+
+    /**
      * 获取{@link HttpExceptionHandleFactory HTTP异常处理器工厂}
      *
      * @return HTTP异常处理器
      */
     public HttpExceptionHandleFactory getHttpExceptionHandleFactory() {
         return httpExceptionHandleFactory;
-    }
-
-    /**
-     * 获取{@link HttpExceptionHandleFactory 请求处理器工厂}
-     *
-     * @return 请求处理器工厂
-     */
-    public RequestAfterProcessorsFactory getRequestAfterProcessorsFactory() {
-        return requestAfterProcessorsFactory;
-    }
-
-    /**
-     * 获取{@link ResponseAfterProcessorsFactory 响应处理器工厂}
-     *
-     * @return 响应处理器工厂
-     */
-    public ResponseAfterProcessorsFactory getResponseAfterProcessorsFactory() {
-        return responseAfterProcessorsFactory;
     }
 
     /**
@@ -413,5 +516,73 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public List<String> getSpringElPackageImports() {
         return springElPackageImports;
+    }
+
+    /**
+     * 获取{@link RequestInterceptor}请求拦截器集合
+     *
+     * @return 请求拦截器集合
+     */
+    public RequestInterceptor[] getRequestInterceptors() {
+        return requestInterceptors;
+    }
+
+    /**
+     * 获取{@link ResponseInterceptor}响应拦截器集合
+     *
+     * @return 请求响应器集合
+     */
+    public ResponseInterceptor[] getResponseInterceptors() {
+        return responseInterceptors;
+    }
+
+    /**
+     * 获取需要打印日志的包集合
+     *
+     * @return 需要打印日志的包集合
+     */
+    public Set<String> getPrintLogPackages() {
+        return printLogPackages;
+    }
+
+    /**
+     * 是否开启了请求日志打印功能
+     * @return 是否开启了请求日志打印功能
+     */
+    public boolean isEnableRequestLog() {
+        return enableRequestLog;
+    }
+
+    /**
+     * 是否开启了响应日志打印功能
+     * @return 是否开启了响应日志打印功能
+     */
+    public boolean isEnableResponseLog() {
+        return enableResponseLog;
+    }
+
+    /**
+     * 获取MimeType，当MimeType为这些类型时，将打印响应体日志<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     *     <li>application/json</li>
+     *     <li>application/xml</li>
+     *     <li>text/xml</li>
+     *     <li>text/plain</li>
+     *     <li>text/html</li>
+     * </ui>
+     */
+    public Set<String> getAllowPrintLogBodyMimeTypes() {
+        return allowPrintLogBodyMimeTypes;
+    }
+
+    /**
+     * 获取打印响应日志的阈值，响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
+     * 单位：字节<br/>
+     * 默认值：-1
+     */
+    public long getAllowPrintLogBodyMaxLength() {
+        return allowPrintLogBodyMaxLength;
     }
 }

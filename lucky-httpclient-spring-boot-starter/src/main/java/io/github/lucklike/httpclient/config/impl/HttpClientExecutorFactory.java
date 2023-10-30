@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 
 /**

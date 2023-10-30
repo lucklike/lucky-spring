@@ -1,12 +1,4 @@
-## <center> lucky-httpclient模块与SpringBoot整合
-
-##  🍀 简介
-
----
-
-`lucky-httpclient-spring-boot-starter`用于整合`lucky-httpclient`和`springboot`，提供了HTTP接口自动扫描自动注册的功能，以及提供了一些可配置的参数方便开发者能
-更方便的使用`lucky-httpclient`。
-
+# 🐰 与`SpringBoot`整合开发
 
 ## ⚙️ 安装
 
@@ -18,20 +10,20 @@
     <dependency>
         <groupId>io.github.lucklike</groupId>
         <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.0.FINAL</version>
     </dependency>
 ```
 
 🐘 Gradle
 
 ```groovy
-    implementation group: 'io.github.lucklike', name: 'lucky-httpclient-spring-boot-starter', version: '1.0.0'
+    implementation group: 'io.github.lucklike', name: 'lucky-httpclient-spring-boot-starter', version: '1.0.0.FINAL'
 ```
 
 ## 🏄‍♂️  开始使用
 
 ---
->  一、在SpingBoot的启动类上添加`@EnableLuckyHttpClient`注解来开启`lucky-httpclient`的注解开发功能
+### 一、在SpingBoot的启动类上添加`@EnableLuckyHttpClient`注解来开启`lucky-httpclient`的注解开发功能
 
 ```java
 import io.github.lucklike.httpclient.EnableLuckyHttpClient;
@@ -101,7 +93,9 @@ public @interface EnableLuckyHttpClient {
 
 ```
 
-> 二、创建HTTP接口，并使用`@HttpClient`注解进行标注(lucky底层会识别`@HttpClient`注解，并会为所有被注解的接口生成代理对象之后注入到Spring容器中)
+###  二、创建HTTP接口，并使用`@HttpClient`注解进行标注
+
+(lucky底层会识别`@HttpClient`注解，并会为所有被注解的接口生成代理对象之后注入到Spring容器中，类似`Mybatis`的`Mapper`接口)
 
 ```java
 
@@ -116,14 +110,33 @@ public @interface EnableLuckyHttpClient {
 @HttpClient("#{gaoDeApi}")
 public interface GaoDeApi {
 
-    @ResultSelect(key="@resp.lives1", defaultValue = "#{new ArrayList()}")
+    /**
+     * 高德开放平台API -- 天气查询
+     * 
+     * @param city 城市名称
+     * @return 该城市的天气情况
+     */
+    @ResultSelect(key="@resp.lives", defaultValue = "#{new ArrayList()}")
     @Get("/{version}/weather/weatherInfo")
     Object queryWeather(String city);
 
+    /**
+     * 高德开放平台API -- 骑行路线查询
+     * 
+     * @param origin        出发地的高德坐标
+     * @param destination   目的地的高德坐标
+     * @return  出发地到目的地的骑行路线
+     */
     @ResultSelect("@resp.data.paths")
     @Get("/v4/direction/bicycling")
     Object bicycling(String origin, String destination);
 
+    /**
+     * 高德开放平台API -- 将地址转化为高德坐标
+     * 
+     * @param address 地址
+     * @return 该地址对应的高德坐标
+     */
     @ResultSelect("@resp.geocodes[0].location")
     @Get("/{version}/geocode/geo")
     Future<String> getGeocode(String address);
@@ -132,63 +145,143 @@ public interface GaoDeApi {
 
 ```
 
-> 三、在其他Spring组件中导入HTTP组件进行使用
+### 三、在其他Spring组件中导入HTTP组件进行使用
 
 ```java
 package com.springboot.testdemo.springboottest.controller;
 
 import com.luckyframework.async.EnhanceFuture;
+import com.luckyframework.async.EnhanceFutureFactory;
 import com.luckyframework.common.StopWatch;
 import com.springboot.testdemo.springboottest.api.GaoDeApi;
 import lombok.AllArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
+/**
+ * @author fukang
+ * @version 1.0.0
+ * @date 2023/8/30 05:46
+ */
 @AllArgsConstructor
-@RestController("/lucky/httpclient")
+@RestController
 public class LuckyHttpClientController {
-    private static final EnhanceFuture<String> enhanceFuture = new EnhanceFuture<>();
-    private final GaoDeApi gaoDeApi;
+  private final EnhanceFutureFactory enhanceFutureFactory;
+  private final GaoDeApi gaoDeApi;
 
-    @GetMapping("weather")
-    public Object call(String city) {
-        StopWatch sw = new StopWatch();
-        sw.start("http");
-        Object result = gaoDeApi.queryWeather(city);
-        sw.stopWatch();
-        System.out.println(sw.prettyPrintMillis());
-        return result;
-    }
+  @GetMapping("weather")
+  public Object call(String city) {
+    StopWatch sw = new StopWatch();
+    sw.start("proxy");
+    Object result = gaoDeApi.queryWeather(city);
+    sw.stopWatch();
+    System.out.println(sw.prettyPrintMillis());
+    return result;
+  }
 
-    @GetMapping("bicycling")
-    public Object bicycling(String origin, String destination){
-        enhanceFuture.addFuture("origin", gaoDeApi.getGeocode(origin));
-        enhanceFuture.addFuture("destination", gaoDeApi.getGeocode(destination));
-        Object bicycling = gaoDeApi.bicycling(enhanceFuture.getTaskResult("origin"), enhanceFuture.getTaskResult("destination"));
-        enhanceFuture.clearTasks();
-        return bicycling;
-    }
+  @GetMapping("bicycling")
+  public Object bicycling(String origin, String destination){
+    EnhanceFuture<String> enhanceFuture = enhanceFutureFactory.create();
+    enhanceFuture.addFuture(gaoDeApi.getGeocode(origin));
+    enhanceFuture.addFuture( gaoDeApi.getGeocode(destination));
+    return gaoDeApi.bicycling(enhanceFuture.getTaskResult(0), enhanceFuture.getTaskResult(1));
+  }
+
+
 }
 
+
+```
+
+## 🎱 SpEL功能增强
+与SpringBoot整合后，原先所有支持SpEL表达式的地方现在均可以使用`${}`表达式直接获取到Spring环境变量中的配置值。  
+例如，application.yaml中有如下配置：
+```yaml
+gaoDe: 
+  url: https://restapi.amap.com
+  weatherApi: /v3/weather/weatherInfo
+```
+
+那么可以使用`${}`直接将此配置引入：
+```java
+/**
+ * 高德开放平台API
+ *
+ * @author fukang
+ * @version 1.0.0
+ * @date 2023/8/30 05:32
+ */
+@PrintLog
+@HttpClient("${gaoDe.url}")
+public interface GaoDeApi {
+
+    /**
+     * 高德开放平台API -- 天气查询
+     * 
+     * @param city 城市名称
+     * @return 该城市的天气情况
+     */
+    @ResultSelect(key="@resp.lives", defaultValue = "#{new ArrayList()}")
+    @Get("${gaoDe.weatherApi}")
+    Object queryWeather(String city);
+}
 ```
 
 ## 🪛 常用配置
 - `spring.lucky.http-client.connection-timeout`  
-    设置`连接超时时间` 
- 
+  设置`连接超时时间`
+
 
 - `spring.lucky.http-client.read-timeout`  
-    设置`读超时时间`
+  设置`读超时时间`
 
 
 - `spring.lucky.http-client.write-timeout`  
-    设置`写超时时间`
+  设置`写超时时间`
 
+
+- `spring.lucky.http-client.print-log-packages`  
+  在如下包中的HTTP接口将会打印日志
+  ```yaml
+  spring:
+    lucky:
+      http-client:
+        print-log-packages:
+          - com.springboot.testdemo.springboottest.api.GaoDeApi
+          - com.springboot.testdemo.springboottest.api2
+          - com.springboot.testdemo.springboottest.api3
+  ```
+
+- `spring.lucky.http-client.enable-request-log`  
+  开启请求日志
+
+
+- `spring.lucky.http-client.enable-response-log`  
+  开启响应日志
+
+
+- `spring.lucky.http-client.allow-print-log-body-mime-types`  
+  响应日志开启时，设置mime-types，只有响应的mime-types为配置值时才打印具体的响应体内容
+  ```yaml
+  spring:
+    lucky:
+      http-client:
+        allow-print-log-body-mime-types:
+          - application/json
+          - application/xml
+  ```
+
+- `spring.lucky.http.client.allow-print-log-body-max-length`  
+  响应日志开启时，设置最大响应体长度，超过该长度则不会打印响应体内容,值小于等于0时表示没有限制
+  ```yaml
+  spring:
+    lucky:
+      http-client:
+        allow-print-log-body-max-length: 14500
+  ```
 
 - `spring.lucky.http-client.header-params`  
-    设置公共`请求头`参数，支持给指定接口配置特有的参数
+  设置公共`请求头`参数，支持给指定接口配置特有的参数
     ```yaml
     spring:
       lucky:
@@ -204,18 +297,8 @@ public class LuckyHttpClientController {
               - c2=token-uuidm
     ```
 
-- `spring.lucky.http-client.http-executor-factory`  
-  设置HTTP执行器工厂的类的全类名
-  ```yaml
-    spring:
-      lucky:
-        http-client:
-          # 设置SpEL运行时环境工厂的类的全类名
-          http-executor-factory: io.github.lucklike.httpclient.config.impl.OkHttpExecutorFactory
-  ```
-
 - `spring.lucky.http-client.query-params`  
-   设置公共`URL`参数，支持给指定接口配置特有的参数
+  设置公共`URL`参数，支持给指定接口配置特有的参数
 
 
 - `spring.lucky.http-client.path-params`  
@@ -259,7 +342,7 @@ public class LuckyHttpClientController {
 
 
 - `spring.lucky.http-client.expression-params`  
-    配置SpEL表达式参数，这里配置的参数可以在`lucky-httpclient`中支持`SpEL`表达式的注解中直接使用。
+  配置SpEL表达式参数，这里配置的参数可以在`lucky-httpclient`中支持`SpEL`表达式的注解中直接使用。
   ```yaml
     spring:
       lucky:
@@ -272,7 +355,7 @@ public class LuckyHttpClientController {
 
   ```
 - `spring.lucky.http-client.spring-el-package-imports`  
-    向`SpEL运行时环境`中`导包`，导入后`在SpEL表达式`中使用包中的类时便可以不用使用全类名，直接使用类名即可.
+  向`SpEL运行时环境`中`导包`，导入后`在SpEL表达式`中使用包中的类时便可以不用使用全类名，直接使用类名即可.
     ```yaml
     spring:
       lucky:
@@ -283,6 +366,26 @@ public class LuckyHttpClientController {
           spring-el-package-imports:
             - java.util
    ```
+
+- `spring.lucky.http-client.http-executor-factory`  
+  设置HTTP执行器工厂的类的全类名
+  ```yaml
+    spring:
+      lucky:
+        http-client:
+          # 设置SpEL运行时环境工厂的类的全类名
+          http-executor-factory: io.github.lucklike.httpclient.config.impl.OkHttpExecutorFactory
+  ```
+
+- `spring.lucky.http-client.http-executor`  
+  设置HTTP执行器
+  ```yaml
+    spring:
+      lucky:
+        http-client:
+          # HTTP执行器，jdk、okhttp、http_client
+          http-executor: okhttp
+  ```
 
 - `spring.lucky.http-client.object-creator-factory`  
   设置对象创建器工厂的类的全类名
@@ -315,23 +418,25 @@ public class LuckyHttpClientController {
   ```
 
 
-- `spring.lucky.http-client.request-after-processors-factory`  
-  设置请求处理器工厂的类的全类名
+- `spring.lucky.http-client.request-interceptors`  
+  设置请求拦截器
   ```yaml
     spring:
       lucky:
         http-client:
-          # 设置请求处理器工厂的类的全类名
-          request-after-processors-factory: io.github.lucklike.httpclient.config.impl.PrintLogProcessorFactory
+          # 请求拦截器实现类集合
+          request-interceptors:
+            - com.luckyframework.httpclient.proxy.impl.interceptor.PrintLogInterceptor
 
   ```
 
-- `spring.lucky.http-client.response-after-processors-factory`  
-  设置响应处理器工厂的类的全类名
+- `spring.lucky.http-client.response-interceptors`  
+  设置响应拦截器
   ```yaml
     spring:
       lucky:
         http-client:
-          # 设置响应处理器工厂的类的全类名
-          response-after-processors-factory: io.github.lucklike.httpclient.config.impl.PrintLogProcessorFactory
+          # 响应拦截器实现类集合
+          response-interceptors:
+            - com.luckyframework.httpclient.proxy.impl.interceptor.PrintLogInterceptor
   ```

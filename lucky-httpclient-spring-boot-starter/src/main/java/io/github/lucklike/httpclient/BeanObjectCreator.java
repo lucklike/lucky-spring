@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient;
 
-import com.luckyframework.httpclient.proxy.impl.AbstractCachedObjectCreator;
+import com.luckyframework.httpclient.proxy.impl.creator.AbstractCachedObjectCreator;
 import com.luckyframework.reflect.ClassUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.util.StringUtils;
@@ -22,10 +22,9 @@ public class BeanObjectCreator extends AbstractCachedObjectCreator {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     protected <T> T createObject(Class<T> aClass, String createMessage) {
         if (StringUtils.hasText(createMessage)) {
-            return (T) beanFactory.getBean(createMessage);
+            return (T) beanFactory.getBean(createMessage, aClass);
         }
         return ClassUtils.newObject(aClass);
     }
