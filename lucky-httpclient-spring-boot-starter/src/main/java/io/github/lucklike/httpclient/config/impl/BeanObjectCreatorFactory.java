@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config.impl;
 
-import com.luckyframework.httpclient.proxy.ObjectCreator;
+import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.BeanObjectCreator;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;

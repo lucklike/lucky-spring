@@ -1,8 +1,9 @@
 package io.github.lucklike.httpclient;
 
-import com.luckyframework.httpclient.proxy.impl.creator.AbstractCachedObjectCreator;
+import com.luckyframework.httpclient.proxy.creator.CachedReflectObjectCreator;
 import com.luckyframework.reflect.ClassUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 
 /**
@@ -13,19 +14,22 @@ import org.springframework.util.StringUtils;
  * @version 1.0.0
  * @date 2023/8/30 03:40
  */
-public class BeanObjectCreator extends AbstractCachedObjectCreator {
+public class BeanObjectCreator extends CachedReflectObjectCreator {
 
-    private final BeanFactory beanFactory;
+    private final ApplicationContext applicationContext;
 
-    public BeanObjectCreator(BeanFactory beanFactory) {
-        this.beanFactory = beanFactory;
+    public BeanObjectCreator(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @Override
     protected <T> T createObject(Class<T> aClass, String createMessage) {
         if (StringUtils.hasText(createMessage)) {
-            return (T) beanFactory.getBean(createMessage, aClass);
+            if (applicationContext.isTypeMatch(createMessage, aClass)) {
+                return applicationContext.getBean(createMessage, aClass);
+            }
+            throw new IllegalArgumentException("Component creation failed: The bean name '" + createMessage + "' and bean type '" + aClass.getName() + "' provided in the creation information do not match each other");
         }
-        return ClassUtils.newObject(aClass);
+        return super.createObject(aClass, createMessage);
     }
 }

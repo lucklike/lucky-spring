@@ -26,7 +26,7 @@
 ### 一、在SpingBoot的启动类上添加`@EnableLuckyHttpClient`注解来开启`lucky-httpclient`的注解开发功能
 
 ```java
-import io.github.lucklike.httpclient.EnableLuckyHttpClient;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -39,7 +39,7 @@ public class SpringbootTestApplication {
 
 
     public static void main(String[] args) {
-       SpringApplication.run(SpringbootTestApplication.class, args);
+        SpringApplication.run(SpringbootTestApplication.class, args);
     }
 
 }

@@ -3,10 +3,12 @@ package io.github.lucklike.httpclient.config.impl;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.core.Request;
 import com.luckyframework.httpclient.core.Response;
-import com.luckyframework.httpclient.proxy.MethodContext;
-import com.luckyframework.httpclient.proxy.impl.interceptor.PrintLogInterceptor;
+import com.luckyframework.httpclient.core.ResponseProcessor;
+import com.luckyframework.httpclient.core.VoidResponse;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.interceptor.InterceptorContext;
+import com.luckyframework.httpclient.proxy.interceptor.PrintLogInterceptor;
 
-import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,17 +38,28 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
     }
 
     @Override
-    public void requestProcess(Request request, MethodContext context, Annotation requestAfterHandleAnn) {
-        if (isPrintMethod(context) && printRequestLog) {
-            super.requestProcess(request, context, requestAfterHandleAnn);
+    public void beforeExecute(Request request, InterceptorContext context) {
+        if (isPrintMethod(context.getContext()) && printRequestLog) {
+            super.beforeExecute(request, context);
         }
+
     }
 
     @Override
-    public void responseProcess(Response response, MethodContext context, Annotation responseInterceptorHandleAnn) {
-        if (isPrintMethod(context) && isPrintResponseLog) {
-            super.responseProcess(response, context, responseInterceptorHandleAnn);
+    public VoidResponse afterExecute(VoidResponse voidResponse, ResponseProcessor responseProcessor, InterceptorContext context) {
+        if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
+            return super.afterExecute(voidResponse, responseProcessor, context);
         }
+        return voidResponse;
+
+    }
+
+    @Override
+    public Response afterExecute(Response response, InterceptorContext context) {
+        if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
+            return super.afterExecute(response, context);
+        }
+        return response;
     }
 
     private boolean isPrintMethod(MethodContext context) {

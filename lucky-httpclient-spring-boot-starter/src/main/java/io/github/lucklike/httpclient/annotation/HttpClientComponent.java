@@ -1,16 +1,16 @@
-package io.github.lucklike.httpclient;
+package io.github.lucklike.httpclient.annotation;
 
-import com.luckyframework.httpclient.proxy.annotations.DomainName;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * httpclient注解，用于将某个接口声明为httpclient代理接口
+ * 声明声明式Http客户端的注解，被标记的接口将会被Lucky自动发现并代理
  *
  * @author fukang
  * @version 1.0.0
@@ -19,20 +19,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Component
-@DomainName
-public @interface HttpClient {
-
-    /**
-     * 域名配置，同{@link DomainName#value()}
-     */
-    @AliasFor(annotation = DomainName.class, attribute = "value")
-    String value() default "";
-
-    /**
-     * 域名配置，同{@link DomainName#value()}
-     */
-    @AliasFor(annotation = DomainName.class, attribute = "value")
-    String domainName() default "";
+@Inherited
+public @interface HttpClientComponent {
 
     /**
      * 配置Bean的名称，同{@link Component#value()}

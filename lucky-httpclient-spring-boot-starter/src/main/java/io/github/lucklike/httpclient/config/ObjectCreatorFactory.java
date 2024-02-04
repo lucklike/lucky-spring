@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.proxy.ObjectCreator;
+import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import org.springframework.lang.NonNull;
 
 /**

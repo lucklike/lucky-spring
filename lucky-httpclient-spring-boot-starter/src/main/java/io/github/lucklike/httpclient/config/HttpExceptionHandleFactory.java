@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.proxy.HttpExceptionHandle;
+import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 
 /**
  * HTTP异常处理器工厂

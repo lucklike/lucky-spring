@@ -1,11 +1,9 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.proxy.RequestInterceptor;
-import com.luckyframework.httpclient.proxy.ResponseInterceptor;
+import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
-import sun.net.www.content.text.plain;
 
 import java.net.HttpURLConnection;
 import java.util.HashSet;
@@ -57,14 +55,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private HttpExceptionHandleFactory httpExceptionHandleFactory;
 
     /**
-     * 请求拦截器集合
+     * 拦截器集合
      */
-    private RequestInterceptor[] requestInterceptors;
-
-    /**
-     * 响应拦截器集合
-     */
-    private ResponseInterceptor[] responseInterceptors;
+    private Interceptor[] interceptors;
 
     /**
      * 连接超时时间
@@ -131,13 +124,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
-     *     <li>application/json</li>
-     *     <li>application/xml</li>
-     *     <li>text/xml</li>
-     *     <li>text/plain</li>
-     *     <li>text/html</li>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
      * </ui>
-     *
      */
     private Set<String> allowPrintLogBodyMimeTypes;
 
@@ -147,6 +139,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 默认值：-1
      */
     private long allowPrintLogBodyMaxLength = -1L;
+
+    /**
+     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     */
+    private String printReqLogCondition;
+
+    /**
+     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     */
+    private String printRespLogCondition;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -191,9 +193,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 使用执行器枚举来指定执行器<br/>
-     *  {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
-     *  {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp实现的执行器。<br/>
-     *  {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
+     * {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
+     * {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp实现的执行器。<br/>
+     * {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
      *
      * @param httpExecutor 执行器枚举
      */
@@ -301,21 +303,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置{@link RequestInterceptor}请求拦截器集合
+     * 设置{@link Interceptor}拦截器集合
      *
-     * @param requestInterceptors 请求拦截器集合
+     * @param interceptors 拦截器集合
      */
-    public void setRequestInterceptors(RequestInterceptor[] requestInterceptors) {
-        this.requestInterceptors = requestInterceptors;
-    }
-
-    /**
-     * 设置{@link ResponseInterceptor}响应拦截器集合
-     *
-     * @param responseInterceptors 响应拦截器集合
-     */
-    public void setResponseInterceptors(ResponseInterceptor[] responseInterceptors) {
-        this.responseInterceptors = responseInterceptors;
+    public void setInterceptors(Interceptor[] interceptors) {
+        this.interceptors = interceptors;
     }
 
     /**
@@ -329,6 +322,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置是否开启请求日志的打印，默认开启
+     *
      * @param enableRequestLog 是否开启请求日志的打印
      */
     public void setEnableRequestLog(boolean enableRequestLog) {
@@ -337,6 +331,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置是否开启响应日志的打印，默认开启
+     *
      * @param enableResponseLog 否开启响应日志的打印
      */
     public void setEnableResponseLog(boolean enableResponseLog) {
@@ -348,12 +343,13 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
-     *     <li>application/json</li>
-     *     <li>application/xml</li>
-     *     <li>text/xml</li>
-     *     <li>text/plain</li>
-     *     <li>text/html</li>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
      * </ui>
+     *
      * @param allowPrintLogBodyMimeTypes 打印响应体内容的MimeType集合
      */
     public void setAllowPrintLogBodyMimeTypes(Set<String> allowPrintLogBodyMimeTypes) {
@@ -367,6 +363,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setAllowPrintLogBodyMaxLength(long allowPrintLogBodyMaxLength) {
         this.allowPrintLogBodyMaxLength = allowPrintLogBodyMaxLength;
+    }
+
+    /**
+     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     *
+     * @param printReqLogCondition 打印请求日志的条件
+     */
+    public void setPrintReqLogCondition(String printReqLogCondition) {
+        this.printReqLogCondition = printReqLogCondition;
+    }
+
+    /**
+     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     *
+     * @param printRespLogCondition 打印请求日志的条件
+     */
+    public void setPrintRespLogCondition(String printRespLogCondition) {
+        this.printRespLogCondition = printRespLogCondition;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -519,21 +533,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取{@link RequestInterceptor}请求拦截器集合
+     * 获取{@link Interceptor}拦截器集合
      *
-     * @return 请求拦截器集合
+     * @return 拦截器集合
      */
-    public RequestInterceptor[] getRequestInterceptors() {
-        return requestInterceptors;
-    }
-
-    /**
-     * 获取{@link ResponseInterceptor}响应拦截器集合
-     *
-     * @return 请求响应器集合
-     */
-    public ResponseInterceptor[] getResponseInterceptors() {
-        return responseInterceptors;
+    public Interceptor[] getInterceptors() {
+        return interceptors;
     }
 
     /**
@@ -547,6 +552,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 是否开启了请求日志打印功能
+     *
      * @return 是否开启了请求日志打印功能
      */
     public boolean isEnableRequestLog() {
@@ -555,6 +561,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 是否开启了响应日志打印功能
+     *
      * @return 是否开启了响应日志打印功能
      */
     public boolean isEnableResponseLog() {
@@ -566,11 +573,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
-     *     <li>application/json</li>
-     *     <li>application/xml</li>
-     *     <li>text/xml</li>
-     *     <li>text/plain</li>
-     *     <li>text/html</li>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
      * </ui>
      */
     public Set<String> getAllowPrintLogBodyMimeTypes() {
@@ -584,5 +591,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public long getAllowPrintLogBodyMaxLength() {
         return allowPrintLogBodyMaxLength;
+    }
+
+    /**
+     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     *
+     * @return 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     */
+    public String getPrintReqLogCondition() {
+        return printReqLogCondition;
+    }
+
+    /**
+     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     *
+     * @return 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
+     */
+    public String getPrintRespLogCondition() {
+        return printRespLogCondition;
     }
 }
