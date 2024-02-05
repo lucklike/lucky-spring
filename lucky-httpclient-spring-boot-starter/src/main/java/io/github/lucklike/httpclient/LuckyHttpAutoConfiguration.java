@@ -11,6 +11,7 @@ import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.SpELConvert;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
+import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
@@ -218,9 +219,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
+        // 检查是否需要注册支持自动重定向功能的拦截器
+        if (factoryConfig.isAutoRedirect()) {
+            factory.addInterceptors(new RedirectInterceptor());
+        }
+
         // 检查是否需要注册日志打印的拦截器
         Set<String> printLogPackages = factoryConfig.getPrintLogPackages();
         if (!ContainerUtils.isEmptyCollection(printLogPackages)) {
+            // 注册负责日志打印的拦截器
             SpecifiedInterfacePrintLogInterceptor logInterceptor = new SpecifiedInterfacePrintLogInterceptor();
             logInterceptor.setPrintLogPackageSet(printLogPackages);
             logInterceptor.setPrintRequestLog(factoryConfig.isEnableRequestLog());
@@ -233,6 +240,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
             logInterceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
             factory.addInterceptors(logInterceptor);
+
         }
 
         // 注册容器中的拦截器

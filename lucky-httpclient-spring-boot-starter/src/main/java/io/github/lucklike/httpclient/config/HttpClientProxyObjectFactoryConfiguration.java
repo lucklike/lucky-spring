@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.core.HttpHeaders;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
@@ -149,6 +150,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String printRespLogCondition;
+
+    /**
+     * 是否开启自动重定向，开启后当响应码为{@code 302}、{@code 301}时会自动重定向到响应头{@link HttpHeaders#LOCATION Location}
+     * 所指定的地址
+     */
+    private boolean autoRedirect;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -383,6 +390,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.printRespLogCondition = printRespLogCondition;
     }
 
+    /**
+     * 设置是否开启自动重定向功能
+     *
+     * @param autoRedirect 是否开启自动重定向功能
+     */
+    public void setAutoRedirect(boolean autoRedirect) {
+        this.autoRedirect = autoRedirect;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -609,5 +625,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public String getPrintRespLogCondition() {
         return printRespLogCondition;
+    }
+
+    /**
+     * 是否开启了自动重定向功能
+     *
+     * @return 是否开启了自动重定向功能
+     */
+    public boolean isAutoRedirect() {
+        return autoRedirect;
     }
 }
