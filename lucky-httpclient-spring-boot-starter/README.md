@@ -17,7 +17,7 @@
 🐘 Gradle
 
 ```groovy
-    implementation group: 'io.github.lucklike', name: 'lucky-httpclient-spring-boot-starter', version: '1.0.0.FINAL'
+    implementation group: 'io.github.lucklike', name: 'lucky-httpclient-spring-boot-starter', version: '1.1.0'
 ```
 
 ## 🏄‍♂️  开始使用
