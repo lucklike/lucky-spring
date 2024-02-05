@@ -10,7 +10,7 @@
     <dependency>
         <groupId>io.github.lucklike</groupId>
         <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
-        <version>1.0.0.FINAL</version>
+        <version>1.1.0</version>
     </dependency>
 ```
 
