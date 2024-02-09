@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient;
 
-import com.luckyframework.httpclient.proxy.SpELConvert;
+import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import org.springframework.core.env.Environment;
