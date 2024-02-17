@@ -2,7 +2,9 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.HttpHeaders;
+import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
+import com.luckyframework.httpclient.proxy.interceptor.InterceptorPerformer;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 
@@ -51,14 +53,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private HttpExecutorEnum httpExecutor;
 
     /**
-     * HTTP异常处理器工厂
+     * HTTP异常处理器生成器信息
      */
-    private HttpExceptionHandleFactory httpExceptionHandleFactory;
+    private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
 
     /**
-     * 拦截器集合
+     * 拦截器生成器数组
      */
-    private Interceptor[] interceptors;
+    private InterceptorGenerateEntry[] interceptorGenerates;
 
     /**
      * 连接超时时间
@@ -211,12 +213,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置{@link HttpExceptionHandleFactory 异常处理器工厂}
+     * 设置异常处理器生成器
      *
-     * @param httpExceptionHandleFactory 异常处理器工厂
+     * @param exceptionHandleGenerate 异常处理器生成器
      */
-    public void setHttpExceptionHandleFactory(HttpExceptionHandleFactory httpExceptionHandleFactory) {
-        this.httpExceptionHandleFactory = httpExceptionHandleFactory;
+    public void setExceptionHandleGenerate(GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate) {
+        this.exceptionHandleGenerate = exceptionHandleGenerate;
+    }
+
+    /**
+     * 设置拦截器生成器（数组）
+     *
+     * @param interceptorGenerates 拦截器生成器（数组）
+     */
+    public void setInterceptorGenerates(InterceptorGenerateEntry[] interceptorGenerates) {
+        this.interceptorGenerates = interceptorGenerates;
     }
 
     /**
@@ -307,15 +318,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setSpringElPackageImports(List<String> springElPackageImports) {
         this.springElPackageImports = springElPackageImports;
-    }
-
-    /**
-     * 设置{@link Interceptor}拦截器集合
-     *
-     * @param interceptors 拦截器集合
-     */
-    public void setInterceptors(Interceptor[] interceptors) {
-        this.interceptors = interceptors;
     }
 
     /**
@@ -450,12 +452,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取{@link HttpExceptionHandleFactory HTTP异常处理器工厂}
+     * 获取拦截器生成器（数组）
      *
-     * @return HTTP异常处理器
+     * @return 拦截器生成器（数组）
      */
-    public HttpExceptionHandleFactory getHttpExceptionHandleFactory() {
-        return httpExceptionHandleFactory;
+    public InterceptorGenerateEntry[] getInterceptorGenerates() {
+        return interceptorGenerates;
+    }
+
+    /**
+     * 获取异常处理器生成器
+     *
+     * @return 异常处理器生成器
+     */
+    public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
+        return exceptionHandleGenerate;
     }
 
     /**
@@ -548,14 +559,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
         return springElPackageImports;
     }
 
-    /**
-     * 获取{@link Interceptor}拦截器集合
-     *
-     * @return 拦截器集合
-     */
-    public Interceptor[] getInterceptors() {
-        return interceptors;
-    }
 
     /**
      * 获取需要打印日志的包集合

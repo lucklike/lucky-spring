@@ -23,7 +23,7 @@ public class BeanObjectCreator extends ReflectObjectCreator {
     }
 
     @Override
-    protected Object doCreateObject(Class<?> clazz, String msg) {
+    protected <T> T doCreateObject(Class<T> clazz, String msg) {
         if (StringUtils.hasText(msg)) {
             if (applicationContext.isTypeMatch(msg, clazz)) {
                 return applicationContext.getBean(msg, clazz);

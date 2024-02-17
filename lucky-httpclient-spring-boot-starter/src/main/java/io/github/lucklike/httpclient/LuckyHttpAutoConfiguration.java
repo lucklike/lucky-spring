@@ -8,23 +8,24 @@ import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
-import com.luckyframework.httpclient.proxy.creator.AbstractObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
+import com.luckyframework.httpclient.proxy.creator.Scope;
+import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
+import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.HttpExceptionHandleFactory;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
+import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
-import io.github.lucklike.httpclient.convert.HttpExceptionHandleFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
-import io.github.lucklike.httpclient.convert.InterceptorListConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import org.springframework.beans.BeansException;
@@ -43,6 +44,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
@@ -77,9 +79,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         factoryBean.setConverters(new HashSet<>(Arrays.asList(
                 new SpELRuntimeFactoryInstanceConverter(),
                 new ObjectCreatorFactoryInstanceConverter(),
-                new HttpExecutorFactoryInstanceConverter(),
-                new HttpExceptionHandleFactoryInstanceConverter(),
-                new InterceptorListConverter()
+                new HttpExecutorFactoryInstanceConverter()
         )));
         return factoryBean;
     }
@@ -199,60 +199,63 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 设置公用的{@link com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle 异常处理器}，首先尝试从配置中读取用户配置的{@link HttpExceptionHandleFactory},
-     * 如果存在则采用该工厂创建，否则使用默认对象
+     * 设置公用的{@link HttpExceptionHandle 异常处理器}
      *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
+    @SuppressWarnings("unchecked")
     private void exceptionHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        HttpExceptionHandleFactory httpExceptionHandleFactory = factoryConfig.getHttpExceptionHandleFactory();
-        if (httpExceptionHandleFactory != null) {
-            factory.setExceptionHandle(httpExceptionHandleFactory.getHttpExceptionHandle());
+        GenerateEntry<HttpExceptionHandle> generate = factoryConfig.getExceptionHandleGenerate();
+        if (generate != null) {
+            factory.setExceptionHandle(generate.getType(), generate.getMsg(), generate.getScope(), (Consumer<HttpExceptionHandle>) ClassUtils.newObject(generate.getConsumerClass()));
         }
     }
 
     /**
-     * 请求、响应拦截器设置
+     * 拦截器设置
      *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
+    @SuppressWarnings("unchecked")
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
-            factory.addInterceptors(new RedirectInterceptor());
+            factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD_CONTEXT);
         }
 
         // 检查是否需要注册日志打印的拦截器
         Set<String> printLogPackages = factoryConfig.getPrintLogPackages();
         if (!ContainerUtils.isEmptyCollection(printLogPackages)) {
             // 注册负责日志打印的拦截器
-            SpecifiedInterfacePrintLogInterceptor logInterceptor = new SpecifiedInterfacePrintLogInterceptor();
-            logInterceptor.setPrintLogPackageSet(printLogPackages);
-            logInterceptor.setPrintRequestLog(factoryConfig.isEnableRequestLog());
-            logInterceptor.setPrintResponseLog(factoryConfig.isEnableResponseLog());
-            logInterceptor.setReqCondition(factoryConfig.getPrintReqLogCondition());
-            logInterceptor.setRespCondition(factoryConfig.getPrintRespLogCondition());
-            Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getAllowPrintLogBodyMimeTypes();
-            if (!ContainerUtils.isEmptyCollection(allowPrintLogBodyMimeTypes)) {
-                logInterceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+            factory.addInterceptor(SpecifiedInterfacePrintLogInterceptor.class, Scope.METHOD_CONTEXT, interceptor -> {
+                interceptor.setPrintLogPackageSet(printLogPackages);
+                interceptor.setPrintRequestLog(factoryConfig.isEnableRequestLog());
+                interceptor.setPrintResponseLog(factoryConfig.isEnableResponseLog());
+                interceptor.setReqCondition(factoryConfig.getPrintReqLogCondition());
+                interceptor.setRespCondition(factoryConfig.getPrintRespLogCondition());
+                Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getAllowPrintLogBodyMimeTypes();
+                if (!ContainerUtils.isEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                    interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+                }
+                interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
+            });
+
+        }
+
+        InterceptorGenerateEntry[] interceptorGenerates = factoryConfig.getInterceptorGenerates();
+        if (ContainerUtils.isNotEmptyArray(interceptorGenerates)) {
+            for (InterceptorGenerateEntry interceptorGenerate : interceptorGenerates) {
+
+                factory.addInterceptor(
+                        interceptorGenerate.getType(),
+                        interceptorGenerate.getMsg(),
+                        interceptorGenerate.getScope(),
+                        (Consumer<Interceptor>) ClassUtils.newObject(interceptorGenerate.getConsumerClass()),
+                        interceptorGenerate.getPriority()
+                );
             }
-            logInterceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
-            factory.addInterceptors(logInterceptor);
-
-        }
-
-        // 注册容器中的拦截器
-        for (String reqInterName : applicationContext.getBeanNamesForType(Interceptor.class)) {
-            factory.addInterceptors(applicationContext.getBean(reqInterName, Interceptor.class));
-        }
-
-        // 注册环境变量中配置的拦截器
-        Interceptor[] requestInterceptors = factoryConfig.getInterceptors();
-        if (!ContainerUtils.isEmptyArray(requestInterceptors)) {
-            factory.addInterceptors(requestInterceptors);
         }
     }
 
