@@ -111,12 +111,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private Set<String> printLogPackages = new HashSet<>();
 
     /**
-     * 是否开启请求日志，默认开启
+     * 是否开启请求日志，默认开启（只有在{@link #printLogPackages}不为{@code null}时才生效）
      */
     private boolean enableRequestLog = true;
 
     /**
-     * 是否开启响应日志，默认开启
+     * 是否开启响应日志，默认开启（只有在{@link #printLogPackages}不为{@code null}时才生效）
      */
     private boolean enableResponseLog = true;
 
@@ -152,10 +152,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private String printRespLogCondition;
 
     /**
-     * 是否开启自动重定向，开启后当响应码为{@code 302}、{@code 301}时会自动重定向到响应头{@link HttpHeaders#LOCATION Location}
-     * 所指定的地址
+     * 是否开启自动重定向
      */
     private boolean autoRedirect;
+
+    /**
+     * 需要重定向的状态码，默认重定向状态码：301, 302, 303, 304, 307, 308
+     */
+    private Integer[] redirectStatus;
+
+    /**
+     * 需要重定向的条件，此处支持SpEL表达式
+     */
+    private String redirectCondition;
+
+    /**
+     * 重定向地址表达式，此处支持SpEL表达式，默认值为：#{$respHeader$.Location}
+     */
+    private String redirectLocation;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -399,6 +413,33 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.autoRedirect = autoRedirect;
     }
 
+    /**
+     * 设置需要重定向的状态码
+     *
+     * @param redirectStatus 需要重定向的状态码
+     */
+    public void setRedirectStatus(Integer[] redirectStatus) {
+        this.redirectStatus = redirectStatus;
+    }
+
+    /**
+     * 设置需要重定向的条件，此处支持SpEL表达式
+     *
+     * @param redirectCondition 需要重定向的条件，此处支持SpEL表达式
+     */
+    public void setRedirectCondition(String redirectCondition) {
+        this.redirectCondition = redirectCondition;
+    }
+
+    /**
+     * 设置重定向地址获取表达式
+     *
+     * @param redirectLocation 重定向地址获取表达式
+     */
+    public void setRedirectLocation(String redirectLocation) {
+        this.redirectLocation = redirectLocation;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -635,5 +676,32 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public boolean isAutoRedirect() {
         return autoRedirect;
+    }
+
+    /**
+     * 获取需要重定向的状态码
+     *
+     * @return 需要重定向的状态码
+     */
+    public Integer[] getRedirectStatus() {
+        return redirectStatus;
+    }
+
+    /**
+     * 获取需要重定向的条件表达式
+     *
+     * @return 需要重定向的条件表达式
+     */
+    public String getRedirectCondition() {
+        return redirectCondition;
+    }
+
+    /**
+     * 获取需要重定向的地址表达式
+     *
+     * @return 需要重定向的地址表达式
+     */
+    public String getRedirectLocation() {
+        return redirectLocation;
     }
 }

@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
@@ -222,7 +223,17 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
-            factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD_CONTEXT, Integer.MIN_VALUE + 10);
+            factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD, interceptor -> {
+                if (ContainerUtils.isNotEmptyArray(factoryConfig.getRedirectStatus())) {
+                    interceptor.setRedirectStatus(factoryConfig.getRedirectStatus());
+                }
+                if (StringUtils.hasText(factoryConfig.getRedirectCondition())) {
+                    interceptor.setRedirectCondition(factoryConfig.getRedirectCondition());
+                }
+                if (StringUtils.hasText(factoryConfig.getRedirectLocation())) {
+                    interceptor.setRedirectLocationExp(factoryConfig.getRedirectLocation());
+                }
+            }, Integer.MIN_VALUE + 10);
         }
 
         // 检查是否需要注册日志打印的拦截器
