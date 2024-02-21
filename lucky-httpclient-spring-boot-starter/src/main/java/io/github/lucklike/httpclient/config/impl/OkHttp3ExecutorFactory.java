@@ -1,8 +1,8 @@
 package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
-import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
+
+import com.luckyframework.httpclient.core.executor.OkHttp3Executor;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 
 /**
@@ -12,10 +12,10 @@ import io.github.lucklike.httpclient.config.HttpExecutorFactory;
  * @version 1.0.0
  * @date 2023/9/10 07:04
  */
-public class OkHttpExecutorFactory implements HttpExecutorFactory {
+public class OkHttp3ExecutorFactory implements HttpExecutorFactory {
 
     @Override
     public HttpExecutor getHttpExecutor() {
-        return new OkHttpExecutor();
+        return new OkHttp3Executor();
     }
 }

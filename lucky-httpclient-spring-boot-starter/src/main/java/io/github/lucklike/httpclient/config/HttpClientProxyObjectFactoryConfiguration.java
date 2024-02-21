@@ -3,8 +3,6 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.HttpHeaders;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
-import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
-import com.luckyframework.httpclient.proxy.interceptor.InterceptorPerformer;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 
@@ -203,7 +201,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 使用执行器枚举来指定执行器<br/>
      * {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
-     * {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp实现的执行器。<br/>
+     * {@link HttpExecutorEnum#OKHTTP3 OK_HTTP}: 使用OkHttp3实现的执行器。<br/>
      * {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
      *
      * @param httpExecutor 执行器枚举

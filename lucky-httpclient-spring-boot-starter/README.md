@@ -374,7 +374,7 @@ public interface GaoDeApi {
       lucky:
         http-client:
           # 设置SpEL运行时环境工厂的类的全类名
-          http-executor-factory: io.github.lucklike.httpclient.config.impl.OkHttpExecutorFactory
+          http-executor-factory: io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory
   ```
 
 - `spring.lucky.http-client.http-executor`  

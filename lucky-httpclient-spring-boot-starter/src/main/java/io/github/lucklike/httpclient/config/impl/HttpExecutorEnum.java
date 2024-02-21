@@ -22,7 +22,7 @@ public enum HttpExecutorEnum {
     /**
      * 基于Okhttp实现的执行器枚举配置
      */
-    OKHTTP(new OkHttpExecutorFactory()),
+    OKHTTP3(new OkHttp3ExecutorFactory()),
 
     /**
      * 基于Apache HttpClient实现的执行器枚举配置

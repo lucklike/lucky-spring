@@ -6,7 +6,7 @@ import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
+import com.luckyframework.httpclient.core.executor.OkHttp3Executor;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.Scope;
@@ -222,7 +222,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
-            factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD_CONTEXT);
+            factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD_CONTEXT, Integer.MIN_VALUE + 10);
         }
 
         // 检查是否需要注册日志打印的拦截器
@@ -314,7 +314,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         @Bean
         public HttpExecutor luckyOkHttpExecutor() {
-            return new OkHttpExecutor();
+            return new OkHttp3Executor();
         }
 
     }
