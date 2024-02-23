@@ -24,7 +24,7 @@ import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfigur
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
-import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
@@ -45,10 +45,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.*;
 
 /**
  * <pre>
@@ -88,7 +88,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     /**
      * 从环境变量获取必要的配置
      */
-    @Bean("luckyHttpClientProxyObjectFactoryConfiguration")
+    @Bean(PROXY_FACTORY_CONFIG_BEAN_NAME)
     @ConfigurationProperties("lucky.http-client")
     public HttpClientProxyObjectFactoryConfiguration httpClientProxyObjectFactoryConfiguration() {
         return new HttpClientProxyObjectFactoryConfiguration();
@@ -100,7 +100,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 配置实例
      */
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
-    public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier("luckyHttpClientProxyObjectFactoryConfiguration") HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         objectCreateSetting(factoryConfig);
         factorySpELConvertSetting(factoryConfig);
         factoryExpressionParamSetting(factoryConfig);
@@ -152,21 +152,51 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 设置{@link HttpExecutor HTTP请求执行器}，首先尝试从配置中读取用户配置的{@link HttpExecutorFactory},
-     * 如果存在则采用该工厂创建，否则直接从Spring容器中获取
+     * 设置{@link HttpExecutor HTTP请求执行器}：
+     * 1.如果配置了 httpExecutorBean，则直接使用该Bean名称对应的执行器
+     * 2.如果配置了httpExecutorFactory，则使用httpExecutorFactory来创建执行器
+     * 3.如果配置了HttpExecutorEnum，则使用枚举中指定的httpExecutorFactory来创建执行器
+     *      如果httpExecutorFactory为{@link PoolParamHttpExecutorFactory},则还需要设置连接池参数
+     * 4.在Spring容器中按类型查找，将找到的Bean设置为执行器
+     *
      *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
     private void httpExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        HttpExecutorFactory httpExecutorFactory = factoryConfig.getHttpExecutorFactory();
-        HttpExecutorEnum executorEnum = factoryConfig.getHttpExecutor();
-        if (httpExecutorFactory != null) {
-            factory.setHttpExecutor(httpExecutorFactory.getHttpExecutor());
-        } else if (executorEnum != null) {
-            factory.setHttpExecutor(executorEnum.getHttpExecutor());
-        } else {
-            factory.setHttpExecutor(applicationContext.getBean(HttpExecutor.class));
+        String httpExecutorBean = factoryConfig.getHttpExecutorBean();
+        if (StringUtils.hasText(httpExecutorBean)) {
+            factory.setHttpExecutor(applicationContext.getBean(httpExecutorBean, HttpExecutor.class));
+        }
+        else {
+            HttpExecutorFactory httpExecutorFactory = factoryConfig.getHttpExecutorFactory();
+            if (httpExecutorFactory == null &&  factoryConfig.getHttpExecutor() != null) {
+                httpExecutorFactory = factoryConfig.getHttpExecutor().HttpExecutorFactory();
+            }
+            if (httpExecutorFactory != null) {
+                if (httpExecutorFactory instanceof PoolParamHttpExecutorFactory) {
+                    PoolParamHttpExecutorFactory poolParamHttpExecutorFactory = (PoolParamHttpExecutorFactory) httpExecutorFactory;
+                    Integer maxIdleConnections = factoryConfig.getMaxIdleConnections();
+                    Long keepAliveDuration = factoryConfig.getKeepAliveDuration();
+                    TimeUnit keepAliveTimeUnit = factoryConfig.getKeepAliveTimeUnit();
+
+                    if(maxIdleConnections != null && maxIdleConnections > 0) {
+                        poolParamHttpExecutorFactory.setMaxIdleConnections(maxIdleConnections);
+                    }
+
+                    if(keepAliveDuration != null && keepAliveDuration > 0) {
+                        poolParamHttpExecutorFactory.setKeepAliveDuration(keepAliveDuration);
+                    }
+
+                    if (keepAliveTimeUnit != null) {
+                        poolParamHttpExecutorFactory.setTimeUnit(keepAliveTimeUnit);
+                    }
+
+                }
+                factory.setHttpExecutor(httpExecutorFactory.getHttpExecutor());
+            } else {
+                factory.setHttpExecutor(applicationContext.getBean(HttpExecutor.class));
+            }
         }
     }
 
@@ -313,7 +343,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient"})
     static class JdkHttpExecutorConfig {
 
-        @Bean
+        @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
         public HttpExecutor luckyJdkHttpExecutor() {
             return new JdkHttpExecutor();
         }
@@ -323,8 +353,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @ConditionalOnClass(name = {"okhttp3.OkHttpClient"})
     static class OkHttpExecutorConfig {
 
-        @Bean
-        public HttpExecutor luckyOkHttpExecutor() {
+        @Bean(DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME)
+        public HttpExecutor luckyOkHttp3Executor() {
             return new OkHttp3Executor();
         }
 
@@ -333,7 +363,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @ConditionalOnClass(name = {"org.apache.http.client.HttpClient"})
     static class ApacheHttpExecutorConfig {
 
-        @Bean
+        @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
         public HttpExecutor luckyApacheHttpExecutor() {
             return new HttpClientExecutor();
         }

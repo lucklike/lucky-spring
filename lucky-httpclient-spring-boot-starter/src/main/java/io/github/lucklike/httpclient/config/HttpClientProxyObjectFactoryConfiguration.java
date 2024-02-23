@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.core.HttpHeaders;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
@@ -10,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -24,6 +24,26 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 用于创建异步调用的线程池的参数
      */
     private ThreadPoolParam threadPoolParam;
+
+    /**
+     * 指定使用的HTTP执行器Bean的名称
+     */
+    private String httpExecutorBean;
+
+    /**
+     * 连接池最大连接数
+     */
+    private Integer maxIdleConnections = 10;
+
+    /**
+     * 连接池空闲连接的保活时间
+     */
+    private Long keepAliveDuration = 5L;
+
+    /**
+     * 连接池空闲连接的保活时间单位
+     */
+    private TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
 
     /**
      * SpEL运行时环境工厂
@@ -440,6 +460,42 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.redirectLocation = redirectLocation;
     }
 
+    /**
+     * 设置连接池的最大连接数
+     *
+     * @param maxIdleConnections 最大连接数
+     */
+    public void setMaxIdleConnections(int maxIdleConnections) {
+        this.maxIdleConnections = maxIdleConnections;
+    }
+
+    /**
+     * 设置连接池空闲连接的保活时间
+     *
+     * @param keepAliveDuration 连接池空闲连接的保活时间
+     */
+    public void setKeepAliveDuration(long keepAliveDuration) {
+        this.keepAliveDuration = keepAliveDuration;
+    }
+
+    /**
+     * 设置连接池空闲连接的保活时间单位
+     *
+     * @param keepAliveTimeUnit 连接池空闲连接的保活时间单位
+     */
+    public void setKeepAliveTimeUnit(TimeUnit keepAliveTimeUnit) {
+        this.keepAliveTimeUnit = keepAliveTimeUnit;
+    }
+
+    /**
+     * 设置使用HTTP执行器的SpringBean的名称
+     *
+     * @param httpExecutorBean HTTP执行器的SpringBean的名称
+     */
+    public void setHttpExecutorBean(String httpExecutorBean) {
+        this.httpExecutorBean = httpExecutorBean;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -703,5 +759,41 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public String getRedirectLocation() {
         return redirectLocation;
+    }
+
+    /**
+     * 连接池的最大连接数
+     *
+     * @return 连接池的最大连接数
+     */
+    public Integer getMaxIdleConnections() {
+        return maxIdleConnections;
+    }
+
+    /**
+     * 连接池空闲连接的保活时间
+     *
+     * @return 连接池空闲连接的保活时间
+     */
+    public Long getKeepAliveDuration() {
+        return keepAliveDuration;
+    }
+
+    /**
+     * 连接池空闲连接的保活时间单位
+     *
+     * @return 连接池空闲连接的保活时间单位
+     */
+    public TimeUnit getKeepAliveTimeUnit() {
+        return keepAliveTimeUnit;
+    }
+
+    /**
+     * HTTP执行器的SpringBean的名称
+     *
+     * @return HTTP执行器的SpringBean的名称
+     */
+    public String getHttpExecutorBean() {
+        return httpExecutorBean;
     }
 }

@@ -1,6 +1,5 @@
 package io.github.lucklike.httpclient.config.impl;
 
-import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 
 import java.net.HttpURLConnection;
@@ -20,7 +19,7 @@ public enum HttpExecutorEnum {
     JDK(new JdkHttpExecutorFactory()),
 
     /**
-     * 基于Okhttp实现的执行器枚举配置
+     * 基于Okhttp3实现的执行器枚举配置
      */
     OKHTTP3(new OkHttp3ExecutorFactory()),
 
@@ -35,7 +34,7 @@ public enum HttpExecutorEnum {
         this.factory = factory;
     }
 
-    public HttpExecutor getHttpExecutor() {
-        return factory.getHttpExecutor();
+    public HttpExecutorFactory HttpExecutorFactory() {
+        return factory;
     }
 }
