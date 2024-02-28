@@ -276,6 +276,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 interceptor.setPrintResponseLog(factoryConfig.isEnableResponseLog());
                 interceptor.setReqCondition(factoryConfig.getPrintReqLogCondition());
                 interceptor.setRespCondition(factoryConfig.getPrintRespLogCondition());
+                interceptor.setPrintAnnotationInfo(factoryConfig.isEnablePrintAnnotationInfo());
+                interceptor.setPrintArgsInfo(factoryConfig.isEnablePrintArgsInfo());
                 Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getAllowPrintLogBodyMimeTypes();
                 if (!ContainerUtils.isEmptyCollection(allowPrintLogBodyMimeTypes)) {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);

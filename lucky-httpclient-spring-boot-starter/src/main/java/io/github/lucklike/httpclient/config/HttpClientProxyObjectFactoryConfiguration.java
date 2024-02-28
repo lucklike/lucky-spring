@@ -141,6 +141,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private boolean enableResponseLog = true;
 
     /**
+     * 是否开启打印注解信息功能，默认关闭
+     */
+    private boolean enablePrintAnnotationInfo = false;
+
+    /**
+     * 是否开启打印参数信息功能，默认关闭
+     */
+    private boolean enablePrintArgsInfo = false;
+
+    /**
      * MimeType为这些类型时，将打印响应体日志<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
@@ -425,6 +435,25 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 设置是否开启打印注解信息功能
+     *
+     * @param enablePrintAnnotationInfo 是否开启打印注解信息功能
+     */
+    public void setEnablePrintAnnotationInfo(boolean enablePrintAnnotationInfo) {
+        this.enablePrintAnnotationInfo = enablePrintAnnotationInfo;
+    }
+
+    /**
+     * 设置是否开启打印参数信息功能
+     *
+     * @param enablePrintArgsInfo 是否开启打印参数信息功能
+     */
+    public void setEnablePrintArgsInfo(boolean enablePrintArgsInfo) {
+        this.enablePrintArgsInfo = enablePrintArgsInfo;
+    }
+
+
+    /**
      * 设置是否开启自动重定向功能
      *
      * @param autoRedirect 是否开启自动重定向功能
@@ -465,7 +494,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param maxIdleConnections 最大连接数
      */
-    public void setMaxIdleConnections(int maxIdleConnections) {
+    public void setMaxIdleConnections(Integer maxIdleConnections) {
         this.maxIdleConnections = maxIdleConnections;
     }
 
@@ -474,7 +503,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param keepAliveDuration 连接池空闲连接的保活时间
      */
-    public void setKeepAliveDuration(long keepAliveDuration) {
+    public void setKeepAliveDuration(Long keepAliveDuration) {
         this.keepAliveDuration = keepAliveDuration;
     }
 
@@ -680,6 +709,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public boolean isEnableResponseLog() {
         return enableResponseLog;
+    }
+
+    /**
+     * 是否开启了打印注解信息的功能
+     *
+     * @return 是否开启了打印注解信息的功能
+     */
+    public boolean isEnablePrintAnnotationInfo() {
+        return enablePrintAnnotationInfo;
+    }
+
+    /**
+     * 是否开启了打印参数信息的功能
+     *
+     * @return 是否开启了打印参数信息的功能
+     */
+    public boolean isEnablePrintArgsInfo() {
+        return enablePrintArgsInfo;
     }
 
     /**
