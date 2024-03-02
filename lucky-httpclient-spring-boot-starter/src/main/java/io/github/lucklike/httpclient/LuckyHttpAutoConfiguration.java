@@ -48,7 +48,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static io.github.lucklike.httpclient.Constant.*;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
  * <pre>
@@ -101,11 +106,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        objectCreateSetting(factoryConfig);
-        factorySpELConvertSetting(factoryConfig);
-        factoryExpressionParamSetting(factoryConfig);
+
 
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
+        objectCreateSetting(factory, factoryConfig);
+        factorySpELConvertSetting(factory, factoryConfig);
+        factoryExpressionParamSetting(factory, factoryConfig);
         asyncExecuteSetting(factory, factoryConfig);
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
@@ -120,9 +126,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * 设置{@link SpELConvert SPEL表达式转换器}，首先尝试从配置中读取用户配置的{@link io.github.lucklike.httpclient.config.SpELRuntimeFactory},
      * 如果存在则采用该工厂创建，否则使用默认实例
      *
+     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void factorySpELConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void factorySpELConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SpELRuntime spELRuntime;
         io.github.lucklike.httpclient.config.SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringElRuntimeFactory();
         if (spELRuntimeFactory == null) {
@@ -136,18 +143,19 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (!ContainerUtils.isEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(spELConvert::importPackage);
         }
-        HttpClientProxyObjectFactory.setSpELConverter(spELConvert);
+        factory.setSpELConverter(spELConvert);
     }
 
     /**
      * 设置工厂SpEL表达式配置参数
      *
+     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void factoryExpressionParamSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void factoryExpressionParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         ConfigurationMap expressionParams = factoryConfig.getExpressionParams();
         if (expressionParams != null) {
-            expressionParams.forEach(HttpClientProxyObjectFactory::addExpressionParam);
+            expressionParams.forEach(factory::addExpressionParam);
         }
     }
 
@@ -156,9 +164,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * 1.如果配置了 httpExecutorBean，则直接使用该Bean名称对应的执行器
      * 2.如果配置了httpExecutorFactory，则使用httpExecutorFactory来创建执行器
      * 3.如果配置了HttpExecutorEnum，则使用枚举中指定的httpExecutorFactory来创建执行器
-     *      如果httpExecutorFactory为{@link PoolParamHttpExecutorFactory},则还需要设置连接池参数
+     * 如果httpExecutorFactory为{@link PoolParamHttpExecutorFactory},则还需要设置连接池参数
      * 4.在Spring容器中按类型查找，将找到的Bean设置为执行器
-     *
      *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
@@ -167,10 +174,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         String httpExecutorBean = factoryConfig.getHttpExecutorBean();
         if (StringUtils.hasText(httpExecutorBean)) {
             factory.setHttpExecutor(applicationContext.getBean(httpExecutorBean, HttpExecutor.class));
-        }
-        else {
+        } else {
             HttpExecutorFactory httpExecutorFactory = factoryConfig.getHttpExecutorFactory();
-            if (httpExecutorFactory == null &&  factoryConfig.getHttpExecutor() != null) {
+            if (httpExecutorFactory == null && factoryConfig.getHttpExecutor() != null) {
                 httpExecutorFactory = factoryConfig.getHttpExecutor().HttpExecutorFactory();
             }
             if (httpExecutorFactory != null) {
@@ -180,11 +186,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     Long keepAliveDuration = factoryConfig.getKeepAliveDuration();
                     TimeUnit keepAliveTimeUnit = factoryConfig.getKeepAliveTimeUnit();
 
-                    if(maxIdleConnections != null && maxIdleConnections > 0) {
+                    if (maxIdleConnections != null && maxIdleConnections > 0) {
                         poolParamHttpExecutorFactory.setMaxIdleConnections(maxIdleConnections);
                     }
 
-                    if(keepAliveDuration != null && keepAliveDuration > 0) {
+                    if (keepAliveDuration != null && keepAliveDuration > 0) {
                         poolParamHttpExecutorFactory.setKeepAliveDuration(keepAliveDuration);
                     }
 
@@ -204,14 +210,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * 设置{@link ObjectCreator 对象创建器}，首先尝试从配置中读取用户配置的{@link ObjectCreatorFactory},
      * 如果存在则采用该工厂创建，否则使用默认对象
      *
+     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void objectCreateSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void objectCreateSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         ObjectCreatorFactory objectCreatorFactory = factoryConfig.getObjectCreatorFactory();
         if (objectCreatorFactory == null) {
-            HttpClientProxyObjectFactory.setObjectCreator(new BeanObjectCreator(applicationContext));
+            factory.setObjectCreator(new BeanObjectCreator(applicationContext));
         } else {
-            HttpClientProxyObjectFactory.setObjectCreator(objectCreatorFactory.getObjectCreator());
+            factory.setObjectCreator(objectCreatorFactory.getObjectCreator());
         }
     }
 
