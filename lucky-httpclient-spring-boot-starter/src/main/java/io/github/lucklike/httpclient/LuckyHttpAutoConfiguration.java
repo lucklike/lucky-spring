@@ -25,6 +25,8 @@ import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
+import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
+import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
@@ -130,15 +132,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void factorySpELConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        SpELRuntime spELRuntime;
-        io.github.lucklike.httpclient.config.SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringElRuntimeFactory();
-        if (spELRuntimeFactory == null) {
-            spELRuntime = new SpELRuntimeFactory(applicationContext).createSpELRuntime();
-        } else {
-            spELRuntime = spELRuntimeFactory.getSpELRuntime();
-        }
-        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
+        // 使用工厂构建一个SpELRuntime对象
+        SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringElRuntimeFactory();
+        spELRuntimeFactory = spELRuntimeFactory == null ? new BeanSpELRuntimeFactoryFactory() : spELRuntimeFactory;
+        SpELRuntime spELRuntime = spELRuntimeFactory.getSpELRuntime();
 
+        // 使用SpELRuntime对象构建一个SpELConvert对象，并导入公共包
+        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
         SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment());
         if (!ContainerUtils.isEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(spELConvert::importPackage);

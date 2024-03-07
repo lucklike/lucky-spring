@@ -4,6 +4,7 @@ import com.luckyframework.spel.AnnotationAccessor;
 import com.luckyframework.spel.ClassFieldAccessor;
 import com.luckyframework.spel.EvaluationContextFactory;
 import com.luckyframework.spel.NotExistReturnNullMapAccessor;
+import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.convert.ApplicationConversionService;
@@ -25,20 +26,16 @@ import org.springframework.util.ClassUtils;
  * @version 1.0.0
  * @date 2023/8/30 03:13
  */
-public class SpELRuntimeFactory implements EvaluationContextFactory {
+public class BeanEvaluationContextFactory implements EvaluationContextFactory {
 
     private final BeanFactory beanFactory;
 
-    public SpELRuntimeFactory(BeanFactory beanFactory) {
+    public BeanEvaluationContextFactory(BeanFactory beanFactory) {
         this.beanFactory = beanFactory;
     }
 
-    public SpELRuntime createSpELRuntime() {
-        return new SpELRuntime(this);
-    }
-
     @Override
-    public EvaluationContext getEvaluationContext() {
+    public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
         StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
         evaluationContext.addPropertyAccessor(new NotExistReturnNullMapAccessor());
         evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
@@ -50,6 +47,10 @@ public class SpELRuntimeFactory implements EvaluationContextFactory {
         evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
         evaluationContext.setTypeLocator(new StandardTypeLocator(ClassUtils.getDefaultClassLoader()));
         evaluationContext.setTypeConverter(new StandardTypeConverter(new ApplicationConversionService()));
+
+        evaluationContext.setTypeLocator(createStandardTypeLocator(paramWrapper));
+        evaluationContext.setVariables(paramWrapper.getVariables());
+        evaluationContext.setRootObject(paramWrapper.getRootObject());
         return evaluationContext;
     }
 }
