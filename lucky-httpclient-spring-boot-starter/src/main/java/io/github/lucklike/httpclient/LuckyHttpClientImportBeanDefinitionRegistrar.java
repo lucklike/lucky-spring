@@ -5,12 +5,15 @@ import com.luckyframework.common.ScanUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -23,6 +26,8 @@ import java.util.Map;
  */
 public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
 
+    private static final Logger log = LoggerFactory.getLogger(LuckyHttpClientBeanDefinitionGenerator.class);
+
     private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
 
     @Override
@@ -30,6 +35,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
         boolean useCglibProxy = (boolean) attributes.get("useCglibProxy");
         String proxyFactoryName = (String) attributes.get("proxyFactoryName");
+        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, (useCglibProxy ? "CGLIB" : "JDK"));
         LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
                 new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, useCglibProxy);
         addHttpClientClasses(beanDefinitionGenerator, importingClassMetadata);
@@ -50,10 +56,14 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             scannedClasses = new Class[]{ClassUtils.getClass(importingClassMetadata.getClassName())};
         }
         String[] finalScannedPackages = ScanUtils.getPackages(scannedClasses, scannedPackages);
+        log.info("Lucky-HttpClient Start scanning the package {}", Arrays.toString(finalScannedPackages));
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
             if (annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
                 beanDefinitionGenerator.addHttpClientClasses(ClassUtils.getClass(annotationMetadata.getClassName()));
+                if (log.isDebugEnabled()) {
+                    log.debug("@HttpClientComponent '{}' is registered", annotationMetadata.getClassName());
+                }
             }
         });
     }
