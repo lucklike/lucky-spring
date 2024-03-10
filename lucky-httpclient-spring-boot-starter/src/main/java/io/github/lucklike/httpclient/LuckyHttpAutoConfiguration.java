@@ -4,14 +4,18 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
+import com.luckyframework.exception.LuckyRuntimeException;
+import com.luckyframework.httpclient.core.CookieStore;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttp3Executor;
+import com.luckyframework.httpclient.core.ssl.SSLUtils;
+import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
+import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
@@ -25,8 +29,10 @@ import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
+import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
+import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
@@ -108,9 +114,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-
-
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
+
         objectCreateSetting(factory, factoryConfig);
         factorySpELConvertSetting(factory, factoryConfig);
         factoryExpressionParamSetting(factory, factoryConfig);
@@ -119,10 +124,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         exceptionHandlerSetting(factory, factoryConfig);
         timeoutSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
+        sslSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
 
         return factory;
     }
+
 
     /**
      * 设置{@link SpELConvert SPEL表达式转换器}，首先尝试从配置中读取用户配置的{@link io.github.lucklike.httpclient.config.SpELRuntimeFactory},
@@ -258,6 +265,24 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     @SuppressWarnings("unchecked")
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
+        if (factoryConfig.isEnableCookieManage()) {
+            SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
+            if (cookieStoreGenerate != null) {
+                CookieStore cookieStore;
+                if (StringUtils.hasText(cookieStoreGenerate.getMsg())) {
+                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getMsg(), cookieStoreGenerate.getType());
+                } else {
+                    cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
+                }
+
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 100);
+            } else {
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, 100);
+            }
+        }
+
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
             factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD, interceptor -> {
@@ -270,7 +295,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 if (StringUtils.hasText(factoryConfig.getRedirectLocation())) {
                     interceptor.setRedirectLocationExp(factoryConfig.getRedirectLocation());
                 }
-            }, Integer.MIN_VALUE + 10);
+            }, 1000);
         }
 
         // 检查是否需要注册日志打印的拦截器
@@ -305,6 +330,23 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                         (Consumer<Interceptor>) ClassUtils.newObject(interceptorGenerate.getConsumerClass()),
                         interceptorGenerate.getPriority()
                 );
+            }
+        }
+    }
+
+    /**
+     * SSL证书相关的配置
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void sslSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 检查是否需要注册忽略SSL证书认证的拦截器
+        if (factoryConfig.isIgnoreSSLVerify()) {
+            try {
+                factory.setHostnameVerifier(TrustAllHostnameVerifier.DEFAULT_INSTANCE);
+                factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(factoryConfig.getSslProtocol()).getSocketFactory());
+            }catch (Exception e) {
+                throw new LuckyRuntimeException(e);
             }
         }
     }
@@ -364,7 +406,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         @Bean(DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME)
         public HttpExecutor luckyOkHttp3Executor() {
-            return new OkHttp3Executor();
+            return new OkHttp3ExecutorFactory().getHttpExecutor();
         }
 
     }

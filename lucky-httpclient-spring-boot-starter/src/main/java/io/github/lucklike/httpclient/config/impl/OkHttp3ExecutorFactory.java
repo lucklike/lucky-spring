@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttp3Executor;
+import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
 
 /**
@@ -15,6 +16,12 @@ public class OkHttp3ExecutorFactory extends PoolParamHttpExecutorFactory {
 
     @Override
     public HttpExecutor getHttpExecutor() {
-        return new OkHttp3Executor(getMaxIdleConnections(), getKeepAliveDuration(), getTimeUnit());
+        try {
+            Class.forName("okhttp3.RequestBody$Companion");
+            return new OkHttp3Executor(getMaxIdleConnections(), getKeepAliveDuration(), getTimeUnit());
+        }catch (Exception e) {
+            return new OkHttpExecutor(getMaxIdleConnections(), getKeepAliveDuration(), getTimeUnit());
+        }
+
     }
 }

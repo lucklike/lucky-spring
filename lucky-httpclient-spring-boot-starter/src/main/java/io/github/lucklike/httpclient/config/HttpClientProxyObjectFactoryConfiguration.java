@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.core.CookieStore;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
@@ -187,6 +188,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private boolean autoRedirect;
 
     /**
+     * 是否忽略SSL证书认证
+     */
+    private boolean ignoreSSLVerify;
+
+    /**
+     * 使用的SSL协议，默认为TLS
+     */
+    private String sslProtocol;
+
+    /**
      * 需要重定向的状态码，默认重定向状态码：301, 302, 303, 304, 307, 308
      */
     private Integer[] redirectStatus;
@@ -200,6 +211,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 重定向地址表达式，此处支持SpEL表达式，默认值为：#{$respHeader$.Location}
      */
     private String redirectLocation;
+
+    /**
+     * 是否开启Cookie管理功能
+     */
+    private boolean enableCookieManage;
+
+    /**
+     * CookieStore生成器
+     */
+    private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -463,6 +484,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 是否忽略SSL证书认证
+     *
+     * @param ignoreSSLVerify 是否忽略SSL证书认证
+     */
+    public void setIgnoreSSLVerify(boolean ignoreSSLVerify) {
+        this.ignoreSSLVerify = ignoreSSLVerify;
+    }
+
+    /**
+     * 设置SSL协议
+     *
+     * @param sslProtocol SSL协议，默认TLS
+     */
+    public void setSslProtocol(String sslProtocol) {
+        this.sslProtocol = sslProtocol;
+    }
+
+    /**
      * 设置需要重定向的状态码
      *
      * @param redirectStatus 需要重定向的状态码
@@ -523,6 +562,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setHttpExecutorBean(String httpExecutorBean) {
         this.httpExecutorBean = httpExecutorBean;
+    }
+
+    /**
+     * 设置是否开启Cookie管理功能
+     *
+     * @param enableCookieManage 是否开启Cookie管理功能
+     */
+    public void setEnableCookieManage(boolean enableCookieManage) {
+        this.enableCookieManage = enableCookieManage;
+    }
+
+    /**
+     * 设置CookieStore对象生成器
+     *
+     * @param cookieStoreGenerate CookieStore对象生成器
+     */
+    public void setCookieStoreGenerate(SimpleGenerateEntry<CookieStore> cookieStoreGenerate) {
+        this.cookieStoreGenerate = cookieStoreGenerate;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -782,6 +839,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 是否忽略SSL证书认证功能
+     *
+     * @return 是否忽略SSL证书认证功能
+     */
+    public boolean isIgnoreSSLVerify() {
+        return ignoreSSLVerify;
+    }
+
+    /**
+     * 获取SSL协议
+     *
+     * @return SSL协议
+     */
+    public String getSslProtocol() {
+        return sslProtocol;
+    }
+
+    /**
      * 获取需要重定向的状态码
      *
      * @return 需要重定向的状态码
@@ -842,5 +917,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public String getHttpExecutorBean() {
         return httpExecutorBean;
+    }
+
+    /**
+     * 是否开启Cookie管理功能
+     *
+     * @return 是否开启Cookie管理功能
+     */
+    public boolean isEnableCookieManage() {
+        return enableCookieManage;
+    }
+
+    /**
+     * 获取CookieStore对象生成器
+     *
+     * @return CookieStore对象生成器
+     */
+    public SimpleGenerateEntry<CookieStore> getCookieStoreGenerate() {
+        return cookieStoreGenerate;
     }
 }
