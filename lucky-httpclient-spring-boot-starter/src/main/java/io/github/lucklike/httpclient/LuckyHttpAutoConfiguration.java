@@ -266,8 +266,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @SuppressWarnings("unchecked")
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
-
-
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
             factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD, interceptor -> {
