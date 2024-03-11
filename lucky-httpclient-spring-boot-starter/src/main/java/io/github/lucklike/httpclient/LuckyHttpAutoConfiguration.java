@@ -266,22 +266,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @SuppressWarnings("unchecked")
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
-        // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
-        if (factoryConfig.isEnableCookieManage()) {
-            SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
-            if (cookieStoreGenerate != null) {
-                CookieStore cookieStore;
-                if (StringUtils.hasText(cookieStoreGenerate.getBeanName())) {
-                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getBeanName(), CookieStore.class);
-                } else {
-                    cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
-                }
 
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 100);
-            } else {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, 100);
-            }
-        }
 
         // 检查是否需要注册支持自动重定向功能的拦截器
         if (factoryConfig.isAutoRedirect()) {
@@ -295,7 +280,24 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 if (StringUtils.hasText(factoryConfig.getRedirectLocation())) {
                     interceptor.setRedirectLocationExp(factoryConfig.getRedirectLocation());
                 }
-            }, 1000);
+            }, 100);
+        }
+
+        // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
+        if (factoryConfig.isEnableCookieManage()) {
+            SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
+            if (cookieStoreGenerate != null) {
+                CookieStore cookieStore;
+                if (StringUtils.hasText(cookieStoreGenerate.getBeanName())) {
+                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getBeanName(), CookieStore.class);
+                } else {
+                    cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
+                }
+
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 100);
+            } else {
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, 1000);
+            }
         }
 
         // 检查是否需要注册日志打印的拦截器
