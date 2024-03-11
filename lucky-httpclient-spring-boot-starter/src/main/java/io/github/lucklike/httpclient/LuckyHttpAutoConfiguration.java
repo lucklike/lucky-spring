@@ -253,7 +253,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void exceptionHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         GenerateEntry<HttpExceptionHandle> generate = factoryConfig.getExceptionHandleGenerate();
         if (generate != null) {
-            factory.setExceptionHandle(generate.getType(), generate.getMsg(), generate.getScope(), (Consumer<HttpExceptionHandle>) ClassUtils.newObject(generate.getConsumerClass()));
+            factory.setExceptionHandle(generate.getType(), generate.getBeanName(), generate.getScope(), (Consumer<HttpExceptionHandle>) ClassUtils.newObject(generate.getConsumerClass()));
         }
     }
 
@@ -271,8 +271,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
             if (cookieStoreGenerate != null) {
                 CookieStore cookieStore;
-                if (StringUtils.hasText(cookieStoreGenerate.getMsg())) {
-                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getMsg(), cookieStoreGenerate.getType());
+                if (StringUtils.hasText(cookieStoreGenerate.getBeanName())) {
+                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getBeanName(), CookieStore.class);
                 } else {
                     cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
                 }
@@ -325,7 +325,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
                 factory.addInterceptor(
                         interceptorGenerate.getType(),
-                        interceptorGenerate.getMsg(),
+                        interceptorGenerate.getBeanName(),
                         interceptorGenerate.getScope(),
                         (Consumer<Interceptor>) ClassUtils.newObject(interceptorGenerate.getConsumerClass()),
                         interceptorGenerate.getPriority()

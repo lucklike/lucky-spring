@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 /**
  * 简单生成器实体
+ *
  * @author fukang
  * @version 1.0.0
  * @date 2024/3/9 16:37
@@ -13,9 +14,9 @@ public class SimpleGenerateEntry<T> {
      */
     private Class<T> type;
     /**
-     * 生成该对象所需要的额外信息
+     * 对象在SpringIOC容器中的名称
      */
-    private String msg = "";
+    private String beanName = "";
 
 
     /**
@@ -37,20 +38,20 @@ public class SimpleGenerateEntry<T> {
     }
 
     /**
-     * 获取生成对象需要用到的额外信息
+     * 获取对象在SpringIOC容器中的名称
      *
-     * @return 生成对象需要用到的额外信息
+     * @return 对象在SpringIOC容器中的名称
      */
-    public String getMsg() {
-        return msg;
+    public String getBeanName() {
+        return beanName;
     }
 
     /**
-     * 设置生成对象需要用到的额外信息
+     * 对象在SpringIOC容器中的名称
      *
-     * @param msg 生成对象需要用到的额外信息
+     * @param beanName 对象在SpringIOC容器中的名称
      */
-    public void setMsg(String msg) {
-        this.msg = msg;
+    public void setBeanName(String beanName) {
+        this.beanName = beanName;
     }
 }

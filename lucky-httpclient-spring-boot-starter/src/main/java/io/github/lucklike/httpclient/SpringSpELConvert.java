@@ -28,7 +28,7 @@ public class SpringSpELConvert extends SpELConvert {
 
     @Override
     protected void paramWrapperPostProcess(ParamWrapper paramWrapper) {
-        paramWrapper.setExpression(environment.resolvePlaceholders(paramWrapper.getExpression()));
+        paramWrapper.setExpression(environment.resolveRequiredPlaceholders(paramWrapper.getExpression()));
         super.paramWrapperPostProcess(paramWrapper);
     }
 }
