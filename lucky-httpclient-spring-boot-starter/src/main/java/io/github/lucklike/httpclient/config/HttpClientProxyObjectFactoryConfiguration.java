@@ -117,9 +117,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private ConfigurationMap formParams = new ConfigurationMap();
 
     /**
-     * 公共资源参数
+     * 公共multipart/form-data参数(简单参数)
      */
-    private ConfigurationMap resourceParams = new ConfigurationMap();
+    private ConfigurationMap multipartFormSimpleParams = new ConfigurationMap();
+
+    /**
+     * 公共multipart/form-data参数(资源参数)
+     */
+    private ConfigurationMap multipartFormResourceParams = new ConfigurationMap();
 
     /**
      * SpEL表达式参数
@@ -357,12 +362,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置公共的资源参数
+     * 设置公共的multipart/form-data参数(简单参数)
      *
-     * @param resourceParams 公共的资源参数
+     * @param multipartFormSimpleParams 公共的multipart/form-data参数(简单参数)
      */
-    public void setResourceParams(ConfigurationMap resourceParams) {
-        this.resourceParams = resourceParams;
+    public void setMultipartFormSimpleParams(ConfigurationMap multipartFormSimpleParams) {
+        this.multipartFormSimpleParams = multipartFormSimpleParams;
+    }
+
+    /**
+     * 设置公共的multipart/form-data参数(资源参数)
+     *
+     * @param multipartFormResourceParams 公共的multipart/form-data参数(资源参数)
+     */
+    public void setMultipartFormResourceParams(ConfigurationMap multipartFormResourceParams) {
+        this.multipartFormResourceParams = multipartFormResourceParams;
     }
 
     /**
@@ -714,12 +728,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取公共的资源参数
+     * 获取公共的multipart/form-data参数(简单参数)
      *
-     * @return 公共的资源参数
+     * @return 公共的multipart/form-data参数(简单参数)
      */
-    public ConfigurationMap getResourceParams() {
-        return resourceParams;
+    public ConfigurationMap getMultipartFormSimpleParams() {
+        return multipartFormSimpleParams;
+    }
+
+    /**
+     * 获取公共的multipart/form-data参数(资源参数)
+     *
+     * @return 公共的multipart/form-data参数(资源参数)
+     */
+    public ConfigurationMap getMultipartFormResourceParams() {
+        return multipartFormResourceParams;
     }
 
     /**
