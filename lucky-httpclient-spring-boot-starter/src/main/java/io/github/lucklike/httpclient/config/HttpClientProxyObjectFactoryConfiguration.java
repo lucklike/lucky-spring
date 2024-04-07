@@ -227,6 +227,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
 
+    /**
+     * 是否启用压缩内容自动解压功能
+     */
+    private boolean enableContentCompress;
+
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
@@ -596,6 +601,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.cookieStoreGenerate = cookieStoreGenerate;
     }
 
+    /**
+     * 设置是否开启压缩内容自动解压功能
+     *
+     * @param enableContentCompress 是否开启压缩内容自动解压功能
+     */
+    public void setEnableContentCompress(boolean enableContentCompress) {
+        this.enableContentCompress = enableContentCompress;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -958,5 +972,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public SimpleGenerateEntry<CookieStore> getCookieStoreGenerate() {
         return cookieStoreGenerate;
+    }
+
+    /**
+     * 是否开启了压缩内容自动解压功能
+     *
+     * @return 是否开启了压缩内容自动解压功能
+     */
+    public boolean isEnableContentCompress() {
+        return enableContentCompress;
     }
 }
