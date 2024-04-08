@@ -358,11 +358,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     public void parameterSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        ConfigurationMap headerParams = factoryConfig.getHeaderParams();
-        if (factoryConfig.isEnableContentCompress()) {
-            headerParams.put("Accept-Encoding", "gzip, deflate, br, zstd");
-        }
-        factory.setHeaders(headerParams);
+        factory.setHeaders(factoryConfig.getHeaderParams());
         factory.setPathParameters(factoryConfig.getPathParams());
         factory.setQueryParameters(factoryConfig.getQueryParams());
         factory.setFormParameters(factoryConfig.getFormParams());
@@ -370,6 +366,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         ConfigurationMap multipartFormResourceParams = factoryConfig.getMultipartFormResourceParams();
         if (multipartFormResourceParams != null) {
             multipartFormResourceParams.forEach((k, v) -> factory.addResources(k, ConversionUtils.conversion(v, Resource[].class)));
+        }
+        if (factoryConfig.isEnableContentCompress()) {
+            factory.addHeader("Accept-Encoding", "gzip, deflate, br, zstd");
         }
 
     }
