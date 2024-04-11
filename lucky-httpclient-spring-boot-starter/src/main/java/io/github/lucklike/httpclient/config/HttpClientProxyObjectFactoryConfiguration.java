@@ -163,6 +163,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * <ui>
      * <li>application/json</li>
      * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
      * <li>text/xml</li>
      * <li>text/plain</li>
      * <li>text/html</li>
@@ -830,6 +831,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * <ui>
      * <li>application/json</li>
      * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
      * <li>text/xml</li>
      * <li>text/plain</li>
      * <li>text/html</li>

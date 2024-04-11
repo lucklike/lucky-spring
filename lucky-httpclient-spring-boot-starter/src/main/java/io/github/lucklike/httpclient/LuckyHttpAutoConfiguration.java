@@ -147,7 +147,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         // 使用SpELRuntime对象构建一个SpELConvert对象，并导入公共包
         List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
         SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment());
-        if (!ContainerUtils.isEmptyCollection(springElPackageImports)) {
+        if (ContainerUtils.isNotEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(spELConvert::importPackage);
         }
         factory.setSpELConverter(spELConvert);
@@ -300,7 +300,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         // 检查是否需要注册日志打印的拦截器
         Set<String> printLogPackages = factoryConfig.getPrintLogPackages();
-        if (!ContainerUtils.isEmptyCollection(printLogPackages)) {
+        if (ContainerUtils.isNotEmptyCollection(printLogPackages)) {
             // 注册负责日志打印的拦截器
             factory.addInterceptor(SpecifiedInterfacePrintLogInterceptor.class, Scope.METHOD_CONTEXT, interceptor -> {
                 interceptor.setPrintLogPackageSet(printLogPackages);
@@ -311,7 +311,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 interceptor.setPrintAnnotationInfo(factoryConfig.isEnablePrintAnnotationInfo());
                 interceptor.setPrintArgsInfo(factoryConfig.isEnablePrintArgsInfo());
                 Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getAllowPrintLogBodyMimeTypes();
-                if (!ContainerUtils.isEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
                 }
                 interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
