@@ -19,6 +19,8 @@ import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
+import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
+import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
@@ -160,9 +162,28 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void factoryExpressionParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        ConfigurationMap expressionParams = factoryConfig.getExpressionParams();
-        if (expressionParams != null) {
-            expressionParams.forEach(factory::addExpressionParam);
+        ConfigurationMap springElRootVariables = factoryConfig.getSpringElRootVariables();
+        if (ContainerUtils.isNotEmptyMap(springElRootVariables)) {
+            factory.addSpringElRootVariables(springElRootVariables);
+        }
+
+        ConfigurationMap springElVariables = factoryConfig.getSpringElVariables();
+        if (ContainerUtils.isNotEmptyMap(springElVariables)) {
+            factory.addSpringElVariables(springElVariables);
+        }
+
+        StaticClassEntry[] springElFunctionClasses = factoryConfig.getSpringElFunctionClasses();
+        if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
+            for (StaticClassEntry springElFunctionClass : springElFunctionClasses) {
+                factory.addSpringElFunctionClass(springElFunctionClass);
+            }
+        }
+
+        StaticMethodEntry[] springElFunctions = factoryConfig.getSpringElFunctions();
+        if (ContainerUtils.isNotEmptyArray(springElFunctions)) {
+            for (StaticMethodEntry springElFunction : springElFunctions) {
+                factory.addSpringElFunction(springElFunction);
+            }
         }
     }
 

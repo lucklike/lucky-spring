@@ -3,6 +3,8 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.CookieStore;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
+import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
+import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 
@@ -55,6 +57,26 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 向SpEL运行时环境导入的包
      */
     private List<String> springElPackageImports;
+
+    /**
+     * SpEL表达式Root对象参数（通过name引入）
+     */
+    private ConfigurationMap springElRootVariables = new ConfigurationMap();
+
+    /**
+     * SpEL表达式普通对象参数（通过#name引入）
+     */
+    private ConfigurationMap springElVariables = new ConfigurationMap();
+
+    /**
+     * SpEL表达式函数
+     */
+    private StaticMethodEntry[] springElFunctions;
+
+    /**
+     * SpEL表达式函数工具类
+     */
+    private StaticClassEntry[] springElFunctionClasses;
 
     /**
      * 对象创建器工厂
@@ -125,11 +147,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 公共multipart/form-data参数(资源参数)
      */
     private ConfigurationMap multipartFormResourceParams = new ConfigurationMap();
-
-    /**
-     * SpEL表达式参数
-     */
-    private ConfigurationMap expressionParams = new ConfigurationMap();
 
     /**
      * 指定需要打印日志的包
@@ -386,12 +403,39 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置自定义SpEL表达式参数
+     * 设置自定义SpEL表达式Root参数
      *
-     * @param expressionParams 自定义参数
+     * @param springElRootVariables 自定义Root参数
      */
-    public void setExpressionParams(ConfigurationMap expressionParams) {
-        this.expressionParams = expressionParams;
+    public void setSpringElRootVariables(ConfigurationMap springElRootVariables) {
+        this.springElRootVariables = springElRootVariables;
+    }
+
+    /**
+     * 设置自定义SpEL表达式普通参数
+     *
+     * @param springElVariables 自定义普通参数
+     */
+    public void setSpringElVariables(ConfigurationMap springElVariables) {
+        this.springElVariables = springElVariables;
+    }
+
+    /**
+     * 设置自定义SpEL表达式函数
+     *
+     * @param springElFunctions SpEL表达式函数
+     */
+    public void setSpringElFunctions(StaticMethodEntry[] springElFunctions) {
+        this.springElFunctions = springElFunctions;
+    }
+
+    /**
+     * 设置自定义SpEL表达式函数类
+     *
+     * @param springElFunctionClasses 自定义SpEL表达式函数类
+     */
+    public void setSpringElFunctionClasses(StaticClassEntry[] springElFunctionClasses) {
+        this.springElFunctionClasses = springElFunctionClasses;
     }
 
     /**
@@ -761,12 +805,39 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取自定义SpEL表达式参数
+     * 获取自定义SpEL表达式Root参数
      *
-     * @return 自定义SpEL表达式参数
+     * @return 自定义SpEL表达式Root参数
      */
-    public ConfigurationMap getExpressionParams() {
-        return expressionParams;
+    public ConfigurationMap getSpringElRootVariables() {
+        return springElRootVariables;
+    }
+
+    /**
+     * 获取自定义SpEL表达式普通参数
+     *
+     * @return 自定义SpEL表达式普通参数
+     */
+    public ConfigurationMap getSpringElVariables() {
+        return springElVariables;
+    }
+
+    /**
+     * 获取自定义SpEL表达式函数
+     *
+     * @return 自定义SpEL表达式函数
+     */
+    public StaticMethodEntry[] getSpringElFunctions() {
+        return springElFunctions;
+    }
+
+    /**
+     * 获取自定义SpEL表达式函数类
+     *
+     * @return 自定义SpEL表达式函数类
+     */
+    public StaticClassEntry[] getSpringElFunctionClasses() {
+        return springElFunctionClasses;
     }
 
     /**
