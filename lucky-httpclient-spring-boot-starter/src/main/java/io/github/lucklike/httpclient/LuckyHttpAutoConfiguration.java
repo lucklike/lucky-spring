@@ -300,6 +300,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
         if (factoryConfig.isEnableCookieManage()) {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
+            Integer priority = factoryConfig.getCookieManagePriority();
             if (cookieStoreGenerate != null) {
                 CookieStore cookieStore;
                 if (StringUtils.hasText(cookieStoreGenerate.getBeanName())) {
@@ -308,9 +309,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
                 }
 
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 1000);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), priority);
             } else {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, 1000);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
         }
 

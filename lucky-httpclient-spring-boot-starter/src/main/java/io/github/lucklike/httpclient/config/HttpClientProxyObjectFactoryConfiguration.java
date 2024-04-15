@@ -246,6 +246,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private boolean enableCookieManage;
 
     /**
+     * Cookie管理器拦截器的优先级，默认1000
+     */
+    private Integer cookieManagePriority = 1000;
+
+    /**
      * CookieStore生成器
      */
     @NestedConfigurationProperty
@@ -651,6 +656,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 设置Cookie管理器拦截器的优先级
+     *
+     * @param cookieManagePriority Cookie管理器拦截器的优先级
+     */
+    public void setCookieManagePriority(Integer cookieManagePriority) {
+        this.cookieManagePriority = cookieManagePriority;
+    }
+
+    /**
      * 设置CookieStore对象生成器
      *
      * @param cookieStoreGenerate CookieStore对象生成器
@@ -670,6 +684,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置HTTP请求头规范中的<b>Accept-Encoding</b>
+     *
      * @param acceptEncoding <b>Accept-Encoding</b>值
      */
     public void setAcceptEncoding(String acceptEncoding) {
@@ -1060,6 +1075,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 获取Cookie管理器拦截器的优先级
+     *
+     * @return Cookie管理器拦截器的优先级
+     */
+    public Integer getCookieManagePriority() {
+        return cookieManagePriority;
+    }
+
+    /**
      * 获取CookieStore对象生成器
      *
      * @return CookieStore对象生成器
@@ -1079,6 +1103,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 获取<b>Accept-Encoding</b>配置值
+     *
      * @return <b>Accept-Encoding</b>配置值
      */
     public String getAcceptEncoding() {
