@@ -6,9 +6,11 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.annotation.SpELFunction;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import java.lang.annotation.Annotation;
 import java.net.HttpURLConnection;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +71,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * SpEL表达式普通对象参数（通过#name引入）
      */
     private ConfigurationMap springElVariables = new ConfigurationMap();
+
+    /**
+     * SpEL表达式函数工具类自动扫描的包
+     */
+    private Set<String> springElFunctionPackages = new HashSet<>();
+
+    /**
+     * SpEL表达式函数工具类自动扫描时，会通过该注解来判定是否自动注册
+     */
+    private Class<? extends Annotation> springElFunctionAnnotation = SpELFunction.class;
 
     /**
      * SpEL表达式函数，此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
@@ -446,6 +458,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setSpringElVariables(ConfigurationMap springElVariables) {
         this.springElVariables = springElVariables;
+    }
+
+    /**
+     * 设置SpEL表达式函数工具类自动扫描的包
+     *
+     * @param springElFunctionPackages SpEL表达式函数工具类自动扫描的包
+     */
+    public void setSpringElFunctionPackages(Set<String> springElFunctionPackages) {
+        this.springElFunctionPackages = springElFunctionPackages;
+    }
+
+    /**
+     * 设置SpEL表达式函数工具类自动扫描时检测的标志注解
+     *
+     * @param springElFunctionAnnotation SpEL表达式函数工具类自动扫描时检测的标志注解类型
+     */
+    public void setSpringElFunctionAnnotation(Class<? extends Annotation> springElFunctionAnnotation) {
+        this.springElFunctionAnnotation = springElFunctionAnnotation;
     }
 
     /**
@@ -883,6 +913,25 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public ConfigurationMap getSpringElVariables() {
         return springElVariables;
+    }
+
+
+    /**
+     * 获取SpEL表达式函数工具类自动扫描的包
+     *
+     * @return SpEL表达式函数工具类自动扫描的包
+     */
+    public Set<String> getSpringElFunctionPackages() {
+        return springElFunctionPackages;
+    }
+
+    /**
+     * 获取SpEL表达式函数工具类自动扫描时检测的标志注解类型
+     *
+     * @return SpEL表达式函数工具类自动扫描时检测的标志注解类型
+     */
+    public Class<? extends Annotation> getSpringElFunctionAnnotation() {
+        return springElFunctionAnnotation;
     }
 
     /**

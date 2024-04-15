@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
@@ -25,6 +26,7 @@ import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.annotation.SpELFunction;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
@@ -39,6 +41,8 @@ import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInter
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -50,6 +54,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.io.Resource;
+import org.springframework.core.type.AnnotationMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -72,6 +77,8 @@ import static io.github.lucklike.httpclient.Constant.*;
  */
 @Configuration
 public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
+
+    private static final Logger log = LoggerFactory.getLogger(LuckyHttpAutoConfiguration.class);
 
     private ApplicationContext applicationContext;
 
@@ -157,16 +164,35 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void factoryExpressionParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 注册SpELRoot变量
         ConfigurationMap springElRootVariables = factoryConfig.getSpringElRootVariables();
         if (ContainerUtils.isNotEmptyMap(springElRootVariables)) {
             factory.addSpringElRootVariables(springElRootVariables);
         }
 
+        // 注册SpEL普通变量
         ConfigurationMap springElVariables = factoryConfig.getSpringElVariables();
         if (ContainerUtils.isNotEmptyMap(springElVariables)) {
             factory.addSpringElVariables(springElVariables);
         }
 
+        // SpEL函数自动扫描与注册
+        if (ContainerUtils.isNotEmptyCollection(factoryConfig.getSpringElFunctionPackages())) {
+            final String SPEL_FUNCTION_ANN = factoryConfig.getSpringElFunctionAnnotation().getName();
+            String[] packages = ScanUtils.getPackages(ContainerUtils.setToArray(factoryConfig.getSpringElFunctionPackages(), String.class));
+            ScanUtils.resourceHandle(packages, resource -> {
+                AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(resource);
+                if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN)) {
+                   factory.addSpringElFunctionClass(ClassUtils.getClass(annotationMetadata.getClassName()));
+                    if (log.isDebugEnabled()) {
+                        log.debug("@SpELFunction '{}' is registered", annotationMetadata.getClassName());
+                    }
+                }
+            });
+        }
+
+        // 注册配置文件中的SpEL函数
         StaticClassEntry[] springElFunctionClasses = factoryConfig.getSpringElFunctionClasses();
         if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
             for (StaticClassEntry springElFunctionClass : springElFunctionClasses) {
@@ -181,6 +207,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
         }
     }
+
 
     /**
      * 设置{@link HttpExecutor HTTP请求执行器}：
