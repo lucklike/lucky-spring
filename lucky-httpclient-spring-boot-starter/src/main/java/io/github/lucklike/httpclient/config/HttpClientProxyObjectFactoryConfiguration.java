@@ -69,12 +69,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private ConfigurationMap springElVariables = new ConfigurationMap();
 
     /**
-     * SpEL表达式函数
+     * SpEL表达式函数，此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
+     * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
      */
     private StaticMethodEntry[] springElFunctions;
 
     /**
-     * SpEL表达式函数工具类
+     * SpEL表达式函数工具类, 此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
+     * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
      */
     private StaticClassEntry[] springElFunctionClasses;
 
@@ -246,9 +248,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
 
     /**
-     * 是否启用压缩内容自动解压功能
+     * 是否启用压缩内容自动解压功能， 配合<b>accept-encoding</b>一起使用
      */
     private boolean enableContentCompress;
+
+    /**
+     * 客户端支持的压缩格式，<b>enable-content-compress</b>功能开启时生效<br/>
+     * 参照HTTP请求头规范中的<b>Accept-Encoding</b><br/>
+     * 默认值：gzip, deflate
+     */
+    private String acceptEncoding = "gzip, deflate";
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -655,6 +664,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.enableContentCompress = enableContentCompress;
     }
 
+    /**
+     * 设置HTTP请求头规范中的<b>Accept-Encoding</b>
+     * @param acceptEncoding <b>Accept-Encoding</b>值
+     */
+    public void setAcceptEncoding(String acceptEncoding) {
+        this.acceptEncoding = acceptEncoding;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -1054,5 +1071,13 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public boolean isEnableContentCompress() {
         return enableContentCompress;
+    }
+
+    /**
+     * 获取<b>Accept-Encoding</b>配置值
+     * @return <b>Accept-Encoding</b>配置值
+     */
+    public String getAcceptEncoding() {
+        return acceptEncoding;
     }
 }

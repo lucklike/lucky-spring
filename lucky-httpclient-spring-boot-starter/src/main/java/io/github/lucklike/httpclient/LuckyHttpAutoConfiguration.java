@@ -58,12 +58,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.*;
 
 /**
  * <pre>
@@ -388,8 +383,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (multipartFormResourceParams != null) {
             multipartFormResourceParams.forEach((k, v) -> factory.addResources(k, ConversionUtils.conversion(v, Resource[].class)));
         }
-        if (factoryConfig.isEnableContentCompress()) {
-            factory.addHeader("Accept-Encoding", "gzip, deflate, br, zstd");
+        if (factoryConfig.isEnableContentCompress() && StringUtils.hasText(factoryConfig.getAcceptEncoding())) {
+            factory.addHeader("Accept-Encoding", factoryConfig.getAcceptEncoding());
         }
 
     }

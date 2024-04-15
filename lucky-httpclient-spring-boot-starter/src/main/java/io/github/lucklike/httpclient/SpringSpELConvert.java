@@ -31,4 +31,23 @@ public class SpringSpELConvert extends SpELConvert {
         paramWrapper.setExpression(environment.resolveRequiredPlaceholders(paramWrapper.getExpression()));
         super.paramWrapperPostProcess(paramWrapper);
     }
+
+    @Override
+    protected boolean needParse(Object value) {
+        if (value instanceof String) {
+            String text = (String) value;
+            return isSpELExpression(text) || isEnvValueLExpression(text);
+        }
+        return false;
+    }
+
+    /**
+     * 是否为环境变量取值表达式
+     *
+     * @param text 待判断的文本
+     * @return 否为环境变量取值表达式
+     */
+    protected boolean isEnvValueLExpression(String text) {
+        return isExpression(text, "${", "}");
+    }
 }
