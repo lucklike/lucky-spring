@@ -332,7 +332,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
                 }
                 interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
-            }, factoryConfig.getRedirectPriority());
+            }, factoryConfig.getPrintLogPriority());
 
         }
 
