@@ -7,6 +7,7 @@ import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 用于创建异步调用的线程池的参数
      */
+    @NestedConfigurationProperty
     private ThreadPoolParam threadPoolParam;
 
     /**
@@ -98,6 +100,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * HTTP异常处理器生成器信息
      */
+    @NestedConfigurationProperty
     private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
 
     /**
@@ -245,6 +248,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * CookieStore生成器
      */
+    @NestedConfigurationProperty
     private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
 
     /**
