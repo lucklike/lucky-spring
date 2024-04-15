@@ -308,7 +308,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
                 }
 
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 100);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), 1000);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, 1000);
             }
