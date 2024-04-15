@@ -294,7 +294,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 if (StringUtils.hasText(factoryConfig.getRedirectLocation())) {
                     interceptor.setRedirectLocationExp(factoryConfig.getRedirectLocation());
                 }
-            }, 100);
+            }, factoryConfig.getRedirectPriority());
         }
 
         // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
@@ -332,7 +332,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
                 }
                 interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
-            });
+            }, factoryConfig.getRedirectPriority());
 
         }
 

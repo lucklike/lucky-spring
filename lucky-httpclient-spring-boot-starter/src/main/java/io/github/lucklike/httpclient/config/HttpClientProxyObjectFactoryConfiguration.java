@@ -179,6 +179,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private boolean enablePrintArgsInfo = false;
 
     /**
+     * 日志打印拦截器的优先级，默认{@link Integer#MAX_VALUE}
+     */
+    private Integer printLogPriority = Integer.MAX_VALUE;
+
+    /**
      * MimeType为这些类型时，将打印响应体日志<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
@@ -239,6 +244,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 重定向地址表达式，此处支持SpEL表达式，默认值为：#{$respHeader$.Location}
      */
     private String redirectLocation;
+
+    /**
+     * 重定向拦截器的优先级，默认100
+     */
+    private Integer redirectPriority = 100;
 
     /**
      * 是否开启Cookie管理功能
@@ -555,6 +565,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.enablePrintArgsInfo = enablePrintArgsInfo;
     }
 
+    /**
+     * 设置日志打印拦截器的优先级
+     *
+     * @param printLogPriority 日志打印拦截器的优先级
+     */
+    public void setPrintLogPriority(Integer printLogPriority) {
+        this.printLogPriority = printLogPriority;
+    }
 
     /**
      * 设置是否开启自动重定向功能
@@ -608,6 +626,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setRedirectLocation(String redirectLocation) {
         this.redirectLocation = redirectLocation;
+    }
+
+    /**
+     * 设置重定向拦截器的优先级
+     *
+     * @param redirectPriority 重定向拦截器的优先级
+     */
+    public void setRedirectPriority(Integer redirectPriority) {
+        this.redirectPriority = redirectPriority;
     }
 
     /**
@@ -932,6 +959,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 获取日志打印拦截器的优先级
+     *
+     * @return 日志打印拦截器的优先级
+     */
+    public Integer getPrintLogPriority() {
+        return printLogPriority;
+    }
+
+    /**
      * 获取MimeType，当MimeType为这些类型时，将打印响应体日志<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
@@ -1027,6 +1063,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public String getRedirectLocation() {
         return redirectLocation;
+    }
+
+    /**
+     * 获取重定向拦截器的优先级
+     *
+     * @return 重定向拦截器的优先级
+     */
+    public Integer getRedirectPriority() {
+        return redirectPriority;
     }
 
     /**
