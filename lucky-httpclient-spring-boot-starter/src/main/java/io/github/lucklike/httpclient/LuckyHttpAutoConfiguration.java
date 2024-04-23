@@ -62,8 +62,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.*;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
  * <pre>
@@ -420,8 +426,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void responseAutoConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
-        for (SimpleGenerateEntry<Response.AutoConvert> autoConvert : responseAutoConverts) {
-            Response.addAutoConvert(createObject(autoConvert));
+        if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
+            Stream.of(responseAutoConverts).forEach(rac -> Response.addAutoConvert(createObject(rac)));
         }
     }
 
@@ -447,11 +453,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
-    private <T> T createObject(SimpleGenerateEntry<T> generateEntry)  {
+    @SuppressWarnings("unchecked")
+    private <T> T createObject(SimpleGenerateEntry<T> generateEntry) {
         if (StringUtils.hasText(generateEntry.getBeanName())) {
-            return applicationContext.getBean(generateEntry.getBeanName(), generateEntry.getType());
+            return (T) applicationContext.getBean(generateEntry.getBeanName());
         } else {
-           return ClassUtils.newObject(generateEntry.getType());
+            return ClassUtils.newObject(generateEntry.getType());
         }
     }
 
