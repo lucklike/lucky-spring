@@ -7,6 +7,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.CookieStore;
+import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
@@ -130,6 +131,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         sslSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
 
+        responseAutoConvertSetting(factoryConfig);
+
         return factory;
     }
 
@@ -183,7 +186,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             ScanUtils.resourceHandle(packages, resource -> {
                 AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(resource);
                 if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN)) {
-                   factory.addSpringElFunctionClass(ClassUtils.getClass(annotationMetadata.getClassName()));
+                    factory.addSpringElFunctionClass(ClassUtils.getClass(annotationMetadata.getClassName()));
                     if (log.isDebugEnabled()) {
                         log.debug("@SpELFunction '{}' is registered", annotationMetadata.getClassName());
                     }
@@ -328,14 +331,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
             Integer priority = factoryConfig.getCookieManagePriority();
             if (cookieStoreGenerate != null) {
-                CookieStore cookieStore;
-                if (StringUtils.hasText(cookieStoreGenerate.getBeanName())) {
-                    cookieStore = applicationContext.getBean(cookieStoreGenerate.getBeanName(), CookieStore.class);
-                } else {
-                    cookieStore = ClassUtils.newObject(cookieStoreGenerate.getType());
-                }
-
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(cookieStore), priority);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject(cookieStoreGenerate)), priority);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
@@ -379,6 +375,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /**
      * SSL证书相关的配置
+     *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
@@ -388,7 +385,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             try {
                 factory.setHostnameVerifier(TrustAllHostnameVerifier.DEFAULT_INSTANCE);
                 factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(factoryConfig.getSslProtocol()).getSocketFactory());
-            }catch (Exception e) {
+            } catch (Exception e) {
                 throw new LuckyRuntimeException(e);
             }
         }
@@ -417,6 +414,18 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
+     * 设置响应结果自动转换器
+     *
+     * @param factoryConfig 工厂配置
+     */
+    private void responseAutoConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
+        for (SimpleGenerateEntry<Response.AutoConvert> autoConvert : responseAutoConverts) {
+            Response.addAutoConvert(createObject(autoConvert));
+        }
+    }
+
+    /**
      * 超时时间设置
      *
      * @param factory       工厂实例
@@ -435,6 +444,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
         if (writeTimeout != null) {
             factory.setWriteTimeout(writeTimeout);
+        }
+    }
+
+    private <T> T createObject(SimpleGenerateEntry<T> generateEntry)  {
+        if (StringUtils.hasText(generateEntry.getBeanName())) {
+            return applicationContext.getBean(generateEntry.getBeanName(), generateEntry.getType());
+        } else {
+           return ClassUtils.newObject(generateEntry.getType());
         }
     }
 

@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.CookieStore;
+import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
@@ -114,6 +115,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
+
+    /**
+     * 响应结果自动转换器
+     */
+    private SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts;
 
     /**
      * 拦截器生成器数组
@@ -350,6 +356,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setExceptionHandleGenerate(GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate) {
         this.exceptionHandleGenerate = exceptionHandleGenerate;
+    }
+
+    /**
+     * 设置响应结果自动转换器
+     *
+     * @param responseAutoConverts 应结果自动转换器
+     */
+    public void setResponseAutoConverts(SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts) {
+        this.responseAutoConverts = responseAutoConverts;
     }
 
     /**
@@ -814,6 +829,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
         return exceptionHandleGenerate;
+    }
+
+    /**
+     * 获取配置的应结果自动转换器数组
+     *
+     * @return 应结果自动转换器数组
+     */
+    public SimpleGenerateEntry<Response.AutoConvert>[] getResponseAutoConverts() {
+        return responseAutoConverts;
     }
 
     /**
