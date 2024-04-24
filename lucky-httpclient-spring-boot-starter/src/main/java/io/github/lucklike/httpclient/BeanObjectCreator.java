@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
  * @version 1.0.0
  * @date 2023/8/30 03:40
  */
+@SuppressWarnings("unchecked")
 public class BeanObjectCreator extends ReflectObjectCreator {
 
     private final ApplicationContext applicationContext;
@@ -24,12 +25,8 @@ public class BeanObjectCreator extends ReflectObjectCreator {
 
     @Override
     protected <T> T doCreateObject(Class<T> clazz, String msg) {
-        if (StringUtils.hasText(msg)) {
-            if (applicationContext.isTypeMatch(msg, clazz)) {
-                return applicationContext.getBean(msg, clazz);
-            }
-            throw new IllegalArgumentException("Component creation failed: The bean name '" + msg + "' and bean type '" + clazz.getName() + "' provided in the creation information do not match each other");
-        }
-        return super.doCreateObject(clazz, msg);
+        return StringUtils.hasText(msg)
+                ? (T) applicationContext.getBean(msg)
+                : super.doCreateObject(clazz, msg);
     }
 }
