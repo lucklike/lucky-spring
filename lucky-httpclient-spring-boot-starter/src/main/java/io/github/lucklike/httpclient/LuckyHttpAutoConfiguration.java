@@ -156,12 +156,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         spELRuntimeFactory = spELRuntimeFactory == null ? new BeanSpELRuntimeFactoryFactory() : spELRuntimeFactory;
         SpELRuntime spELRuntime = spELRuntimeFactory.getSpELRuntime();
 
-        // 使用SpELRuntime对象构建一个SpELConvert对象，并导入公共包
-        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
+        // 使用SpELRuntime对象构建一个SpELConvert对象
         SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment());
-        if (ContainerUtils.isNotEmptyCollection(springElPackageImports)) {
-            springElPackageImports.forEach(spELConvert::importPackage);
-        }
         factory.setSpELConverter(spELConvert);
     }
 
@@ -172,6 +168,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void factoryExpressionParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 导入SpEL依赖包
+        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
+        if (ContainerUtils.isNotEmptyCollection(springElPackageImports)) {
+            springElPackageImports.forEach(factory::importPackage);
+        }
 
         // 注册SpELRoot变量
         ConfigurationMap springElRootVariables = factoryConfig.getSpringElRootVariables();
