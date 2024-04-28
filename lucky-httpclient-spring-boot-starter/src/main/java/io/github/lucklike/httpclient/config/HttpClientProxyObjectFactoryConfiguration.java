@@ -202,7 +202,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private Integer printLogPriority = Integer.MAX_VALUE;
 
     /**
-     * MimeType为这些类型时，将打印响应体日志<br/>
+     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
@@ -214,7 +214,22 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * <li>text/html</li>
      * </ui>
      */
-    private Set<String> allowPrintLogBodyMimeTypes;
+    private Set<String> setAllowPrintLogBodyMimeTypes;
+
+    /**
+     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
+     * </ui>
+     */
+    private Set<String> addAllowPrintLogBodyMimeTypes;
 
     /**
      * 响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
@@ -548,21 +563,41 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置MimeType，当MimeType为这些类型时，将打印响应体日志<br/>
+     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
      * <li>application/json</li>
      * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
      * <li>text/xml</li>
      * <li>text/plain</li>
      * <li>text/html</li>
      * </ui>
      *
-     * @param allowPrintLogBodyMimeTypes 打印响应体内容的MimeType集合
+     * @param setAllowPrintLogBodyMimeTypes 打印响应体内容的MimeType集合
      */
-    public void setAllowPrintLogBodyMimeTypes(Set<String> allowPrintLogBodyMimeTypes) {
-        this.allowPrintLogBodyMimeTypes = allowPrintLogBodyMimeTypes;
+    public void setSetAllowPrintLogBodyMimeTypes(Set<String> setAllowPrintLogBodyMimeTypes) {
+        this.setAllowPrintLogBodyMimeTypes = setAllowPrintLogBodyMimeTypes;
+    }
+
+    /**
+     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
+     * </ui>
+     *
+     * @param addAllowPrintLogBodyMimeTypes 追加的打印响应体内容的MimeType集合
+     */
+    public void setAddAllowPrintLogBodyMimeTypes(Set<String> addAllowPrintLogBodyMimeTypes) {
+        this.addAllowPrintLogBodyMimeTypes = addAllowPrintLogBodyMimeTypes;
     }
 
     /**
@@ -1041,7 +1076,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取MimeType，当MimeType为这些类型时，将打印响应体日志<br/>
+     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
@@ -1053,8 +1088,26 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * <li>text/html</li>
      * </ui>
      */
-    public Set<String> getAllowPrintLogBodyMimeTypes() {
-        return allowPrintLogBodyMimeTypes;
+    public Set<String> getSetAllowPrintLogBodyMimeTypes() {
+        return setAllowPrintLogBodyMimeTypes;
+    }
+
+    /**
+     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
+     * (注： *&frasl;* : 表示所有类型)<br/>
+     * 默认值：
+     * <ui>
+     * <li>application/json</li>
+     * <li>application/xml</li>
+     * <li>application/x-java-serialized-object</li>
+     * <li>text/xml</li>
+     * <li>text/plain</li>
+     * <li>text/html</li>
+     * </ui>
+     * </ui>
+     */
+    public Set<String> getAddAllowPrintLogBodyMimeTypes() {
+        return addAllowPrintLogBodyMimeTypes;
     }
 
     /**
