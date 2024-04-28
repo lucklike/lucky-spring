@@ -363,7 +363,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 }
                 Set<String> addAllowPrintLogBodyMimeTypes = factoryConfig.getAddAllowPrintLogBodyMimeTypes();
                 if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
-                    interceptor.addAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+                    interceptor.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
                 }
                 interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
             }, factoryConfig.getPrintLogPriority());
