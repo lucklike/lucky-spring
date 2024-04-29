@@ -7,6 +7,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.CookieStore;
+import com.luckyframework.httpclient.core.ProtobufAutoConvert;
 import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
@@ -64,12 +65,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.*;
 
 /**
  * <pre>
@@ -431,6 +427,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void responseAutoConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 注册Spring容器中的Response.AutoConvert
+        for (String autoConvertBeanName : applicationContext.getBeanNamesForType(Response.AutoConvert.class)) {
+            Response.addAutoConvert(applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class));
+        }
+
+        // 注册配置文件中配置的额Response.AutoConvert
         SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
         if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
             Stream.of(responseAutoConverts).forEach(rac -> Response.addAutoConvert(createObject(rac)));
@@ -465,6 +468,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             return (T) applicationContext.getBean(generateEntry.getBeanName());
         } else {
             return ClassUtils.newObject(generateEntry.getType());
+        }
+    }
+
+    @ConditionalOnClass(name = {"com.google.protobuf.Parser"})
+    static class ProtobufAutoConvertConfig {
+
+        @Bean
+        public ProtobufAutoConvert protobufAutoConvert() {
+            return new ProtobufAutoConvert();
         }
     }
 
