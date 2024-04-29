@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.CookieStore;
 import com.luckyframework.httpclient.core.Response;
+import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
@@ -119,7 +120,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 响应结果自动转换器
      */
-    private SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts;
+    private Class<? extends Response.AutoConvert>[] responseAutoConverts;
+
+    /**
+     * 响应内容解码器
+     */
+    private Class<? extends ContentEncodingConvertor>[] contentEncodingDecoder;
 
     /**
      * 拦截器生成器数组
@@ -300,16 +306,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
 
     /**
-     * 是否启用压缩内容自动解压功能， 配合<b>accept-encoding</b>一起使用
+     * 是否启用压缩内容自动解压功能
      */
     private boolean enableContentCompress;
 
     /**
      * 客户端支持的压缩格式，<b>enable-content-compress</b>功能开启时生效<br/>
      * 参照HTTP请求头规范中的<b>Accept-Encoding</b><br/>
-     * 默认值：gzip, deflate
      */
-    private String acceptEncoding = "gzip, deflate";
+    private String acceptEncoding;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -378,8 +383,17 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param responseAutoConverts 应结果自动转换器
      */
-    public void setResponseAutoConverts(SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts) {
+    public void setResponseAutoConverts(Class<? extends Response.AutoConvert>[] responseAutoConverts) {
         this.responseAutoConverts = responseAutoConverts;
+    }
+
+    /**
+     * 设置响应内容解码器
+     *
+     * @param contentEncodingDecoder 响应内容解码器
+     */
+    public void setContentEncodingDecoder(Class<? extends ContentEncodingConvertor>[] contentEncodingDecoder) {
+        this.contentEncodingDecoder = contentEncodingDecoder;
     }
 
     /**
@@ -871,8 +885,17 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 应结果自动转换器数组
      */
-    public SimpleGenerateEntry<Response.AutoConvert>[] getResponseAutoConverts() {
+    public Class<? extends Response.AutoConvert>[] getResponseAutoConverts() {
         return responseAutoConverts;
+    }
+
+    /**
+     * 获取响应内容解码器
+     *
+     * @return 响应内容解码器
+     */
+    public Class<? extends ContentEncodingConvertor>[] getContentEncodingDecoder() {
+        return contentEncodingDecoder;
     }
 
     /**

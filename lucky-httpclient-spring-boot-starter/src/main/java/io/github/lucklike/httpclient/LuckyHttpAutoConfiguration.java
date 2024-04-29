@@ -12,6 +12,10 @@ import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
+import com.luckyframework.httpclient.core.impl.BrotliContentEncodingConvertor;
+import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
+import com.luckyframework.httpclient.core.impl.SaveResultResponseProcessor;
+import com.luckyframework.httpclient.core.impl.ZstdContentEncodingConvertor;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
@@ -132,8 +136,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
-
-        responseAutoConvertSetting(factoryConfig);
+        responseConvertSetting(factory, factoryConfig);
 
         return factory;
     }
@@ -415,28 +418,50 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (multipartFormResourceParams != null) {
             multipartFormResourceParams.forEach((k, v) -> factory.addResources(k, ConversionUtils.conversion(v, Resource[].class)));
         }
-        if (factoryConfig.isEnableContentCompress() && StringUtils.hasText(factoryConfig.getAcceptEncoding())) {
-            factory.addHeader("Accept-Encoding", factoryConfig.getAcceptEncoding());
-        }
-
     }
 
     /**
      * 设置响应结果自动转换器
      *
+     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void responseAutoConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void responseConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
         // 注册Spring容器中的Response.AutoConvert
         for (String autoConvertBeanName : applicationContext.getBeanNamesForType(Response.AutoConvert.class)) {
             Response.addAutoConvert(applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class));
         }
 
-        // 注册配置文件中配置的额Response.AutoConvert
-        SimpleGenerateEntry<Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
+        // 注册配置文件中配置的Response.AutoConvert
+        Class<? extends Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
         if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
-            Stream.of(responseAutoConverts).forEach(rac -> Response.addAutoConvert(createObject(rac)));
+            Stream.of(responseAutoConverts).forEach(racClass -> Response.addAutoConvert(ClassUtils.newObject(racClass)));
+        }
+
+        // 注册Spring容器中的ContentEncodingConvertor
+        for (String autoConvertBeanName : applicationContext.getBeanNamesForType(ContentEncodingConvertor.class)) {
+            SaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
+        }
+
+        // 注册配置文件中配置的ContentEncodingConvertor
+        Class<? extends ContentEncodingConvertor>[] contentEncodingDecoders = factoryConfig.getContentEncodingDecoder();
+        if (ContainerUtils.isNotEmptyArray(contentEncodingDecoders)) {
+            Stream.of(contentEncodingDecoders).forEach(cedClass -> SaveResultResponseProcessor.addContentEncodingConvertor(ClassUtils.newObject(cedClass)));
+        }
+
+        // 根据ContentEncodingConvertor解码器自动生成Accept-Encoding
+        if (factoryConfig.isEnableContentCompress()) {
+            String acceptEncoding;
+            String encodeConfig = factoryConfig.getAcceptEncoding();
+            if (StringUtils.hasText(encodeConfig)) {
+                acceptEncoding = encodeConfig;
+            } else {
+                final StringBuilder sb = new StringBuilder();
+                SaveResultResponseProcessor.getContentEncodingConvertors().forEach(cec -> sb.append(cec.contentEncoding()).append(", "));
+                acceptEncoding = sb.substring(0, sb.length() - 2);
+            }
+            factory.addHeader("Accept-Encoding", acceptEncoding);
         }
     }
 
@@ -471,15 +496,44 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
+
+    //--------------------------------------------------------------------------------------------
+    //                              Conditional Beans
+    //--------------------------------------------------------------------------------------------
+
+    /********************** ContentEncodingConvertor *************************************/
+
+    @ConditionalOnClass(name = {"org.brotli.dec.BrotliInputStream"})
+    static class BrotliContentEncodingConvertorConfig {
+
+        @Bean
+        public ContentEncodingConvertor brotliContentEncodingConvertor() {
+            return new BrotliContentEncodingConvertor();
+        }
+    }
+
+    @ConditionalOnClass(name = {"com.github.luben.zstd.Zstd"})
+    static class ZstdContentEncodingConvertorConfig {
+
+        @Bean
+        public ContentEncodingConvertor zstdContentEncodingConvertor() {
+            return new ZstdContentEncodingConvertor();
+        }
+    }
+
+    /********************** Response.AutoConvert *************************************/
+
     @ConditionalOnClass(name = {"com.google.protobuf.Parser"})
     static class ProtobufAutoConvertConfig {
 
         @Bean
-        public ProtobufAutoConvert protobufAutoConvert() {
+        public Response.AutoConvert protobufAutoConvert() {
             return new ProtobufAutoConvert();
         }
     }
 
+
+    /********************** HttpExecutor *************************************/
 
     @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient"})
     static class JdkHttpExecutorConfig {
