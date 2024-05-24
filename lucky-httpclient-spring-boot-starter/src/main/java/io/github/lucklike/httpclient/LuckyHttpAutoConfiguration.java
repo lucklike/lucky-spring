@@ -12,9 +12,9 @@ import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
+import com.luckyframework.httpclient.core.impl.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.impl.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
-import com.luckyframework.httpclient.core.impl.SaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.impl.ZstdContentEncodingConvertor;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
@@ -441,13 +441,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         // 注册Spring容器中的ContentEncodingConvertor
         for (String autoConvertBeanName : applicationContext.getBeanNamesForType(ContentEncodingConvertor.class)) {
-            SaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
+            AbstractSaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
         }
 
         // 注册配置文件中配置的ContentEncodingConvertor
         Class<? extends ContentEncodingConvertor>[] contentEncodingDecoders = factoryConfig.getContentEncodingDecoder();
         if (ContainerUtils.isNotEmptyArray(contentEncodingDecoders)) {
-            Stream.of(contentEncodingDecoders).forEach(cedClass -> SaveResultResponseProcessor.addContentEncodingConvertor(ClassUtils.newObject(cedClass)));
+            Stream.of(contentEncodingDecoders).forEach(cedClass -> AbstractSaveResultResponseProcessor.addContentEncodingConvertor(ClassUtils.newObject(cedClass)));
         }
 
         // 根据ContentEncodingConvertor解码器自动生成Accept-Encoding
@@ -458,7 +458,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 acceptEncoding = encodeConfig;
             } else {
                 final StringBuilder sb = new StringBuilder();
-                SaveResultResponseProcessor.getContentEncodingConvertors().forEach(cec -> sb.append(cec.contentEncoding()).append(", "));
+                AbstractSaveResultResponseProcessor.getContentEncodingConvertors().forEach(cec -> sb.append(cec.contentEncoding()).append(", "));
                 acceptEncoding = sb.substring(0, sb.length() - 2);
             }
             factory.addHeader("Accept-Encoding", acceptEncoding);
