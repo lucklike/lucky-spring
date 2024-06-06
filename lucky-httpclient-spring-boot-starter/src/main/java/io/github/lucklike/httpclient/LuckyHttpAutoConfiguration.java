@@ -32,13 +32,19 @@ import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.config.CookieManageConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
+import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
+import io.github.lucklike.httpclient.config.LoggerConfiguration;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
+import io.github.lucklike.httpclient.config.RedirectConfiguration;
+import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
+import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
@@ -151,7 +157,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void factorySpELConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 使用工厂构建一个SpELRuntime对象
-        SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringElRuntimeFactory();
+        SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringEl().getRuntimeFactory();
         spELRuntimeFactory = spELRuntimeFactory == null ? new BeanSpELRuntimeFactoryFactory() : spELRuntimeFactory;
         SpELRuntime spELRuntime = spELRuntimeFactory.getSpELRuntime();
 
@@ -168,28 +174,30 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void factoryExpressionParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
+        SpELConfiguration springElConfig = factoryConfig.getSpringEl();
+
         // 导入SpEL依赖包
-        List<String> springElPackageImports = factoryConfig.getSpringElPackageImports();
+        List<String> springElPackageImports = springElConfig.getImportPackages();
         if (ContainerUtils.isNotEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(factory::importPackage);
         }
 
         // 注册SpELRoot变量
-        ConfigurationMap springElRootVariables = factoryConfig.getSpringElRootVariables();
+        ConfigurationMap springElRootVariables = springElConfig.getRootVariables();
         if (ContainerUtils.isNotEmptyMap(springElRootVariables)) {
             factory.addSpringElRootVariables(springElRootVariables);
         }
 
         // 注册SpEL普通变量
-        ConfigurationMap springElVariables = factoryConfig.getSpringElVariables();
+        ConfigurationMap springElVariables = springElConfig.getVariables();
         if (ContainerUtils.isNotEmptyMap(springElVariables)) {
             factory.addSpringElVariables(springElVariables);
         }
 
         // SpEL函数自动扫描与注册
-        if (ContainerUtils.isNotEmptyCollection(factoryConfig.getSpringElFunctionPackages())) {
-            final String SPEL_FUNCTION_ANN = factoryConfig.getSpringElFunctionAnnotation().getName();
-            String[] packages = ScanUtils.getPackages(ContainerUtils.setToArray(factoryConfig.getSpringElFunctionPackages(), String.class));
+        if (ContainerUtils.isNotEmptyCollection(springElConfig.getFunctionPackages())) {
+            final String SPEL_FUNCTION_ANN = springElConfig.getFunctionAnnotation().getName();
+            String[] packages = ScanUtils.getPackages(ContainerUtils.setToArray(springElConfig.getFunctionPackages(), String.class));
             ScanUtils.resourceHandle(packages, resource -> {
                 AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(resource);
                 if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN)) {
@@ -202,14 +210,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 注册配置文件中的SpEL函数
-        StaticClassEntry[] springElFunctionClasses = factoryConfig.getSpringElFunctionClasses();
+        StaticClassEntry[] springElFunctionClasses = springElConfig.getFunctionClasses();
         if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
             for (StaticClassEntry springElFunctionClass : springElFunctionClasses) {
                 factory.addSpringElFunctionClass(springElFunctionClass);
             }
         }
 
-        StaticMethodEntry[] springElFunctions = factoryConfig.getSpringElFunctions();
+        StaticMethodEntry[] springElFunctions = springElConfig.getFunctions();
         if (ContainerUtils.isNotEmptyArray(springElFunctions)) {
             for (StaticMethodEntry springElFunction : springElFunctions) {
                 factory.addSpringElFunction(springElFunction);
@@ -241,9 +249,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             if (httpExecutorFactory != null) {
                 if (httpExecutorFactory instanceof PoolParamHttpExecutorFactory) {
                     PoolParamHttpExecutorFactory poolParamHttpExecutorFactory = (PoolParamHttpExecutorFactory) httpExecutorFactory;
-                    Integer maxIdleConnections = factoryConfig.getMaxIdleConnections();
-                    Long keepAliveDuration = factoryConfig.getKeepAliveDuration();
-                    TimeUnit keepAliveTimeUnit = factoryConfig.getKeepAliveTimeUnit();
+                    HttpConnectionPoolConfiguration httpConnPoolConfig = factoryConfig.getHttpConnectionPool();
+                    Integer maxIdleConnections = httpConnPoolConfig.getMaxIdleConnections();
+                    Long keepAliveDuration = httpConnPoolConfig.getKeepAliveDuration();
+                    TimeUnit keepAliveTimeUnit = httpConnPoolConfig.getKeepAliveTimeUnit();
 
                     if (maxIdleConnections != null && maxIdleConnections > 0) {
                         poolParamHttpExecutorFactory.setMaxIdleConnections(maxIdleConnections);
@@ -289,7 +298,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        ThreadPoolParam poolParam = factoryConfig.getThreadPoolParam();
+        ThreadPoolParam poolParam = factoryConfig.getAsyncThreadPool();
         if (poolParam != null) {
             factory.setAsyncExecutorSupplier(() -> ThreadPoolFactory.createThreadPool(poolParam));
         }
@@ -317,26 +326,29 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     @SuppressWarnings("unchecked")
     private void interceptorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        RedirectConfiguration redirectConfig = factoryConfig.getRedirect();
 
         // 检查是否需要注册支持自动重定向功能的拦截器
-        if (factoryConfig.isAutoRedirect()) {
+        if (redirectConfig.isEnable()) {
             factory.addInterceptor(RedirectInterceptor.class, Scope.METHOD, interceptor -> {
-                if (ContainerUtils.isNotEmptyArray(factoryConfig.getRedirectStatus())) {
-                    interceptor.setRedirectStatus(factoryConfig.getRedirectStatus());
+                if (ContainerUtils.isNotEmptyArray(redirectConfig.getStatus())) {
+                    interceptor.setRedirectStatus(redirectConfig.getStatus());
                 }
-                if (StringUtils.hasText(factoryConfig.getRedirectCondition())) {
-                    interceptor.setRedirectCondition(factoryConfig.getRedirectCondition());
+                if (StringUtils.hasText(redirectConfig.getCondition())) {
+                    interceptor.setRedirectCondition(redirectConfig.getCondition());
                 }
-                if (StringUtils.hasText(factoryConfig.getRedirectLocation())) {
-                    interceptor.setRedirectLocationExp(factoryConfig.getRedirectLocation());
+                if (StringUtils.hasText(redirectConfig.getLocation())) {
+                    interceptor.setRedirectLocationExp(redirectConfig.getLocation());
                 }
-            }, factoryConfig.getRedirectPriority());
+                interceptor.setMaxRedirectCount(redirectConfig.getMaxCount());
+            }, redirectConfig.getPriority());
         }
 
         // 检查是否开启了Cookie管理功能，开启则注入相关的拦截器
-        if (factoryConfig.isEnableCookieManage()) {
-            SimpleGenerateEntry<CookieStore> cookieStoreGenerate = factoryConfig.getCookieStoreGenerate();
-            Integer priority = factoryConfig.getCookieManagePriority();
+        CookieManageConfiguration cookieManageConfig = factoryConfig.getCookieManage();
+        if (cookieManageConfig.isEnable()) {
+            SimpleGenerateEntry<CookieStore> cookieStoreGenerate = cookieManageConfig.getCookieStore();
+            Integer priority = cookieManageConfig.getPriority();
             if (cookieStoreGenerate != null) {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject(cookieStoreGenerate)), priority);
             } else {
@@ -345,27 +357,28 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 检查是否需要注册日志打印的拦截器
-        Set<String> printLogPackages = factoryConfig.getPrintLogPackages();
-        if (ContainerUtils.isNotEmptyCollection(printLogPackages)) {
+        LoggerConfiguration loggerConfig = factoryConfig.getLogger();
+        Set<String> loggerPackages = loggerConfig.getPackages();
+        if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
             // 注册负责日志打印的拦截器
             factory.addInterceptor(SpecifiedInterfacePrintLogInterceptor.class, Scope.METHOD_CONTEXT, interceptor -> {
-                interceptor.setPrintLogPackageSet(printLogPackages);
-                interceptor.setPrintRequestLog(factoryConfig.isEnableRequestLog());
-                interceptor.setPrintResponseLog(factoryConfig.isEnableResponseLog());
-                interceptor.setReqCondition(factoryConfig.getPrintReqLogCondition());
-                interceptor.setRespCondition(factoryConfig.getPrintRespLogCondition());
-                interceptor.setPrintAnnotationInfo(factoryConfig.isEnablePrintAnnotationInfo());
-                interceptor.setPrintArgsInfo(factoryConfig.isEnablePrintArgsInfo());
-                Set<String> allowPrintLogBodyMimeTypes = factoryConfig.getSetAllowPrintLogBodyMimeTypes();
+                interceptor.setPrintLogPackageSet(loggerPackages);
+                interceptor.setPrintRequestLog(loggerConfig.isEnableReqLog());
+                interceptor.setPrintResponseLog(loggerConfig.isEnableRespLog());
+                interceptor.setReqCondition(loggerConfig.getReqLogCondition());
+                interceptor.setRespCondition(loggerConfig.getRespLogCondition());
+                interceptor.setPrintAnnotationInfo(loggerConfig.isEnableAnnotationLog());
+                interceptor.setPrintArgsInfo(loggerConfig.isEnableArgsLog());
+                Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
                 if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
                 }
-                Set<String> addAllowPrintLogBodyMimeTypes = factoryConfig.getAddAllowPrintLogBodyMimeTypes();
+                Set<String> addAllowPrintLogBodyMimeTypes = loggerConfig.getAddAllowMimeTypes();
                 if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
                     interceptor.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
                 }
-                interceptor.setAllowPrintLogBodyMaxLength(factoryConfig.getAllowPrintLogBodyMaxLength());
-            }, factoryConfig.getPrintLogPriority());
+                interceptor.setAllowPrintLogBodyMaxLength(loggerConfig.getBodyMaxLength());
+            }, loggerConfig.getPriority());
 
         }
 
@@ -433,8 +446,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             Response.addAutoConvert(applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class));
         }
 
+        ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
+
         // 注册配置文件中配置的Response.AutoConvert
-        Class<? extends Response.AutoConvert>[] responseAutoConverts = factoryConfig.getResponseAutoConverts();
+        Class<? extends Response.AutoConvert>[] responseAutoConverts = responseConvertConfig.getResponseAutoConverts();
         if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
             Stream.of(responseAutoConverts).forEach(racClass -> Response.addAutoConvert(ClassUtils.newObject(racClass)));
         }
@@ -445,15 +460,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 注册配置文件中配置的ContentEncodingConvertor
-        Class<? extends ContentEncodingConvertor>[] contentEncodingDecoders = factoryConfig.getContentEncodingDecoder();
+        Class<? extends ContentEncodingConvertor>[] contentEncodingDecoders = responseConvertConfig.getContentEncodingDecoder();
         if (ContainerUtils.isNotEmptyArray(contentEncodingDecoders)) {
             Stream.of(contentEncodingDecoders).forEach(cedClass -> AbstractSaveResultResponseProcessor.addContentEncodingConvertor(ClassUtils.newObject(cedClass)));
         }
 
         // 根据ContentEncodingConvertor解码器自动生成Accept-Encoding
-        if (factoryConfig.isEnableContentCompress()) {
+        if (responseConvertConfig.isEnableContentCompress()) {
             String acceptEncoding;
-            String encodeConfig = factoryConfig.getAcceptEncoding();
+            String encodeConfig = responseConvertConfig.getAcceptEncoding();
             if (StringUtils.hasText(encodeConfig)) {
                 acceptEncoding = encodeConfig;
             } else {

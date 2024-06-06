@@ -5,19 +5,11 @@ import com.luckyframework.httpclient.core.CookieStore;
 import com.luckyframework.httpclient.core.Response;
 import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
-import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
-import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.threadpool.ThreadPoolParam;
-import io.github.lucklike.httpclient.annotation.SpELFunction;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
-import java.lang.annotation.Annotation;
 import java.net.HttpURLConnection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -29,72 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
-     * 用于创建异步调用的线程池的参数
-     */
-    @NestedConfigurationProperty
-    private ThreadPoolParam threadPoolParam;
-
-    /**
      * 指定使用的HTTP执行器Bean的名称
      */
     private String httpExecutorBean;
-
-    /**
-     * 连接池最大连接数
-     */
-    private Integer maxIdleConnections = 10;
-
-    /**
-     * 连接池空闲连接的保活时间
-     */
-    private Long keepAliveDuration = 5L;
-
-    /**
-     * 连接池空闲连接的保活时间单位
-     */
-    private TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
-
-    /**
-     * SpEL运行时环境工厂
-     */
-    private SpELRuntimeFactory springElRuntimeFactory;
-
-    /**
-     * 向SpEL运行时环境导入的包
-     */
-    private List<String> springElPackageImports;
-
-    /**
-     * SpEL表达式Root对象参数（通过name引入）
-     */
-    private ConfigurationMap springElRootVariables = new ConfigurationMap();
-
-    /**
-     * SpEL表达式普通对象参数（通过#name引入）
-     */
-    private ConfigurationMap springElVariables = new ConfigurationMap();
-
-    /**
-     * SpEL表达式函数工具类自动扫描的包
-     */
-    private Set<String> springElFunctionPackages = new HashSet<>();
-
-    /**
-     * SpEL表达式函数工具类自动扫描时，会通过该注解来判定是否自动注册
-     */
-    private Class<? extends Annotation> springElFunctionAnnotation = SpELFunction.class;
-
-    /**
-     * SpEL表达式函数，此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
-     * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
-     */
-    private StaticMethodEntry[] springElFunctions;
-
-    /**
-     * SpEL表达式函数工具类, 此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
-     * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
-     */
-    private StaticClassEntry[] springElFunctionClasses;
 
     /**
      * 对象创建器工厂
@@ -110,22 +39,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 使用执行器枚举来指定执行器
      */
     private HttpExecutorEnum httpExecutor;
-
-    /**
-     * HTTP异常处理器生成器信息
-     */
-    @NestedConfigurationProperty
-    private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
-
-    /**
-     * 响应结果自动转换器
-     */
-    private Class<? extends Response.AutoConvert>[] responseAutoConverts;
-
-    /**
-     * 响应内容解码器
-     */
-    private Class<? extends ContentEncodingConvertor>[] contentEncodingDecoder;
 
     /**
      * 拦截器生成器数组
@@ -178,88 +91,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private ConfigurationMap multipartFormResourceParams = new ConfigurationMap();
 
     /**
-     * 指定需要打印日志的包
-     */
-    private Set<String> printLogPackages = new HashSet<>();
-
-    /**
-     * 是否开启请求日志，默认开启（只有在{@link #printLogPackages}不为{@code null}时才生效）
-     */
-    private boolean enableRequestLog = true;
-
-    /**
-     * 是否开启响应日志，默认开启（只有在{@link #printLogPackages}不为{@code null}时才生效）
-     */
-    private boolean enableResponseLog = true;
-
-    /**
-     * 是否开启打印注解信息功能，默认关闭
-     */
-    private boolean enablePrintAnnotationInfo = false;
-
-    /**
-     * 是否开启打印参数信息功能，默认关闭
-     */
-    private boolean enablePrintArgsInfo = false;
-
-    /**
-     * 日志打印拦截器的优先级，默认{@link Integer#MAX_VALUE}
-     */
-    private Integer printLogPriority = Integer.MAX_VALUE;
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     */
-    private Set<String> setAllowPrintLogBodyMimeTypes;
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     */
-    private Set<String> addAllowPrintLogBodyMimeTypes;
-
-    /**
-     * 响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
-     * 单位：字节<br/>
-     * 默认值：-1
-     */
-    private long allowPrintLogBodyMaxLength = -1L;
-
-    /**
-     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     */
-    private String printReqLogCondition;
-
-    /**
-     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     */
-    private String printRespLogCondition;
-
-    /**
-     * 是否开启自动重定向
-     */
-    private boolean autoRedirect;
-
-    /**
      * 是否忽略SSL证书认证
      */
     private boolean ignoreSSLVerify;
@@ -270,51 +101,52 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private String sslProtocol;
 
     /**
-     * 需要重定向的状态码，默认重定向状态码：301, 302, 303, 304, 307, 308
-     */
-    private Integer[] redirectStatus;
-
-    /**
-     * 需要重定向的条件，此处支持SpEL表达式
-     */
-    private String redirectCondition;
-
-    /**
-     * 重定向地址表达式，此处支持SpEL表达式，默认值为：#{$respHeader$.Location}
-     */
-    private String redirectLocation;
-
-    /**
-     * 重定向拦截器的优先级，默认100
-     */
-    private Integer redirectPriority = 100;
-
-    /**
-     * 是否开启Cookie管理功能
-     */
-    private boolean enableCookieManage;
-
-    /**
-     * Cookie管理器拦截器的优先级，默认1000
-     */
-    private Integer cookieManagePriority = 1000;
-
-    /**
-     * CookieStore生成器
+     * HTTP异常处理器生成器信息
      */
     @NestedConfigurationProperty
-    private SimpleGenerateEntry<CookieStore> cookieStoreGenerate;
+    private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
 
     /**
-     * 是否启用压缩内容自动解压功能
+     * 用于创建异步调用的线程池的参数
      */
-    private boolean enableContentCompress;
+    @NestedConfigurationProperty
+    private ThreadPoolParam asyncThreadPool;
 
     /**
-     * 客户端支持的压缩格式，<b>enable-content-compress</b>功能开启时生效<br/>
-     * 参照HTTP请求头规范中的<b>Accept-Encoding</b><br/>
+     * 日志打印相关配置
      */
-    private String acceptEncoding;
+    @NestedConfigurationProperty
+    private LoggerConfiguration logger = new LoggerConfiguration();
+
+    /**
+     * SpEL表达式相关的配置
+     */
+    @NestedConfigurationProperty
+    private SpELConfiguration springEl = new SpELConfiguration();
+
+    /**
+     * 重定向相关的配置
+     */
+    @NestedConfigurationProperty
+    private RedirectConfiguration redirect = new RedirectConfiguration();
+
+    /**
+     * HTTP连接池相关配置
+     */
+    @NestedConfigurationProperty
+    private HttpConnectionPoolConfiguration httpConnectionPool = new HttpConnectionPoolConfiguration();
+
+    /**
+     * Cookie管理器相关配置
+     */
+    @NestedConfigurationProperty
+    private CookieManageConfiguration cookieManage = new CookieManageConfiguration();
+
+    /**
+     * 响应结果转换相关的配置
+     */
+    @NestedConfigurationProperty
+    private ResponseConvertConfiguration responseConvert = new ResponseConvertConfiguration();
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -323,20 +155,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置线程池参数
      *
-     * @param threadPoolParam 线程池参数
+     * @param asyncThreadPool 线程池参数
      */
-    public void setThreadPoolParam(ThreadPoolParam threadPoolParam) {
-        this.threadPoolParam = threadPoolParam;
-    }
-
-
-    /**
-     * 设置{@link SpELRuntimeFactory SpEL运行时环境工厂}
-     *
-     * @param springElRuntimeFactory SpEL运行时环境工厂
-     */
-    public void setSpringElRuntimeFactory(SpELRuntimeFactory springElRuntimeFactory) {
-        this.springElRuntimeFactory = springElRuntimeFactory;
+    public void setAsyncThreadPool(ThreadPoolParam asyncThreadPool) {
+        this.asyncThreadPool = asyncThreadPool;
     }
 
     /**
@@ -376,24 +198,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setExceptionHandleGenerate(GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate) {
         this.exceptionHandleGenerate = exceptionHandleGenerate;
-    }
-
-    /**
-     * 设置响应结果自动转换器
-     *
-     * @param responseAutoConverts 应结果自动转换器
-     */
-    public void setResponseAutoConverts(Class<? extends Response.AutoConvert>[] responseAutoConverts) {
-        this.responseAutoConverts = responseAutoConverts;
-    }
-
-    /**
-     * 设置响应内容解码器
-     *
-     * @param contentEncodingDecoder 响应内容解码器
-     */
-    public void setContentEncodingDecoder(Class<? extends ContentEncodingConvertor>[] contentEncodingDecoder) {
-        this.contentEncodingDecoder = contentEncodingDecoder;
     }
 
     /**
@@ -487,197 +291,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置自定义SpEL表达式Root参数
-     *
-     * @param springElRootVariables 自定义Root参数
-     */
-    public void setSpringElRootVariables(ConfigurationMap springElRootVariables) {
-        this.springElRootVariables = springElRootVariables;
-    }
-
-    /**
-     * 设置自定义SpEL表达式普通参数
-     *
-     * @param springElVariables 自定义普通参数
-     */
-    public void setSpringElVariables(ConfigurationMap springElVariables) {
-        this.springElVariables = springElVariables;
-    }
-
-    /**
-     * 设置SpEL表达式函数工具类自动扫描的包
-     *
-     * @param springElFunctionPackages SpEL表达式函数工具类自动扫描的包
-     */
-    public void setSpringElFunctionPackages(Set<String> springElFunctionPackages) {
-        this.springElFunctionPackages = springElFunctionPackages;
-    }
-
-    /**
-     * 设置SpEL表达式函数工具类自动扫描时检测的标志注解
-     *
-     * @param springElFunctionAnnotation SpEL表达式函数工具类自动扫描时检测的标志注解类型
-     */
-    public void setSpringElFunctionAnnotation(Class<? extends Annotation> springElFunctionAnnotation) {
-        this.springElFunctionAnnotation = springElFunctionAnnotation;
-    }
-
-    /**
-     * 设置自定义SpEL表达式函数
-     *
-     * @param springElFunctions SpEL表达式函数
-     */
-    public void setSpringElFunctions(StaticMethodEntry[] springElFunctions) {
-        this.springElFunctions = springElFunctions;
-    }
-
-    /**
-     * 设置自定义SpEL表达式函数类
-     *
-     * @param springElFunctionClasses 自定义SpEL表达式函数类
-     */
-    public void setSpringElFunctionClasses(StaticClassEntry[] springElFunctionClasses) {
-        this.springElFunctionClasses = springElFunctionClasses;
-    }
-
-    /**
-     * 向SpEL运行时环境导入的包
-     *
-     * @param springElPackageImports 向SpEL运行时环境导入的包
-     */
-    public void setSpringElPackageImports(List<String> springElPackageImports) {
-        this.springElPackageImports = springElPackageImports;
-    }
-
-    /**
-     * 指定需要打印日志的包
-     *
-     * @param printLogPackages 指定需要打印日志的包
-     */
-    public void setPrintLogPackages(Set<String> printLogPackages) {
-        this.printLogPackages = printLogPackages;
-    }
-
-    /**
-     * 设置是否开启请求日志的打印，默认开启
-     *
-     * @param enableRequestLog 是否开启请求日志的打印
-     */
-    public void setEnableRequestLog(boolean enableRequestLog) {
-        this.enableRequestLog = enableRequestLog;
-    }
-
-    /**
-     * 设置是否开启响应日志的打印，默认开启
-     *
-     * @param enableResponseLog 否开启响应日志的打印
-     */
-    public void setEnableResponseLog(boolean enableResponseLog) {
-        this.enableResponseLog = enableResponseLog;
-    }
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     *
-     * @param setAllowPrintLogBodyMimeTypes 打印响应体内容的MimeType集合
-     */
-    public void setSetAllowPrintLogBodyMimeTypes(Set<String> setAllowPrintLogBodyMimeTypes) {
-        this.setAllowPrintLogBodyMimeTypes = setAllowPrintLogBodyMimeTypes;
-    }
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     *
-     * @param addAllowPrintLogBodyMimeTypes 追加的打印响应体内容的MimeType集合
-     */
-    public void setAddAllowPrintLogBodyMimeTypes(Set<String> addAllowPrintLogBodyMimeTypes) {
-        this.addAllowPrintLogBodyMimeTypes = addAllowPrintLogBodyMimeTypes;
-    }
-
-    /**
-     * 设置打印响应日志的阈值，响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
-     * 单位：字节<br/>
-     * 默认值：-1
-     */
-    public void setAllowPrintLogBodyMaxLength(long allowPrintLogBodyMaxLength) {
-        this.allowPrintLogBodyMaxLength = allowPrintLogBodyMaxLength;
-    }
-
-    /**
-     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     *
-     * @param printReqLogCondition 打印请求日志的条件
-     */
-    public void setPrintReqLogCondition(String printReqLogCondition) {
-        this.printReqLogCondition = printReqLogCondition;
-    }
-
-    /**
-     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     *
-     * @param printRespLogCondition 打印请求日志的条件
-     */
-    public void setPrintRespLogCondition(String printRespLogCondition) {
-        this.printRespLogCondition = printRespLogCondition;
-    }
-
-    /**
-     * 设置是否开启打印注解信息功能
-     *
-     * @param enablePrintAnnotationInfo 是否开启打印注解信息功能
-     */
-    public void setEnablePrintAnnotationInfo(boolean enablePrintAnnotationInfo) {
-        this.enablePrintAnnotationInfo = enablePrintAnnotationInfo;
-    }
-
-    /**
-     * 设置是否开启打印参数信息功能
-     *
-     * @param enablePrintArgsInfo 是否开启打印参数信息功能
-     */
-    public void setEnablePrintArgsInfo(boolean enablePrintArgsInfo) {
-        this.enablePrintArgsInfo = enablePrintArgsInfo;
-    }
-
-    /**
-     * 设置日志打印拦截器的优先级
-     *
-     * @param printLogPriority 日志打印拦截器的优先级
-     */
-    public void setPrintLogPriority(Integer printLogPriority) {
-        this.printLogPriority = printLogPriority;
-    }
-
-    /**
-     * 设置是否开启自动重定向功能
-     *
-     * @param autoRedirect 是否开启自动重定向功能
-     */
-    public void setAutoRedirect(boolean autoRedirect) {
-        this.autoRedirect = autoRedirect;
-    }
-
-    /**
      * 是否忽略SSL证书认证
      *
      * @param ignoreSSLVerify 是否忽略SSL证书认证
@@ -696,69 +309,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置需要重定向的状态码
-     *
-     * @param redirectStatus 需要重定向的状态码
-     */
-    public void setRedirectStatus(Integer[] redirectStatus) {
-        this.redirectStatus = redirectStatus;
-    }
-
-    /**
-     * 设置需要重定向的条件，此处支持SpEL表达式
-     *
-     * @param redirectCondition 需要重定向的条件，此处支持SpEL表达式
-     */
-    public void setRedirectCondition(String redirectCondition) {
-        this.redirectCondition = redirectCondition;
-    }
-
-    /**
-     * 设置重定向地址获取表达式
-     *
-     * @param redirectLocation 重定向地址获取表达式
-     */
-    public void setRedirectLocation(String redirectLocation) {
-        this.redirectLocation = redirectLocation;
-    }
-
-    /**
-     * 设置重定向拦截器的优先级
-     *
-     * @param redirectPriority 重定向拦截器的优先级
-     */
-    public void setRedirectPriority(Integer redirectPriority) {
-        this.redirectPriority = redirectPriority;
-    }
-
-    /**
-     * 设置连接池的最大连接数
-     *
-     * @param maxIdleConnections 最大连接数
-     */
-    public void setMaxIdleConnections(Integer maxIdleConnections) {
-        this.maxIdleConnections = maxIdleConnections;
-    }
-
-    /**
-     * 设置连接池空闲连接的保活时间
-     *
-     * @param keepAliveDuration 连接池空闲连接的保活时间
-     */
-    public void setKeepAliveDuration(Long keepAliveDuration) {
-        this.keepAliveDuration = keepAliveDuration;
-    }
-
-    /**
-     * 设置连接池空闲连接的保活时间单位
-     *
-     * @param keepAliveTimeUnit 连接池空闲连接的保活时间单位
-     */
-    public void setKeepAliveTimeUnit(TimeUnit keepAliveTimeUnit) {
-        this.keepAliveTimeUnit = keepAliveTimeUnit;
-    }
-
-    /**
      * 设置使用HTTP执行器的SpringBean的名称
      *
      * @param httpExecutorBean HTTP执行器的SpringBean的名称
@@ -768,48 +318,57 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置是否开启Cookie管理功能
+     * 设置日志相关的配置
      *
-     * @param enableCookieManage 是否开启Cookie管理功能
+     * @param logger 日志相关的配置
      */
-    public void setEnableCookieManage(boolean enableCookieManage) {
-        this.enableCookieManage = enableCookieManage;
+    public void setLogger(LoggerConfiguration logger) {
+        this.logger = logger;
     }
 
     /**
-     * 设置Cookie管理器拦截器的优先级
+     * 设置SpEL相关的配置
      *
-     * @param cookieManagePriority Cookie管理器拦截器的优先级
+     * @param springEl SpEL相关的配置
      */
-    public void setCookieManagePriority(Integer cookieManagePriority) {
-        this.cookieManagePriority = cookieManagePriority;
+    public void setSpringEl(SpELConfiguration springEl) {
+        this.springEl = springEl;
     }
 
     /**
-     * 设置CookieStore对象生成器
+     * 设置重定向相关的配置
      *
-     * @param cookieStoreGenerate CookieStore对象生成器
+     * @param redirect 重定向相关的配置
      */
-    public void setCookieStoreGenerate(SimpleGenerateEntry<CookieStore> cookieStoreGenerate) {
-        this.cookieStoreGenerate = cookieStoreGenerate;
+    public void setRedirect(RedirectConfiguration redirect) {
+        this.redirect = redirect;
     }
 
     /**
-     * 设置是否开启压缩内容自动解压功能
+     * 设置HTTP连接池相关的配置
      *
-     * @param enableContentCompress 是否开启压缩内容自动解压功能
+     * @param httpConnectionPool HTTP连接池相关的配置
      */
-    public void setEnableContentCompress(boolean enableContentCompress) {
-        this.enableContentCompress = enableContentCompress;
+    public void setHttpConnectionPool(HttpConnectionPoolConfiguration httpConnectionPool) {
+        this.httpConnectionPool = httpConnectionPool;
     }
 
     /**
-     * 设置HTTP请求头规范中的<b>Accept-Encoding</b>
+     * 设置Cookie管理器相关配置
      *
-     * @param acceptEncoding <b>Accept-Encoding</b>值
+     * @param cookieManage Cookie管理器相关配置
      */
-    public void setAcceptEncoding(String acceptEncoding) {
-        this.acceptEncoding = acceptEncoding;
+    public void setCookieManage(CookieManageConfiguration cookieManage) {
+        this.cookieManage = cookieManage;
+    }
+
+    /**
+     * 设置响应结果转换相关的配置
+     *
+     * @param responseConvert 响应结果转换相关的配置
+     */
+    public void setResponseConvert(ResponseConvertConfiguration responseConvert) {
+        this.responseConvert = responseConvert;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -822,17 +381,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 线程池参数
      */
-    public ThreadPoolParam getThreadPoolParam() {
-        return threadPoolParam;
-    }
-
-    /**
-     * 获取{@link SpELRuntimeFactory SpEL运行时环境工厂}
-     *
-     * @return SpEL运行时环境工厂
-     */
-    public SpELRuntimeFactory getSpringElRuntimeFactory() {
-        return springElRuntimeFactory;
+    public ThreadPoolParam getAsyncThreadPool() {
+        return asyncThreadPool;
     }
 
     /**
@@ -878,24 +428,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
         return exceptionHandleGenerate;
-    }
-
-    /**
-     * 获取配置的应结果自动转换器数组
-     *
-     * @return 应结果自动转换器数组
-     */
-    public Class<? extends Response.AutoConvert>[] getResponseAutoConverts() {
-        return responseAutoConverts;
-    }
-
-    /**
-     * 获取响应内容解码器
-     *
-     * @return 响应内容解码器
-     */
-    public Class<? extends ContentEncodingConvertor>[] getContentEncodingDecoder() {
-        return contentEncodingDecoder;
     }
 
     /**
@@ -980,196 +512,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取自定义SpEL表达式Root参数
-     *
-     * @return 自定义SpEL表达式Root参数
-     */
-    public ConfigurationMap getSpringElRootVariables() {
-        return springElRootVariables;
-    }
-
-    /**
-     * 获取自定义SpEL表达式普通参数
-     *
-     * @return 自定义SpEL表达式普通参数
-     */
-    public ConfigurationMap getSpringElVariables() {
-        return springElVariables;
-    }
-
-
-    /**
-     * 获取SpEL表达式函数工具类自动扫描的包
-     *
-     * @return SpEL表达式函数工具类自动扫描的包
-     */
-    public Set<String> getSpringElFunctionPackages() {
-        return springElFunctionPackages;
-    }
-
-    /**
-     * 获取SpEL表达式函数工具类自动扫描时检测的标志注解类型
-     *
-     * @return SpEL表达式函数工具类自动扫描时检测的标志注解类型
-     */
-    public Class<? extends Annotation> getSpringElFunctionAnnotation() {
-        return springElFunctionAnnotation;
-    }
-
-    /**
-     * 获取自定义SpEL表达式函数
-     *
-     * @return 自定义SpEL表达式函数
-     */
-    public StaticMethodEntry[] getSpringElFunctions() {
-        return springElFunctions;
-    }
-
-    /**
-     * 获取自定义SpEL表达式函数类
-     *
-     * @return 自定义SpEL表达式函数类
-     */
-    public StaticClassEntry[] getSpringElFunctionClasses() {
-        return springElFunctionClasses;
-    }
-
-    /**
-     * 向SpEL运行时环境导入的包
-     *
-     * @return 向SpEL运行时环境导入的包
-     */
-    public List<String> getSpringElPackageImports() {
-        return springElPackageImports;
-    }
-
-
-    /**
-     * 获取需要打印日志的包集合
-     *
-     * @return 需要打印日志的包集合
-     */
-    public Set<String> getPrintLogPackages() {
-        return printLogPackages;
-    }
-
-    /**
-     * 是否开启了请求日志打印功能
-     *
-     * @return 是否开启了请求日志打印功能
-     */
-    public boolean isEnableRequestLog() {
-        return enableRequestLog;
-    }
-
-    /**
-     * 是否开启了响应日志打印功能
-     *
-     * @return 是否开启了响应日志打印功能
-     */
-    public boolean isEnableResponseLog() {
-        return enableResponseLog;
-    }
-
-    /**
-     * 是否开启了打印注解信息的功能
-     *
-     * @return 是否开启了打印注解信息的功能
-     */
-    public boolean isEnablePrintAnnotationInfo() {
-        return enablePrintAnnotationInfo;
-    }
-
-    /**
-     * 是否开启了打印参数信息的功能
-     *
-     * @return 是否开启了打印参数信息的功能
-     */
-    public boolean isEnablePrintArgsInfo() {
-        return enablePrintArgsInfo;
-    }
-
-    /**
-     * 获取日志打印拦截器的优先级
-     *
-     * @return 日志打印拦截器的优先级
-     */
-    public Integer getPrintLogPriority() {
-        return printLogPriority;
-    }
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     */
-    public Set<String> getSetAllowPrintLogBodyMimeTypes() {
-        return setAllowPrintLogBodyMimeTypes;
-    }
-
-    /**
-     * MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）<br/>
-     * (注： *&frasl;* : 表示所有类型)<br/>
-     * 默认值：
-     * <ui>
-     * <li>application/json</li>
-     * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
-     * <li>text/xml</li>
-     * <li>text/plain</li>
-     * <li>text/html</li>
-     * </ui>
-     * </ui>
-     */
-    public Set<String> getAddAllowPrintLogBodyMimeTypes() {
-        return addAllowPrintLogBodyMimeTypes;
-    }
-
-    /**
-     * 获取打印响应日志的阈值，响应体超过该值时，将不会打印响应体日志，值小于等于0时表示没有限制<br/>
-     * 单位：字节<br/>
-     * 默认值：-1
-     */
-    public long getAllowPrintLogBodyMaxLength() {
-        return allowPrintLogBodyMaxLength;
-    }
-
-    /**
-     * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     *
-     * @return 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     */
-    public String getPrintReqLogCondition() {
-        return printReqLogCondition;
-    }
-
-    /**
-     * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     *
-     * @return 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
-     */
-    public String getPrintRespLogCondition() {
-        return printRespLogCondition;
-    }
-
-    /**
-     * 是否开启了自动重定向功能
-     *
-     * @return 是否开启了自动重定向功能
-     */
-    public boolean isAutoRedirect() {
-        return autoRedirect;
-    }
-
-    /**
      * 是否忽略SSL证书认证功能
      *
      * @return 是否忽略SSL证书认证功能
@@ -1188,69 +530,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取需要重定向的状态码
-     *
-     * @return 需要重定向的状态码
-     */
-    public Integer[] getRedirectStatus() {
-        return redirectStatus;
-    }
-
-    /**
-     * 获取需要重定向的条件表达式
-     *
-     * @return 需要重定向的条件表达式
-     */
-    public String getRedirectCondition() {
-        return redirectCondition;
-    }
-
-    /**
-     * 获取需要重定向的地址表达式
-     *
-     * @return 需要重定向的地址表达式
-     */
-    public String getRedirectLocation() {
-        return redirectLocation;
-    }
-
-    /**
-     * 获取重定向拦截器的优先级
-     *
-     * @return 重定向拦截器的优先级
-     */
-    public Integer getRedirectPriority() {
-        return redirectPriority;
-    }
-
-    /**
-     * 连接池的最大连接数
-     *
-     * @return 连接池的最大连接数
-     */
-    public Integer getMaxIdleConnections() {
-        return maxIdleConnections;
-    }
-
-    /**
-     * 连接池空闲连接的保活时间
-     *
-     * @return 连接池空闲连接的保活时间
-     */
-    public Long getKeepAliveDuration() {
-        return keepAliveDuration;
-    }
-
-    /**
-     * 连接池空闲连接的保活时间单位
-     *
-     * @return 连接池空闲连接的保活时间单位
-     */
-    public TimeUnit getKeepAliveTimeUnit() {
-        return keepAliveTimeUnit;
-    }
-
-    /**
      * HTTP执行器的SpringBean的名称
      *
      * @return HTTP执行器的SpringBean的名称
@@ -1260,47 +539,56 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 是否开启Cookie管理功能
+     * 获取日志相关的配置
      *
-     * @return 是否开启Cookie管理功能
+     * @return 日志相关的配置
      */
-    public boolean isEnableCookieManage() {
-        return enableCookieManage;
+    public LoggerConfiguration getLogger() {
+        return logger;
     }
 
     /**
-     * 获取Cookie管理器拦截器的优先级
+     * 获取SpEL相关的配置
      *
-     * @return Cookie管理器拦截器的优先级
+     * @return SpEL相关的配置
      */
-    public Integer getCookieManagePriority() {
-        return cookieManagePriority;
+    public SpELConfiguration getSpringEl() {
+        return springEl;
     }
 
     /**
-     * 获取CookieStore对象生成器
+     * 获取重定向相关的配置
      *
-     * @return CookieStore对象生成器
+     * @return 重定向相关的配置
      */
-    public SimpleGenerateEntry<CookieStore> getCookieStoreGenerate() {
-        return cookieStoreGenerate;
+    public RedirectConfiguration getRedirect() {
+        return redirect;
     }
 
     /**
-     * 是否开启了压缩内容自动解压功能
+     * 获取HTTP连接池相关的配置
      *
-     * @return 是否开启了压缩内容自动解压功能
+     * @return HTTP连接池相关的配置
      */
-    public boolean isEnableContentCompress() {
-        return enableContentCompress;
+    public HttpConnectionPoolConfiguration getHttpConnectionPool() {
+        return httpConnectionPool;
     }
 
     /**
-     * 获取<b>Accept-Encoding</b>配置值
+     * 获取Cookie管理器相关配置
      *
-     * @return <b>Accept-Encoding</b>配置值
+     * @return Cookie管理器相关配置
      */
-    public String getAcceptEncoding() {
-        return acceptEncoding;
+    public CookieManageConfiguration getCookieManage() {
+        return cookieManage;
+    }
+
+    /**
+     * 获取响应结果转换相关的配置
+     *
+     * @return 响应结果转换相关的配置
+     */
+    public ResponseConvertConfiguration getResponseConvert() {
+        return responseConvert;
     }
 }
