@@ -48,17 +48,6 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
     }
 
     @Override
-    public VoidResponse afterExecute(VoidResponse voidResponse, ResponseProcessor responseProcessor, InterceptorContext context) {
-        if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
-            return super.afterExecute(voidResponse, responseProcessor, context);
-        } else {
-            initEndTime();
-        }
-        return voidResponse;
-
-    }
-
-    @Override
     public Response afterExecute(Response response, InterceptorContext context) {
         if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
             return super.afterExecute(response, context);

@@ -34,6 +34,11 @@ public class LoggerConfiguration {
     private boolean enableArgsLog = false;
 
     /**
+     * 是否强制打印响应体信息
+     */
+    private boolean forcePrintBody = false;
+
+    /**
      * 日志打印拦截器的优先级，默认{@link Integer#MAX_VALUE}
      */
     private Integer priority = Integer.MAX_VALUE;
@@ -84,7 +89,6 @@ public class LoggerConfiguration {
      * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String respLogCondition;
-
 
 
     /**
@@ -206,6 +210,14 @@ public class LoggerConfiguration {
         this.priority = priority;
     }
 
+    /**
+     * 设置是否强制打印响应体信息
+     *
+     * @param forcePrintBody 是否强制打印响应体信息
+     */
+    public void setForcePrintBody(boolean forcePrintBody) {
+        this.forcePrintBody = forcePrintBody;
+    }
 
     /**
      * 获取需要打印日志的包集合
@@ -321,5 +333,14 @@ public class LoggerConfiguration {
      */
     public String getRespLogCondition() {
         return respLogCondition;
+    }
+
+    /**
+     * 是否强制打印响应体信息
+     *
+     * @return 是否强制打印响应体信息
+     */
+    public boolean isForcePrintBody() {
+        return forcePrintBody;
     }
 }
