@@ -1,8 +1,8 @@
 package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.common.ContainerUtils;
-import com.luckyframework.httpclient.core.Request;
-import com.luckyframework.httpclient.core.Response;
+import com.luckyframework.httpclient.core.meta.Request;
+import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.interceptor.InterceptorContext;
 import com.luckyframework.httpclient.proxy.interceptor.PrintLogInterceptor;

@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.core.CookieStore;
+import com.luckyframework.httpclient.core.meta.CookieStore;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**

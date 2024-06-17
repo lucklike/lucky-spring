@@ -1,7 +1,8 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.core.Response;
-import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
+
+import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
+import com.luckyframework.httpclient.core.meta.Response;
 
 /**
  * 响应内容转换相关配置

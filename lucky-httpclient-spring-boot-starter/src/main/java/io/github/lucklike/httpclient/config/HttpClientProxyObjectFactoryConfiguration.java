@@ -1,9 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.core.CookieStore;
-import com.luckyframework.httpclient.core.Response;
-import com.luckyframework.httpclient.core.impl.ContentEncodingConvertor;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;

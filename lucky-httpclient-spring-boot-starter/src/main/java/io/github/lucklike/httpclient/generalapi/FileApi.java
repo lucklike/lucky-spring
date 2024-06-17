@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.generalapi;
 
-import com.luckyframework.httpclient.core.RequestMethod;
+import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.annotations.DownloadToLocal;
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.MethodParam;
