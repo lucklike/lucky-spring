@@ -8,7 +8,6 @@ import com.luckyframework.httpclient.proxy.annotations.Branch;
 import com.luckyframework.httpclient.proxy.annotations.BrowserFeign;
 import com.luckyframework.httpclient.proxy.annotations.ConditionalSelection;
 import com.luckyframework.httpclient.proxy.annotations.DownloadToLocal;
-import com.luckyframework.httpclient.proxy.annotations.Get;
 import com.luckyframework.httpclient.proxy.annotations.Head;
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.MethodParam;
@@ -26,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import static org.springframework.util.StreamUtils.BUFFER_SIZE;
@@ -40,6 +38,7 @@ import static org.springframework.util.StreamUtils.BUFFER_SIZE;
  */
 @BrowserFeign
 @SpELVar(fun = RangeInfo.class)
+@Retryable(retryCount = 5, waitMillis = 2000L)
 public interface RangeDownloadApi extends FileApi {
 
 
@@ -54,7 +53,6 @@ public interface RangeDownloadApi extends FileApi {
      * @return Future<File>对象
      */
     @HttpRequest
-    @Retryable(retryCount = 5, waitMillis = 2000L)
     @StaticHeader("Range: bytes=#{begin}-#{end}")
     @DownloadToLocal(saveDir = "#{saveDir}", filename = "#{filename}", normalStatus = 206)
     Future<File> rangeDownload(@Url String url,
@@ -102,8 +100,8 @@ public interface RangeDownloadApi extends FileApi {
      * @param url       请求地址
      * @param saveDir   保存下载文件的目录
      * @param rangeSize 分片大小
-     * @throws Exception 下载过程中可能会出现的异常
      * @return 下载的文件
+     * @throws Exception 下载过程中可能会出现的异常
      */
     default File rangeDownload(String url, String saveDir, long rangeSize) throws Exception {
         return rangeDownload(RequestMethod.GET, url, saveDir, rangeSize);
@@ -119,10 +117,10 @@ public interface RangeDownloadApi extends FileApi {
      *     5.清理分片文件
      * </pre>
      *
-     * @param url       请求地址
-     * @param saveDir   保存下载文件的目录
-     * @throws Exception 下载过程中可能会出现的异常
+     * @param url     请求地址
+     * @param saveDir 保存下载文件的目录
      * @return 下载的文件
+     * @throws Exception 下载过程中可能会出现的异常
      */
     default File rangeDownload(String url, String saveDir) throws Exception {
         return rangeDownload(url, saveDir, 1024 * 1024 * 5);
@@ -143,8 +141,8 @@ public interface RangeDownloadApi extends FileApi {
      * @param url       请求地址
      * @param saveDir   保存下载文件的目录
      * @param rangeSize 分片大小
-     * @throws Exception 下载过程中可能会出现的异常
      * @return 下载的文件
+     * @throws Exception 下载过程中可能会出现的异常
      */
     default File rangeDownload(RequestMethod method, String url, String saveDir, long rangeSize) throws Exception {
         RangeInfo rangeInfo = rangeInfo(url);
