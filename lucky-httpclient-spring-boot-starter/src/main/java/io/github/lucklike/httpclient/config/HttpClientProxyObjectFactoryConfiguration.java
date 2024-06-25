@@ -2,8 +2,8 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
-import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
@@ -107,7 +107,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 用于创建异步调用的线程池的参数
      */
     @NestedConfigurationProperty
-    private ThreadPoolParam asyncThreadPool;
+    private MultipartThreadPoolParam asyncThreadPool;
 
     /**
      * 日志打印相关配置
@@ -154,7 +154,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param asyncThreadPool 线程池参数
      */
-    public void setAsyncThreadPool(ThreadPoolParam asyncThreadPool) {
+    public void setAsyncThreadPool(MultipartThreadPoolParam asyncThreadPool) {
         this.asyncThreadPool = asyncThreadPool;
     }
 
@@ -378,7 +378,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 线程池参数
      */
-    public ThreadPoolParam getAsyncThreadPool() {
+    public MultipartThreadPoolParam getAsyncThreadPool() {
         return asyncThreadPool;
     }
 

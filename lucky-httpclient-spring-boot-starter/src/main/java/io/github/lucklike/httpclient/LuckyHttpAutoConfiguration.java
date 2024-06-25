@@ -47,6 +47,7 @@ import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
+import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
@@ -70,7 +71,9 @@ import org.springframework.core.type.AnnotationMetadata;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -298,9 +301,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        ThreadPoolParam poolParam = factoryConfig.getAsyncThreadPool();
-        if (poolParam != null) {
-            factory.setAsyncExecutorSupplier(() -> ThreadPoolFactory.createThreadPool(poolParam));
+
+        // 导入Spring容器中配置的Executor
+        String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
+        if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
+            for (String executorBeanName : executorBeanNames) {
+                factory.addAlternativeAsyncExecutor("@"+executorBeanName, () -> applicationContext.getBean(Executor.class));
+            }
+        }
+
+        // 导入用户配置的的Executor
+        MultipartThreadPoolParam multiPoolParam = factoryConfig.getAsyncThreadPool();
+        if (multiPoolParam != null) {
+            factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(multiPoolParam));
+
+            Map<String, ThreadPoolParam> alternativePoolParamMap = multiPoolParam.getAlternative();
+            if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
+                alternativePoolParamMap.forEach((name, poolParam) -> {
+                    factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
+                });
+            }
         }
     }
 
