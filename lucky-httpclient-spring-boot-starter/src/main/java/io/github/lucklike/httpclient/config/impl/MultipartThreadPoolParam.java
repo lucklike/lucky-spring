@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.threadpool.ThreadPoolParam;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +17,6 @@ public class MultipartThreadPoolParam extends ThreadPoolParam {
     /**
      * 备用线程池参数
      */
-    @NestedConfigurationProperty
     private Map<String, ThreadPoolParam> alternative = new ConcurrentHashMap<>();
 
     /**
