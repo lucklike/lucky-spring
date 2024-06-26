@@ -7,6 +7,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.convert.ProtobufAutoConvert;
+import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert;
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ZstdContentEncodingConvertor;
@@ -565,6 +566,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         public Response.AutoConvert protobufAutoConvert() {
             return new ProtobufAutoConvert();
+        }
+    }
+
+    @ConditionalOnClass(name = {"org.springframework.web.multipart.MultipartFile"})
+    static class SpringMultipartFileAutoConvertConfig {
+        @Bean
+        public Response.AutoConvert springMultipartFileAutoConvert() {
+            HttpClientProxyObjectFactory.addNotAutoCloseResourceTypes(ClassUtils.getClass("org.springframework.web.multipart.MultipartFile"));
+            return new SpringMultipartFileAutoConvert();
         }
     }
 
