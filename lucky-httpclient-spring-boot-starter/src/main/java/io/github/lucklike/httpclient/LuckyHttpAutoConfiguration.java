@@ -307,7 +307,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
         if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
             for (String executorBeanName : executorBeanNames) {
-                factory.addAlternativeAsyncExecutor("@"+executorBeanName, () -> applicationContext.getBean(Executor.class));
+                factory.addAlternativeAsyncExecutor(executorBeanName, () -> applicationContext.getBean(Executor.class));
             }
         }
 
