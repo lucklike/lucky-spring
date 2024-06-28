@@ -449,7 +449,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         factory.setQueryParameters(factoryConfig.getQueryParams());
         factory.setFormParameters(factoryConfig.getFormParams());
         factory.setMultipartFormParams(factoryConfig.getMultipartFormSimpleParams());
-        ConfigurationMap multipartFormResourceParams = factoryConfig.getMultipartFormResourceParams();
+        Map<String, Object> multipartFormResourceParams = factoryConfig.getMultipartFormResourceParams();
         if (multipartFormResourceParams != null) {
             multipartFormResourceParams.forEach((k, v) -> factory.addResources(k, ConversionUtils.conversion(v, Resource[].class)));
         }

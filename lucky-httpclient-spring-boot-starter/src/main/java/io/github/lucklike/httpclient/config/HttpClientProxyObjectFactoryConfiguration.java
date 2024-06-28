@@ -7,6 +7,7 @@ import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
+import java.util.Map;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -59,33 +60,93 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 公共请求头参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       header-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的header参数
+     *       header-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap headerParams = new ConfigurationMap();
+    private final Map<String, Object> headerParams = new ConfigurationMap();
 
     /**
      * 公共路径请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       path-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的path参数
+     *       path-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap pathParams = new ConfigurationMap();
+    private final Map<String, Object> pathParams = new ConfigurationMap();
 
     /**
-     * 公共URL请求参数
+     * 公共Query请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       query-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的query参数
+     *       query-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap queryParams = new ConfigurationMap();
+    private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
      * 公共Form请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       form-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的form参数
+     *       form-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap formParams = new ConfigurationMap();
+    private final Map<String, Object> formParams = new ConfigurationMap();
 
     /**
      * 公共multipart/form-data参数(简单参数)
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       multipart-form-simple-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form简单参数
+     *       multipart-form-simple-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap multipartFormSimpleParams = new ConfigurationMap();
+    private final Map<String, Object> multipartFormSimpleParams = new ConfigurationMap();
 
     /**
      * 公共multipart/form-data参数(资源参数)
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       multipart-form-resource-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form文件参数
+     *       multipart-form-resource-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap multipartFormResourceParams = new ConfigurationMap();
+    private final Map<String, Object> multipartFormResourceParams = new ConfigurationMap();
 
     /**
      * 是否忽略SSL证书认证
@@ -235,11 +296,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置公共的请求头参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *     2.为某个接口或者接口系列配置特有参数
+     *     {@code
+     *      例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的header参数
+     *      lucky:
+     *        httpclient:
+     *           header-params:
+     *              "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *                   key: value
+     *
+     *     }
+     * </pre>
      *
      * @param headerParams 公共的请求头参数
      */
-    public void setHeaderParams(ConfigurationMap headerParams) {
-        this.headerParams = headerParams;
+    public void setHeaderParams(Map<String, Object> headerParams) {
+        this.headerParams.putAll(headerParams);
     }
 
     /**
@@ -247,8 +321,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param pathParams 公共的路径参数
      */
-    public void setPathParams(ConfigurationMap pathParams) {
-        this.pathParams = pathParams;
+    public void setPathParams(Map<String, Object> pathParams) {
+        this.pathParams.putAll(pathParams);
     }
 
     /**
@@ -256,8 +330,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param queryParams 公共的URL参数
      */
-    public void setQueryParams(ConfigurationMap queryParams) {
-        this.queryParams = queryParams;
+    public void setQueryParams(Map<String, Object> queryParams) {
+        this.queryParams.putAll(queryParams);
     }
 
     /**
@@ -265,8 +339,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param formParams 公共的表单参数
      */
-    public void setFormParams(ConfigurationMap formParams) {
-        this.formParams = formParams;
+    public void setFormParams(Map<String, Object> formParams) {
+        this.formParams.putAll(formParams);
     }
 
     /**
@@ -274,8 +348,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param multipartFormSimpleParams 公共的multipart/form-data参数(简单参数)
      */
-    public void setMultipartFormSimpleParams(ConfigurationMap multipartFormSimpleParams) {
-        this.multipartFormSimpleParams = multipartFormSimpleParams;
+    public void setMultipartFormSimpleParams(Map<String, Object> multipartFormSimpleParams) {
+        this.multipartFormSimpleParams.putAll(multipartFormSimpleParams);
     }
 
     /**
@@ -283,8 +357,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param multipartFormResourceParams 公共的multipart/form-data参数(资源参数)
      */
-    public void setMultipartFormResourceParams(ConfigurationMap multipartFormResourceParams) {
-        this.multipartFormResourceParams = multipartFormResourceParams;
+    public void setMultipartFormResourceParams(Map<String, Object> multipartFormResourceParams) {
+        this.multipartFormResourceParams.putAll(multipartFormResourceParams);
     }
 
     /**
@@ -459,7 +533,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的请求头参数
      */
-    public ConfigurationMap getHeaderParams() {
+    public Map<String, Object> getHeaderParams() {
         return headerParams;
     }
 
@@ -468,7 +542,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的路径参数
      */
-    public ConfigurationMap getPathParams() {
+    public Map<String, Object> getPathParams() {
         return pathParams;
     }
 
@@ -477,7 +551,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的URL参数
      */
-    public ConfigurationMap getQueryParams() {
+    public Map<String, Object> getQueryParams() {
         return queryParams;
     }
 
@@ -486,7 +560,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的表单参数
      */
-    public ConfigurationMap getFormParams() {
+    public Map<String, Object> getFormParams() {
         return formParams;
     }
 
@@ -495,7 +569,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的multipart/form-data参数(简单参数)
      */
-    public ConfigurationMap getMultipartFormSimpleParams() {
+    public Map<String, Object> getMultipartFormSimpleParams() {
         return multipartFormSimpleParams;
     }
 
@@ -504,7 +578,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的multipart/form-data参数(资源参数)
      */
-    public ConfigurationMap getMultipartFormResourceParams() {
+    public Map<String, Object> getMultipartFormResourceParams() {
         return multipartFormResourceParams;
     }
 
