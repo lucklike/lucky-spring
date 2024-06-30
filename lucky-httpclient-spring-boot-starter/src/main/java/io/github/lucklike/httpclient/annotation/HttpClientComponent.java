@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 声明声明式Http客户端的注解，被标记的接口将会被Lucky自动发现并代理
+ * 声明式Http客户端的注解，被标记的接口将会被Lucky自动发现并代理
  *
  * @author fukang
  * @version 1.0.0

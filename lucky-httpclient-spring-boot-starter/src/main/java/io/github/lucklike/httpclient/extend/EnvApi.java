@@ -1,0 +1,166 @@
+package io.github.lucklike.httpclient.extend;
+
+import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.core.meta.RequestMethod;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author fukang
+ * @version 1.0.0
+ * @date 2024/6/30 22:31
+ */
+public class EnvApi extends Api {
+
+    private Api api = new Api();
+
+    private String _url;
+
+    private RequestMethod _method;
+
+    private Map<String, Object> _header;
+
+    private Map<String, List<Object>> _query;
+
+    private Map<String, Object> _form;
+
+    private Map<String, Object> _path;
+
+    private Map<String, Object> _multiData;
+
+    private Map<String, Object> _multiFile;
+
+    private Body _body;
+
+    private Convert _responseConvert;
+
+    public Api getApi() {
+        return api;
+    }
+
+    public void setApi(Api api) {
+        this.api = api;
+    }
+
+    @Override
+    public String getDesc() {
+        return super.getDesc();
+    }
+
+    @Override
+    public synchronized String getUrl() {
+        if (_url == null) {
+            String classUrl = api.getUrl();
+            if (StringUtils.hasText(classUrl)) {
+                _url = StringUtils.joinUrlPath(classUrl, super.getUrl());
+            } else {
+                _url = super.getUrl();
+            }
+        }
+        return _url;
+    }
+
+    @Override
+    public synchronized RequestMethod getMethod() {
+        if (_method == null) {
+            _method = super.getMethod() != null ? super.getMethod() : api.getMethod();
+        }
+        return _method;
+    }
+
+    @Override
+    public synchronized Map<String, Object> getHeader() {
+        if (_header == null) {
+            _header = new LinkedHashMap<>(api.getHeader());
+            _header.putAll(super.getHeader());
+        }
+        return _header;
+    }
+
+    @Override
+    public synchronized Map<String, List<Object>> getQuery() {
+        if (_query == null) {
+            _query = new LinkedHashMap<>(api.getQuery());
+            super.getQuery().forEach((k, queryList) -> {
+                List<Object> list = _query.get(k);
+                if (list == null) {
+                    _query.put(k, queryList);
+                } else {
+                    list.addAll(queryList);
+                }
+            });
+        }
+        return _query;
+    }
+
+    @Override
+    public synchronized Map<String, Object> getForm() {
+        if (_form == null) {
+            _form = new LinkedHashMap<>(api.getForm());
+            _form.putAll(super.getForm());
+        }
+        return _form;
+    }
+
+    @Override
+    public synchronized Map<String, Object> getPath() {
+        if (_path == null) {
+            _path = new LinkedHashMap<>(api.getPath());
+            _path.putAll(super.getPath());
+        }
+        return _path;
+    }
+
+    @Override
+    public synchronized Map<String, Object> getMultiData() {
+        if (_multiData == null) {
+            _multiData = new LinkedHashMap<>(api.getMultiData());
+            _multiData.putAll(super.getMultiData());
+        }
+        return _multiData;
+    }
+
+    @Override
+    public synchronized Map<String, Object> getMultiFile() {
+        if (_multiFile == null) {
+            _multiFile = new LinkedHashMap<>(api.getMultiFile());
+            _multiFile.putAll(super.getMultiFile());
+        }
+        return _multiFile;
+    }
+
+    @Override
+    public synchronized Body getBody() {
+        if (_body == null) {
+            _body = new Body();
+            Body mBody = super.getBody();
+            Body cBody = api.getBody();
+
+            _body.setCharset(StringUtils.hasText(mBody.getCharset()) ? mBody.getCharset() : cBody.getCharset());
+            _body.setMimeType(StringUtils.hasText(mBody.getMimeType()) ? mBody.getMimeType() : cBody.getMimeType());
+            _body.setData(StringUtils.hasText(mBody.getData()) ? mBody.getData() : cBody.getData());
+            _body.setFile(StringUtils.hasText(mBody.getFile()) ? mBody.getFile() : cBody.getFile());
+        }
+        return _body;
+    }
+
+    @Override
+    public synchronized Convert getResponseConvert() {
+        if (_responseConvert == null) {
+            _responseConvert = new Convert();
+            Convert mConvert = super.getResponseConvert();
+            Convert cConvert = api.getResponseConvert();
+
+            _responseConvert.setResult(StringUtils.hasText(mConvert.getResult()) ? mConvert.getResult() : cConvert.getResult());
+            _responseConvert.setException(StringUtils.hasText(mConvert.getException()) ? mConvert.getException() : cConvert.getException());
+            _responseConvert.setDefaultValue(StringUtils.hasText(mConvert.getDefaultValue()) ? mConvert.getDefaultValue() : cConvert.getDefaultValue());
+            List<Condition> newConditions = new ArrayList<>(cConvert.getCondition());
+            newConditions.addAll(mConvert.getCondition());
+            _responseConvert.setCondition(newConditions);
+        }
+        return _responseConvert;
+    }
+}
