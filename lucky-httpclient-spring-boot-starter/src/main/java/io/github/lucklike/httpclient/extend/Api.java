@@ -13,10 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2024/6/30 16:05
  */
 public class Api {
-    /**
-     * 描述信息
-     */
-    private String desc;
 
     private String url;
 
@@ -38,16 +34,8 @@ public class Api {
 
     private Body body = new Body();
 
-    @TargetField("response-convert")
-    private Convert responseConvert = new Convert();
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
-    }
+    @TargetField("resp-convert")
+    private Convert respConvert = new Convert();
 
     public String getUrl() {
         return url;
@@ -121,11 +109,11 @@ public class Api {
         this.body = body;
     }
 
-    public Convert getResponseConvert() {
-        return responseConvert;
+    public Convert getRespConvert() {
+        return respConvert;
     }
 
-    public void setResponseConvert(Convert responseConvert) {
-        this.responseConvert = responseConvert;
+    public void setRespConvert(Convert respConvert) {
+        this.respConvert = respConvert;
     }
 }

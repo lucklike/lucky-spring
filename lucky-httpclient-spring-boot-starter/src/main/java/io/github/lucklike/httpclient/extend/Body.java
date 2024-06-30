@@ -11,7 +11,7 @@ public class Body {
 
     @TargetField("mime-type")
     private String mimeType;
-    private String charset;
+    private String charset = "UTF-8";
     private String data;
     private String file;
 

@@ -45,7 +45,7 @@ public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELRe
     public <T> T convert(Response response, ConvertContext context) throws Throwable {
         String methodName = context.getContext().getCurrentAnnotatedElement().getName();
         EnvApi envApi = envApiMap.get(methodName);
-        Convert convert = envApi.getResponseConvert();
+        Convert convert = envApi.getRespConvert();
         for (Condition condition : convert.getCondition()) {
             boolean assertion = context.parseExpression(condition.getAssertion(), boolean.class);
             if (assertion) {

@@ -46,11 +46,6 @@ public class EnvApi extends Api {
     }
 
     @Override
-    public String getDesc() {
-        return super.getDesc();
-    }
-
-    @Override
     public synchronized String getUrl() {
         if (_url == null) {
             String classUrl = api.getUrl();
@@ -148,11 +143,11 @@ public class EnvApi extends Api {
     }
 
     @Override
-    public synchronized Convert getResponseConvert() {
+    public synchronized Convert getRespConvert() {
         if (_responseConvert == null) {
             _responseConvert = new Convert();
-            Convert mConvert = super.getResponseConvert();
-            Convert cConvert = api.getResponseConvert();
+            Convert mConvert = super.getRespConvert();
+            Convert cConvert = api.getRespConvert();
 
             _responseConvert.setResult(StringUtils.hasText(mConvert.getResult()) ? mConvert.getResult() : cConvert.getResult());
             _responseConvert.setException(StringUtils.hasText(mConvert.getException()) ? mConvert.getException() : cConvert.getException());
