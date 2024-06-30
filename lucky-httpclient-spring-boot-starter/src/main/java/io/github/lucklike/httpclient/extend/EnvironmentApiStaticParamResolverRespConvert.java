@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.extend;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.proxy.annotations.ConvertMetaType;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.convert.AbstractSpELResponseConvert;
 import com.luckyframework.httpclient.proxy.convert.ConditionalSelectionException;
@@ -10,6 +11,7 @@ import com.luckyframework.httpclient.proxy.convert.ConvertContext;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.statics.StaticParamAnnContext;
 import com.luckyframework.httpclient.proxy.statics.StaticParamResolver;
+import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -21,6 +23,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.luckyframework.httpclient.proxy.ParameterNameConstant.RESPONSE_BODY;
+import static com.luckyframework.httpclient.proxy.spel.DefaultSpELVarManager.getResponseBody;
 
 
 /**
@@ -46,6 +51,11 @@ public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELRe
         String methodName = context.getContext().getCurrentAnnotatedElement().getName();
         EnvApi envApi = envApiMap.get(methodName);
         Convert convert = envApi.getRespConvert();
+        Class<?> metaType = convert.getMetaType();
+        if (Object.class != metaType) {
+            context.getResponseVar().addRootVariable(RESPONSE_BODY, LazyValue.of(() -> getResponseBody(response, metaType)));
+        }
+
         for (Condition condition : convert.getCondition()) {
             boolean assertion = context.parseExpression(condition.getAssertion(), boolean.class);
             if (assertion) {

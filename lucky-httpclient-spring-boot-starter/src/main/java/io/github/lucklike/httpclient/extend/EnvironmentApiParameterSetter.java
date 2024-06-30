@@ -28,16 +28,26 @@ public class EnvironmentApiParameterSetter implements ParameterSetter {
         EnvApi api = contextApi.getApi();
         MethodContext context = contextApi.getContext();
 
-        String url = api.getUrl();
-        RequestMethod method = api.getMethod();
-
-
-        if (StringUtils.hasText(url)) {
-            urlSetter.doSet(request, "url", context.parseExpression(url, String.class));
+        if (StringUtils.hasText(api.getUrl())) {
+            urlSetter.doSet(request, "url", context.parseExpression(api.getUrl(), String.class));
         }
-        if (method != null) {
-            request.setRequestMethod(method);
+
+        if (api.getMethod() != null) {
+            request.setRequestMethod(api.getMethod());
         }
+
+        if (api.getConnectTimeout() != null) {
+            request.setConnectTimeout(context.parseExpression(api.getConnectTimeout(), Integer.class));
+        }
+
+        if (api.getReadTimeout() != null) {
+            request.setReadTimeout(context.parseExpression(api.getReadTimeout(), Integer.class));
+        }
+
+        if (api.getWriteTimeout() != null) {
+            request.setWriterTimeout(context.parseExpression(api.getWriteTimeout(), Integer.class));
+        }
+
         api.getHeader().forEach((k, v) -> {
             String key = context.parseExpression(k, String.class);
             Object value = context.parseExpression(String.valueOf(v));

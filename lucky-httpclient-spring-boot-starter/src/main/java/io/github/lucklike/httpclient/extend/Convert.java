@@ -13,9 +13,14 @@ import java.util.List;
 public class Convert {
 
     private String result;
+
     private String exception;
+
     @TargetField("default-value")
     private String defaultValue;
+
+    @TargetField("meta-type")
+    private Class<?> metaType = Object.class;
 
     private List<Condition> condition = new ArrayList<>();
 
@@ -49,5 +54,13 @@ public class Convert {
 
     public void setCondition(List<Condition> condition) {
         this.condition = condition;
+    }
+
+    public Class<?> getMetaType() {
+        return metaType;
+    }
+
+    public void setMetaType(Class<?> metaType) {
+        this.metaType = metaType;
     }
 }

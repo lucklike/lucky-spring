@@ -21,6 +21,12 @@ public class EnvApi extends Api {
 
     private RequestMethod _method;
 
+    private String _connectTimeout;
+
+    private String _readTimeout;
+
+    private String _writeTimeout;
+
     private Map<String, Object> _header;
 
     private Map<String, List<Object>> _query;
@@ -128,6 +134,30 @@ public class EnvApi extends Api {
     }
 
     @Override
+    public String getConnectTimeout() {
+        if (_connectTimeout == null) {
+            _connectTimeout = super.getConnectTimeout() != null ? super.getConnectTimeout() : api.getConnectTimeout();
+        }
+        return _connectTimeout;
+    }
+
+    @Override
+    public String getReadTimeout() {
+        if (_readTimeout == null) {
+            _readTimeout = super.getReadTimeout() != null ? super.getReadTimeout() : api.getReadTimeout();
+        }
+        return _readTimeout;
+    }
+
+    @Override
+    public String getWriteTimeout() {
+        if (_writeTimeout == null) {
+            _writeTimeout = super.getWriteTimeout() != null ? super.getWriteTimeout() : api.getWriteTimeout();
+        }
+        return _writeTimeout;
+    }
+
+    @Override
     public synchronized Body getBody() {
         if (_body == null) {
             _body = new Body();
@@ -152,6 +182,7 @@ public class EnvApi extends Api {
             _responseConvert.setResult(StringUtils.hasText(mConvert.getResult()) ? mConvert.getResult() : cConvert.getResult());
             _responseConvert.setException(StringUtils.hasText(mConvert.getException()) ? mConvert.getException() : cConvert.getException());
             _responseConvert.setDefaultValue(StringUtils.hasText(mConvert.getDefaultValue()) ? mConvert.getDefaultValue() : cConvert.getDefaultValue());
+            _responseConvert.setMetaType(Object.class == mConvert.getMetaType() ? cConvert.getMetaType() : mConvert.getMetaType());
             List<Condition> newConditions = new ArrayList<>(cConvert.getCondition());
             newConditions.addAll(mConvert.getCondition());
             _responseConvert.setCondition(newConditions);

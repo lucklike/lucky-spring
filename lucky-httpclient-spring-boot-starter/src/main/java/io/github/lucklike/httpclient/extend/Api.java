@@ -18,6 +18,15 @@ public class Api {
 
     private RequestMethod method;
 
+    @TargetField("connect-timeout")
+    private String connectTimeout;
+
+    @TargetField("read-timeout")
+    private String readTimeout;
+
+    @TargetField("write-timeout")
+    private String writeTimeout;
+
     private Map<String, Object> header = new ConcurrentHashMap<>();
 
     private Map<String, List<Object>> query = new ConcurrentHashMap<>();
@@ -115,5 +124,29 @@ public class Api {
 
     public void setRespConvert(Convert respConvert) {
         this.respConvert = respConvert;
+    }
+
+    public String getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(String connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public String getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(String readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    public String getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    public void setWriteTimeout(String writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 }
