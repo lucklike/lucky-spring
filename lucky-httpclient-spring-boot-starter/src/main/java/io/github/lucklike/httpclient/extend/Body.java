@@ -14,6 +14,9 @@ public class Body {
     private String charset = "UTF-8";
     private String data;
     private String file;
+    private String json;
+    private String xml;
+    private String form;
 
     public String getMimeType() {
         return mimeType;
@@ -45,5 +48,29 @@ public class Body {
 
     public void setFile(String file) {
         this.file = file;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
+
+    public String getXml() {
+        return xml;
+    }
+
+    public void setXml(String xml) {
+        this.xml = xml;
+    }
+
+    public String getForm() {
+        return form;
+    }
+
+    public void setForm(String form) {
+        this.form = form;
     }
 }

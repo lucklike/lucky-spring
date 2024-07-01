@@ -1,9 +1,10 @@
 package io.github.lucklike.httpclient.extend;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.conversion.ConversionUtils;
+import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.Request;
-import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.setter.ParameterSetter;
@@ -12,8 +13,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
+ * Spring环境变量API参数设置器
+ *
  * @author fukang
  * @version 1.0.0
  * @date 2024/6/30 16:24
@@ -82,28 +89,51 @@ public class EnvironmentApiParameterSetter implements ParameterSetter {
 
         api.getMultiFile().forEach((k, v) -> {
             String key = context.parseExpression(k, String.class);
-            Resource value = context.parseExpression(String.valueOf(v), Resource.class);
-            request.addResources(key, value);
+            String[] resStrArray = ConversionUtils.conversion(v, String[].class);
+            List<Resource> resourceList = new ArrayList<>();
+            for (String resStr : resStrArray) {
+                resStr = context.parseExpression(resStr, String.class);
+                resourceList.addAll(Arrays.asList(ConversionUtils.conversion(resStr, Resource[].class)));
+            }
+            request.addHttpFiles(key, HttpExecutor.toHttpFiles(resourceList));
         });
 
         Body body = api.getBody();
-        if (body.getData() != null) {
+
+        // JSON
+        if (StringUtils.hasText(body.getJson())) {
+            String jsonBody = context.parseExpression(body.getJson(), String.class);
+            request.setBody(BodyObject.jsonBody(jsonBody));
+        }
+        // XML
+        else if (StringUtils.hasText(body.getXml())) {
+            String xmlBody = context.parseExpression(body.getXml(), String.class);
+            request.setBody(BodyObject.xmlBody(xmlBody));
+        }
+        // FORM
+        else if (StringUtils.hasText(body.getForm())) {
+            String formBody = context.parseExpression(body.getForm(), String.class);
+            String charset = context.parseExpression(body.getCharset(), String.class);
+            request.setBody(BodyObject.builder("application/x-www-form-urlencoded", charset, formBody));
+        }
+        // 二进制格式
+        else if (body.getFile() != null) {
+            try {
+                Resource resource = context.parseExpression(body.getFile(), Resource.class);
+                byte[] bytes = FileCopyUtils.copyToByteArray(resource.getInputStream());
+                request.setBody(BodyObject.builder("application/octet-stream", (Charset) null, bytes));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        // 自定义格式
+        else if (body.getData() != null) {
             String mimeType = context.parseExpression(body.getMimeType(), String.class);
             String charset = context.parseExpression(body.getCharset(), String.class);
             String data = context.parseExpression(body.getData(), String.class);
             request.setBody(BodyObject.builder(mimeType, charset, data));
         }
-        else if (body.getFile() != null) {
-            try {
-                String mimeType = context.parseExpression(body.getMimeType(), String.class);
-                String charset = context.parseExpression(body.getCharset(), String.class);
-                Resource resource = context.parseExpression(body.getFile(), Resource.class);
-                byte[] bytes = FileCopyUtils.copyToByteArray(resource.getInputStream());
-                request.setBody(BodyObject.builder(mimeType, charset, bytes));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+
     }
 
 }

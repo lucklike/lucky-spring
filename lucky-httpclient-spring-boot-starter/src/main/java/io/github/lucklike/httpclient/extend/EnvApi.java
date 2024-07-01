@@ -168,6 +168,9 @@ public class EnvApi extends Api {
             _body.setMimeType(StringUtils.hasText(mBody.getMimeType()) ? mBody.getMimeType() : cBody.getMimeType());
             _body.setData(StringUtils.hasText(mBody.getData()) ? mBody.getData() : cBody.getData());
             _body.setFile(StringUtils.hasText(mBody.getFile()) ? mBody.getFile() : cBody.getFile());
+            _body.setJson(StringUtils.hasText(mBody.getJson()) ? mBody.getJson() : cBody.getJson());
+            _body.setXml(StringUtils.hasText(mBody.getXml()) ? mBody.getXml() : cBody.getXml());
+            _body.setForm(StringUtils.hasText(mBody.getForm()) ? mBody.getForm() : cBody.getForm());
         }
         return _body;
     }
