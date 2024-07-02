@@ -4,6 +4,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ public class EnvApi extends Api {
     private Body _body;
 
     private Convert _responseConvert;
+
+    private List<InterceptorConf> _interceptor;
 
     public Api getApi() {
         return api;
@@ -191,5 +194,15 @@ public class EnvApi extends Api {
             _responseConvert.setCondition(newConditions);
         }
         return _responseConvert;
+    }
+
+    @Override
+    public synchronized List<InterceptorConf> getInterceptor() {
+        if (_interceptor == null) {
+            _interceptor = new ArrayList<>(api.getInterceptor());
+            _interceptor.addAll(super.getInterceptor());
+            _interceptor.sort(Comparator.comparingInt(InterceptorConf::getPriority));
+        }
+        return _interceptor;
     }
 }

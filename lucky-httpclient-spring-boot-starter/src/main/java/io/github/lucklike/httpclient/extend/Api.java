@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.extend;
 import com.luckyframework.conversion.TargetField;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +46,8 @@ public class Api {
 
     @TargetField("resp-convert")
     private Convert respConvert = new Convert();
+
+    private List<InterceptorConf> interceptor = new ArrayList<>();
 
     public String getUrl() {
         return url;
@@ -148,5 +151,13 @@ public class Api {
 
     public void setWriteTimeout(String writeTimeout) {
         this.writeTimeout = writeTimeout;
+    }
+
+    public List<InterceptorConf> getInterceptor() {
+        return interceptor;
+    }
+
+    public void setInterceptor(List<InterceptorConf> interceptor) {
+        this.interceptor = interceptor;
     }
 }

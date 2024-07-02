@@ -2,17 +2,22 @@ package io.github.lucklike.httpclient.extend;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.exception.LuckyRuntimeException;
+import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
-import com.luckyframework.httpclient.proxy.annotations.ConvertMetaType;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.convert.AbstractSpELResponseConvert;
 import com.luckyframework.httpclient.proxy.convert.ConditionalSelectionException;
 import com.luckyframework.httpclient.proxy.convert.ConvertContext;
+import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
+import com.luckyframework.httpclient.proxy.interceptor.InterceptorContext;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.statics.StaticParamAnnContext;
 import com.luckyframework.httpclient.proxy.statics.StaticParamResolver;
 import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
@@ -33,7 +38,9 @@ import static com.luckyframework.httpclient.proxy.spel.DefaultSpELVarManager.get
  * @version 1.0.0
  * @date 2024/6/30 21:06
  */
-public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELResponseConvert implements StaticParamResolver {
+public class EnvironmentApiCallable extends AbstractSpELResponseConvert implements StaticParamResolver, Interceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(EnvironmentApiCallable.class);
 
     private final AtomicBoolean init = new AtomicBoolean(false);
     private final Map<String, EnvApi> envApiMap = new ConcurrentHashMap<>(16);
@@ -48,8 +55,7 @@ public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELRe
 
     @Override
     public <T> T convert(Response response, ConvertContext context) throws Throwable {
-        String methodName = context.getContext().getCurrentAnnotatedElement().getName();
-        EnvApi envApi = envApiMap.get(methodName);
+        EnvApi envApi = getEnvApi(context.getContext());
         Convert convert = envApi.getRespConvert();
         Class<?> metaType = convert.getMetaType();
         if (Object.class != metaType) {
@@ -89,6 +95,27 @@ public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELRe
         return response.getEntity(context.getRealMethodReturnType());
     }
 
+    @Override
+    public void doBeforeExecute(Request request, InterceptorContext context) {
+        MethodContext methodContext = context.getContext();
+        EnvApi envApi = getEnvApi(methodContext);
+        for (InterceptorConf conf : envApi.getInterceptor()) {
+            Interceptor interceptor = createInterceptor(methodContext, conf);
+            interceptor.beforeExecute(request, context);
+        }
+    }
+
+    @Override
+    public Response doAfterExecute(Response response, InterceptorContext context) {
+        MethodContext methodContext = context.getContext();
+        EnvApi envApi = getEnvApi(methodContext);
+        for (InterceptorConf conf : envApi.getInterceptor()) {
+            Interceptor interceptor = createInterceptor(methodContext, conf);
+            response = interceptor.afterExecute(response, context);
+        }
+        return response;
+    }
+
     @SuppressWarnings("all")
     private EnvApi createApi(StaticParamAnnContext context) {
         MethodContext methodContext = context.getContext();
@@ -120,5 +147,21 @@ public class EnvironmentApiStaticParamResolverRespConvert extends AbstractSpELRe
             envApi.setApi(api);
             return envApi;
         });
+    }
+
+    private EnvApi getEnvApi(MethodContext context) {
+        String methodName = context.getCurrentAnnotatedElement().getName();
+        return envApiMap.get(methodName);
+    }
+
+    private Interceptor createInterceptor(MethodContext context, InterceptorConf conf) {
+        if (StringUtils.hasText(conf.getBeanName())) {
+            return ApplicationContextUtils.getBean(conf.getBeanName(), Interceptor.class);
+        }
+
+        if (conf.getClazz() != null) {
+           return (Interceptor) context.getHttpProxyFactory().getObjectCreator().newObject(conf.getClazz(), "", context, conf.getScope());
+        }
+        throw new LuckyRuntimeException("@EnvHttpClient the interceptor configuration of 'bean-name' and 'class-name' must be configured at least one.").printException(log);
     }
 }

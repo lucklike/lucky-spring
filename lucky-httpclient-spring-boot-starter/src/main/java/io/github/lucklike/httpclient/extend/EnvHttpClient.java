@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.extend;
 
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
+import com.luckyframework.httpclient.proxy.annotations.InterceptorRegister;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ResultConvert;
 import com.luckyframework.httpclient.proxy.annotations.StaticParam;
@@ -27,15 +28,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @HttpRequest
+@InterceptorRegister(
+        intercept = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS),
+        priority = 9000
+)
 @ResultConvert(
-    convert = @ObjectGenerate(clazz = EnvironmentApiStaticParamResolverRespConvert.class, scope = Scope.CLASS))
+        convert = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS))
 @StaticParam(
-    resolver = @ObjectGenerate(clazz = EnvironmentApiStaticParamResolverRespConvert.class, scope = Scope.CLASS),
-    setter = @ObjectGenerate(EnvironmentApiParameterSetter.class)
+        resolver = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS),
+        setter = @ObjectGenerate(EnvironmentApiParameterSetter.class)
 )
 @HttpClientComponent
-@Combination(StaticParam.class)
+@Combination({StaticParam.class, InterceptorRegister.class})
 public @interface EnvHttpClient {
+
 
     String prefix() default "";
 

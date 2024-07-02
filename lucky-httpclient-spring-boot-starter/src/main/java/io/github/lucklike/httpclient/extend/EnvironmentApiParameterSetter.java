@@ -133,7 +133,6 @@ public class EnvironmentApiParameterSetter implements ParameterSetter {
             String data = context.parseExpression(body.getData(), String.class);
             request.setBody(BodyObject.builder(mimeType, charset, data));
         }
-
     }
 
 }
