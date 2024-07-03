@@ -187,7 +187,6 @@ public class EnvApi extends Api {
 
             _responseConvert.setResult(StringUtils.hasText(mConvert.getResult()) ? mConvert.getResult() : cConvert.getResult());
             _responseConvert.setException(StringUtils.hasText(mConvert.getException()) ? mConvert.getException() : cConvert.getException());
-            _responseConvert.setDefaultValue(StringUtils.hasText(mConvert.getDefaultValue()) ? mConvert.getDefaultValue() : cConvert.getDefaultValue());
             _responseConvert.setMetaType(Object.class == mConvert.getMetaType() ? cConvert.getMetaType() : mConvert.getMetaType());
             List<Condition> newConditions = new ArrayList<>(cConvert.getCondition());
             newConditions.addAll(mConvert.getCondition());
