@@ -119,7 +119,7 @@ public class EnvironmentApiCallable extends AbstractSpELResponseConvert implemen
     @SuppressWarnings("all")
     private EnvApi createApi(StaticParamAnnContext context) {
         MethodContext methodContext = context.getContext();
-        EnvHttpClient ann = context.toAnnotation(EnvHttpClient.class);
+        EnableEnvironmentClient ann = context.toAnnotation(EnableEnvironmentClient.class);
         String methodName = methodContext.getCurrentAnnotatedElement().getName();
 
         String prefix = StringUtils.hasText(ann.prefix()) ? ann.prefix() : methodContext.getClassContext().getCurrentAnnotatedElement().getName();
@@ -162,6 +162,6 @@ public class EnvironmentApiCallable extends AbstractSpELResponseConvert implemen
         if (conf.getClazz() != null) {
            return (Interceptor) context.getHttpProxyFactory().getObjectCreator().newObject(conf.getClazz(), "", context, conf.getScope());
         }
-        throw new LuckyRuntimeException("@EnvHttpClient the interceptor configuration of 'bean-name' and 'class-name' must be configured at least one.").printException(log);
+        throw new LuckyRuntimeException("@EnableEnvironmentClient the interceptor configuration of 'bean-name' and 'class-name' must be configured at least one.").printException(log);
     }
 }
