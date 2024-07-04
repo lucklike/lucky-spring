@@ -40,6 +40,8 @@ public class EnvApi extends Api {
 
     private Map<String, Object> _multiFile;
 
+    private ProxyConf _proxy;
+
     private Body _body;
 
     private Convert _responseConvert;
@@ -134,6 +136,22 @@ public class EnvApi extends Api {
             _multiFile.putAll(super.getMultiFile());
         }
         return _multiFile;
+    }
+
+    @Override
+    public synchronized ProxyConf getProxy() {
+        if (_proxy == null) {
+            _proxy = new ProxyConf();
+            ProxyConf mProxy = super.getProxy();
+            ProxyConf cProxy = api.getProxy();
+
+            _proxy.setType(mProxy.getType() != null ? mProxy.getType() : cProxy.getType());
+            _proxy.setIp(StringUtils.hasText(mProxy.getIp()) ? mProxy.getIp() : cProxy.getIp());
+            _proxy.setPort(StringUtils.hasText(mProxy.getPort()) ? mProxy.getPort() : cProxy.getPort());
+            _proxy.setUsername(StringUtils.hasText(mProxy.getUsername()) ? mProxy.getUsername() : cProxy.getUsername());
+            _proxy.setPassword(StringUtils.hasText(mProxy.getPassword()) ? mProxy.getPassword() : cProxy.getPassword());
+        }
+        return _proxy;
     }
 
     @Override

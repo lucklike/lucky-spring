@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.extend;
 
+import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.reflect.Combination;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import org.springframework.core.annotation.AliasFor;
@@ -12,10 +13,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 声明式Http客户端的注解，支持在读取Spring环境变量中配置的请求与响应转换配置
- * 如下为详细的配置项
+ * 声明式Http客户端的注解，支持从Spring环境变量中获取请求与响应转化的相关配置<br/>
+ * 详细配置如下：
  * <pre>
  *   {@code
+ *      该注解使用{@link SpELImport}默认导入了{@link EncoderUtils}工具类中的如下方法：
+ *      1.base64(String)              -> base64编码函数                    -> #{#base64('abcdefg')}
+ *      2.basicAuth(String, String)   -> basicAuth编码函数                 -> #{#basicAuth('username', 'password‘)}
+ *      3.url(String)                 -> URLEncoder编码(ISO-8859-1)       -> #{#url('string')}
+ *      4.urlUtf8(String)             -> URLEncoder编码(UTF-8)            -> #{#urlUtf8('string')}
+ *      4.urlCharset(String, String)  -> URLEncoder编码(自定义编码方式)      -> #{#urlCharset('string', 'UTF-8')}
+ *
  *      #某个被@EnableEnvironmentClient注解标注的Java接口
  *      顶层的key需要与@EnableEnvironmentClient注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名
  *      io.github.lucklike.httpclient.EnvTestApi:
@@ -76,6 +84,14 @@ import java.lang.annotation.Target;
  *            photo: file:D:/user/image/photo.jpg               #可以是本地文件
  *            idCard-1: http://localhost:8888/idCard/lucky.png  #也可以是网路上的文件
  *            idCard-2: "#{p1}"                                 #取参数列表中的第二个参数来得到文件
+ *
+ *          #配置代理
+ *          proxy:
+ *            type: SOCKS         #代理类型，目前支持SOCKS和HTTP两种类型，默认值为HTTP
+ *            ip: 192.168.0.111   #代理服务器IP，必填参数，不填整体将不生效
+ *            port: 8080          #代理服务器端口，必填参数，不填整体将不生效
+ *            username: username  #用户名
+ *            password: password  #密码
  *
  *          #用来指定请求体参数
  *          body:

@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 用于描述一个API的所有描述信息
+ *
  * @author fukang
  * @version 1.0.0
  * @date 2024/6/30 16:05
@@ -41,6 +43,8 @@ public class Api {
 
     @TargetField("multi-file")
     private Map<String, Object> multiFile = new ConcurrentHashMap<>();
+
+    private ProxyConf proxy = new ProxyConf();
 
     private Body body = new Body();
 
@@ -111,6 +115,14 @@ public class Api {
 
     public void setMultiFile(Map<String, Object> multiFile) {
         this.multiFile = multiFile;
+    }
+
+    public ProxyConf getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(ProxyConf proxy) {
+        this.proxy = proxy;
     }
 
     public Body getBody() {

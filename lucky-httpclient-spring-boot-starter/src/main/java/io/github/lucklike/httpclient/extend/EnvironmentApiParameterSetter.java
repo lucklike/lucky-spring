@@ -5,6 +5,7 @@ import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.Request;
+import com.luckyframework.httpclient.core.proxy.ProxyInfo;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.setter.ParameterSetter;
@@ -98,6 +99,19 @@ public class EnvironmentApiParameterSetter implements ParameterSetter {
             request.addHttpFiles(key, HttpExecutor.toHttpFiles(resourceList));
         });
 
+        ProxyConf proxy = api.getProxy();
+        if (proxy != null) {
+            String ip = context.parseExpression(proxy.getIp(), String.class);
+            String port = context.parseExpression(proxy.getPort(), String.class);
+            if (StringUtils.hasText(ip) && StringUtils.hasText(port)) {
+                request.setProxyInfo(
+                        new ProxyInfo()
+                                .setProxy(proxy.getType(), ip, Integer.parseInt(port))
+                                .setUsername(proxy.getUsername())
+                                .setPassword(proxy.getPassword())
+                );
+            }
+        }
         Body body = api.getBody();
 
         // JSON
