@@ -20,9 +20,8 @@ import java.lang.annotation.Target;
  *      该注解使用{@link SpELImport}默认导入了{@link EncoderUtils}工具类中的如下方法：
  *      1.base64(String)              -> base64编码函数                    -> #{#base64('abcdefg')}
  *      2.basicAuth(String, String)   -> basicAuth编码函数                 -> #{#basicAuth('username', 'password‘)}
- *      3.url(String)                 -> URLEncoder编码(ISO-8859-1)       -> #{#url('string')}
- *      4.urlUtf8(String)             -> URLEncoder编码(UTF-8)            -> #{#urlUtf8('string')}
- *      5.urlCharset(String, String)  -> URLEncoder编码(自定义编码方式)      -> #{#urlCharset('string', 'UTF-8')}
+ *      3.url(String)                 -> URLEncoder编码(UTF-8)            -> #{#url('string')}
+ *      4.urlCharset(String, String)  -> URLEncoder编码(自定义编码方式)      -> #{#urlCharset('string', 'UTF-8')}
  *
  *      #某个被@EnableEnvironmentClient注解标注的Java接口
  *      顶层的key需要与@EnableEnvironmentClient注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名

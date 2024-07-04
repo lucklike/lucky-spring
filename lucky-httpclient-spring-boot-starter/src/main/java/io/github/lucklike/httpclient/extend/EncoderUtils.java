@@ -23,11 +23,7 @@ public class EncoderUtils {
         return URLEncoder.encode(str, charset);
     }
 
-    public static String urlUtf8(String str) throws UnsupportedEncodingException {
-        return URLEncoder.encode(str, "UTF-8");
-    }
-
     public static String url(String str) throws UnsupportedEncodingException {
-        return URLEncoder.encode(str, "ISO-8859-1");
+        return URLEncoder.encode(str, "UTF-8");
     }
 }
