@@ -20,4 +20,6 @@ public class Constant {
     public static final String JDK_PROXY_METHOD = "getJdkProxyObject";
     public static final String CGLIB_PROXY_METHOD = "getCglibProxyObject";
 
+    public static final String SPRING_ENV_CONFIG_SOURCE = "__springEnvConfigSource__";
+
 }

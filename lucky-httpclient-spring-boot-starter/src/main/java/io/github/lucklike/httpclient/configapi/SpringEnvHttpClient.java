@@ -1,5 +1,7 @@
-package io.github.lucklike.httpclient.extend;
+package io.github.lucklike.httpclient.configapi;
 
+import com.luckyframework.httpclient.proxy.configapi.EnableConfigurationParser;
+import com.luckyframework.httpclient.proxy.configapi.EncoderUtils;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.reflect.Combination;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
@@ -12,12 +14,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
+
 /**
  * 声明式Http客户端的注解，支持从Spring环境变量中获取请求与响应转化的相关配置<br/>
  * 详细配置如下：
  * <pre>
  *   {@code
- *      该注解使用{@link SpELImport}默认导入了{@link EncoderUtils}工具类中的如下方法：
+ *      该注解使用{@link SpELImport}默认导入了{@link EncoderUtils }工具类中的如下方法：
  *      1.base64(String)              -> base64编码函数                    -> #{#base64('abcdefg')}
  *      2.basicAuth(String, String)   -> basicAuth编码函数                 -> #{#basicAuth('username', 'password‘)}
  *      3.url(String)                 -> URLEncoder编码(UTF-8)            -> #{#url('string')}
@@ -168,16 +172,28 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@EnableEnvironmentClient
 @HttpClientComponent
-@Combination({EnableEnvironmentClient.class})
-public @interface EnvHttpClient {
+@EnableConfigurationParser
+@Combination({EnableConfigurationParser.class})
+public @interface SpringEnvHttpClient {
 
     /**
      * 定义配置前缀
      */
-    @AliasFor(annotation = EnableEnvironmentClient.class, attribute = "prefix")
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "prefix")
     String prefix() default "";
+
+    /**
+     * 配置源信息
+     */
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "source")
+    String source() default "Spring Environment";
+
+    /**
+     * 配置源类型
+     */
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "sourceType")
+    String sourceType() default SPRING_ENV_CONFIG_SOURCE;
 
     /**
      * 配置Bean的名称，同{@link Component#value()}

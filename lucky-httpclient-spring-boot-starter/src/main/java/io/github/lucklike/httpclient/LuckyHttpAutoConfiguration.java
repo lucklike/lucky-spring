@@ -20,6 +20,8 @@ import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponsePr
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
+import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
+import com.luckyframework.httpclient.proxy.configapi.ConfigurationSource;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
@@ -51,6 +53,7 @@ import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
+import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
@@ -118,6 +121,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         return factoryBean;
     }
 
+    @Bean(SPRING_ENV_CONFIG_SOURCE)
+    public ConfigurationSource springEnvConfigSource() {
+        return new SpringEnvironmentConfigurationSource();
+    }
+
     /**
      * 从环境变量获取必要的配置
      */
@@ -147,10 +155,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         sslSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
+        configApiSourceSetting();
 
         return factory;
     }
-
 
     /**
      * 设置{@link SpELConvert SPEL表达式转换器}，首先尝试从配置中读取用户配置的{@link io.github.lucklike.httpclient.config.SpELRuntimeFactory},
@@ -530,6 +538,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             return (T) applicationContext.getBean(generateEntry.getBeanName());
         } else {
             return ClassUtils.newObject(generateEntry.getType());
+        }
+    }
+
+
+    private void configApiSourceSetting() {
+        String[] beanNames = applicationContext.getBeanNamesForType(ConfigurationSource.class);
+        for (String beanName : beanNames) {
+            ConfigurationApiFunctionalSupport.addConfigSource(beanName, applicationContext.getBean(beanName, ConfigurationSource.class));
         }
     }
 
