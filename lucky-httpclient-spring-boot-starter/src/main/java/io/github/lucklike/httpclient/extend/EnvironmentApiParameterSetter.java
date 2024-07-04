@@ -1,9 +1,11 @@
 package io.github.lucklike.httpclient.extend;
 
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.meta.BodyObject;
+import com.luckyframework.httpclient.core.meta.HttpFile;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.proxy.ProxyInfo;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -90,13 +93,32 @@ public class EnvironmentApiParameterSetter implements ParameterSetter {
 
         api.getMultiFile().forEach((k, v) -> {
             String key = context.parseExpression(k, String.class);
-            String[] resStrArray = ConversionUtils.conversion(v, String[].class);
-            List<Resource> resourceList = new ArrayList<>();
-            for (String resStr : resStrArray) {
-                resStr = context.parseExpression(resStr, String.class);
-                resourceList.addAll(Arrays.asList(ConversionUtils.conversion(resStr, Resource[].class)));
+            Object value = context.parseExpression(String.valueOf(v));
+            HttpFile[] httpFiles = null;
+
+            // 是资源类型
+            if (HttpExecutor.isResourceParam(value)) {
+                httpFiles = HttpExecutor.toHttpFiles(value);
             }
-            request.addHttpFiles(key, HttpExecutor.toHttpFiles(resourceList));
+            // 字符串类型或者是字符串数组、集合类型
+            else if (ContainerUtils.getElementType(value) == String.class) {
+                if (ContainerUtils.isIterable(value)) {
+                    List<Resource> resourceList = new ArrayList<>();
+                    Iterator<Object> iterator = ContainerUtils.getIterator(value);
+                    while (iterator.hasNext()) {
+                        resourceList.addAll(Arrays.asList(ConversionUtils.conversion(iterator.next(), Resource[].class)));
+                    }
+                    httpFiles =  HttpExecutor.toHttpFiles(resourceList);
+                } else {
+                    httpFiles = HttpExecutor.toHttpFiles(ConversionUtils.conversion(value, Resource[].class));
+                }
+            } else {
+
+            }
+            if (ContainerUtils.isNotEmptyArray(httpFiles)) {
+                request.addHttpFiles(key, httpFiles);
+            }
+
         });
 
         ProxyConf proxy = api.getProxy();

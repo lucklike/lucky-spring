@@ -173,13 +173,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @InterceptorRegister(
-        intercept = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS),
+        intercept = @ObjectGenerate(clazz = EnvironmentApiFunctionalSupport.class, scope = Scope.CLASS),
         priority = 9000
 )
 @ResultConvert(
-        convert = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS))
+        convert = @ObjectGenerate(clazz = EnvironmentApiFunctionalSupport.class, scope = Scope.CLASS))
 @StaticParam(
-        resolver = @ObjectGenerate(clazz = EnvironmentApiCallable.class, scope = Scope.CLASS),
+        resolver = @ObjectGenerate(clazz = EnvironmentApiFunctionalSupport.class, scope = Scope.CLASS),
         setter = @ObjectGenerate(EnvironmentApiParameterSetter.class)
 )
 @HttpRequest
