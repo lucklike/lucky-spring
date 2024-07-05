@@ -14,8 +14,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
-
 /**
  * 声明式Http客户端的注解，支持从Spring环境变量中获取请求与响应转化的相关配置<br/>
  * 详细配置如下：
@@ -173,19 +171,28 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @HttpClientComponent
-@EnableConfigurationParser(source = "Spring Environment", sourceType = SPRING_ENV_CONFIG_SOURCE)
+@EnableConfigurationParser(sourceType = "file")
 @Combination({EnableConfigurationParser.class})
-public @interface SpringEnvHttpClient {
+public @interface LocalConfigHttpClient {
+
+    /**
+     * 配置源信息
+     */
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "source") String value() default "";
 
     /**
      * 定义配置前缀
      */
-    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "prefix")
-    String prefix() default "";
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "prefix") String prefix() default "";
+
+    /**
+     * 配置源信息
+     */
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "source") String source() default "";
+
 
     /**
      * 配置Bean的名称，同{@link Component#value()}
      */
-    @AliasFor(annotation = HttpClientComponent.class, attribute = "name")
-    String name() default "";
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "name") String name() default "";
 }
