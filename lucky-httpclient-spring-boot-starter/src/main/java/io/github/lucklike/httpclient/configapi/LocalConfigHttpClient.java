@@ -15,7 +15,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 声明式Http客户端的注解，支持从Spring环境变量中获取请求与响应转化的相关配置<br/>
+ * 声明式Http客户端的注解，支持从本地文件中获取请求与响应转化的相关配置<br/>
  * 详细配置如下：
  * <pre>
  *   {@code
@@ -25,8 +25,8 @@ import java.lang.annotation.Target;
  *      3.url(String)                 -> URLEncoder编码(UTF-8)            -> #{#url('string')}
  *      4.urlCharset(String, String)  -> URLEncoder编码(自定义编码方式)      -> #{#urlCharset('string', 'UTF-8')}
  *
- *      #某个被@EnableEnvironmentClient注解标注的Java接口
- *      顶层的key需要与@EnableEnvironmentClient注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名
+ *      #某个被@EnableConfigurationParser注解标注的Java接口
+ *      顶层的key需要与@EnableConfigurationParser注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名
  *      io.github.lucklike.httpclient.EnvTestApi:
  *        #公共配置可以写在此处
  *        ........

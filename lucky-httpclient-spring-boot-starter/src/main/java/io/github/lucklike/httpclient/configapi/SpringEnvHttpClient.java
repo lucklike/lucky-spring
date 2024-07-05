@@ -27,8 +27,8 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *      3.url(String)                 -> URLEncoder编码(UTF-8)            -> #{#url('string')}
  *      4.urlCharset(String, String)  -> URLEncoder编码(自定义编码方式)      -> #{#urlCharset('string', 'UTF-8')}
  *
- *      #某个被@EnableEnvironmentClient注解标注的Java接口
- *      顶层的key需要与@EnableEnvironmentClient注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名
+ *      #某个被@EnableConfigurationParser注解标注的Java接口
+ *      顶层的key需要与@EnableConfigurationParser注解的prefix属性值一致，如果注解没有配置prefix，则key使用接口的全类名
  *      io.github.lucklike.httpclient.EnvTestApi:
  *        #公共配置可以写在此处
  *        ........
