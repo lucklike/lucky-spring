@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config.impl;
 
 import com.luckyframework.spel.SpELRuntime;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
+import io.github.lucklike.httpclient.BeanEvaluationContextFactory;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 
 /**
@@ -13,6 +14,7 @@ public class BeanSpELRuntimeFactoryFactory implements SpELRuntimeFactory {
 
     @Override
     public SpELRuntime getSpELRuntime() {
-        return new io.github.lucklike.httpclient.SpELRuntimeFactory(ApplicationContextUtils.getApplicationContext()).createSpELRuntime() ;
+        BeanEvaluationContextFactory contextFactory = new BeanEvaluationContextFactory(ApplicationContextUtils.getApplicationContext());
+        return new SpELRuntime(contextFactory);
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>io.github.lucklike</groupId>
     <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.1</version>
 
     <name>lucky-httpclient-spring-boot-starter</name>
     <description>lucky-httpclient模块与SpringBoot整合</description>
@@ -51,6 +51,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <version>${spring-version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>snakeyaml</artifactId>
+                    <groupId>org.yaml</groupId>
+                </exclusion>
+            </exclusions>
             <optional>true</optional>
         </dependency>
 
@@ -64,7 +70,7 @@
         <dependency>
             <groupId>io.github.lucklike</groupId>
             <artifactId>lucky-httpclient</artifactId>
-            <version>2.0.0</version>
+            <version>2.1.1</version>
         </dependency>
 
     </dependencies>

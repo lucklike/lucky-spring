@@ -1,9 +1,13 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.threadpool.ThreadPoolParam;
+import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
+import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
+import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
-import java.util.List;
+import java.net.HttpURLConnection;
+import java.util.Map;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -15,19 +19,9 @@ import java.util.List;
 public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
-     * 用于创建异步调用的线程池的参数
+     * 指定使用的HTTP执行器Bean的名称
      */
-    private ThreadPoolParam threadPoolParam;
-
-    /**
-     * SpEL运行时环境工厂
-     */
-    private SpELRuntimeFactory springElRuntimeFactory;
-
-    /**
-     * 向SpEL运行时环境导入的包
-     */
-    private List<String> springElPackageImports;
+    private String httpExecutorBean;
 
     /**
      * 对象创建器工厂
@@ -40,19 +34,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private HttpExecutorFactory httpExecutorFactory;
 
     /**
-     * HTTP异常处理器工厂
+     * 使用执行器枚举来指定执行器
      */
-    private HttpExceptionHandleFactory httpExceptionHandleFactory;
+    private HttpExecutorEnum httpExecutor;
 
     /**
-     * 请求处理器工厂
+     * 拦截器生成器数组
      */
-    private RequestAfterProcessorsFactory requestAfterProcessorsFactory;
-
-    /**
-     * 响应处理器工厂
-     */
-    private ResponseAfterProcessorsFactory responseAfterProcessorsFactory;
+    private InterceptorGenerateEntry[] interceptorGenerates;
 
     /**
      * 连接超时时间
@@ -71,33 +60,151 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 公共请求头参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       header-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的header参数
+     *       header-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap headerParams = new ConfigurationMap();
+    private final Map<String, Object> headerParams = new ConfigurationMap();
 
     /**
      * 公共路径请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       path-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的path参数
+     *       path-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap pathParams = new ConfigurationMap();
+    private final Map<String, Object> pathParams = new ConfigurationMap();
 
     /**
-     * 公共URL请求参数
+     * 公共Query请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       query-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的query参数
+     *       query-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap queryParams = new ConfigurationMap();
+    private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
      * 公共Form请求参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       form-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的form参数
+     *       form-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap formParams = new ConfigurationMap();
+    private final Map<String, Object> formParams = new ConfigurationMap();
 
     /**
-     * 公共资源参数
+     * 公共multipart/form-data参数(简单参数)
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       multipart-form-simple-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form简单参数
+     *       multipart-form-simple-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap resourceParams = new ConfigurationMap();
+    private final Map<String, Object> multipartFormSimpleParams = new ConfigurationMap();
 
     /**
-     * SpEL表达式参数
+     * 公共multipart/form-data参数(资源参数)
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *       multipart-form-resource-params:
+     *         key: value
+     *     2.为某个接口或者接口系列配置特有参数
+     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form文件参数
+     *       multipart-form-resource-params:
+     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *            key: value
+     * </pre>
      */
-    private ConfigurationMap expressionParams = new ConfigurationMap();
+    private final Map<String, Object> multipartFormResourceParams = new ConfigurationMap();
+
+    /**
+     * 是否忽略SSL证书认证
+     */
+    private boolean ignoreSSLVerify;
+
+    /**
+     * 使用的SSL协议，默认为TLS
+     */
+    private String sslProtocol;
+
+    /**
+     * HTTP异常处理器生成器信息
+     */
+    @NestedConfigurationProperty
+    private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
+
+    /**
+     * 用于创建异步调用的线程池的参数
+     */
+    @NestedConfigurationProperty
+    private MultipartThreadPoolParam asyncThreadPool;
+
+    /**
+     * 日志打印相关配置
+     */
+    @NestedConfigurationProperty
+    private LoggerConfiguration logger = new LoggerConfiguration();
+
+    /**
+     * SpEL表达式相关的配置
+     */
+    @NestedConfigurationProperty
+    private SpELConfiguration springEl = new SpELConfiguration();
+
+    /**
+     * 重定向相关的配置
+     */
+    @NestedConfigurationProperty
+    private RedirectConfiguration redirect = new RedirectConfiguration();
+
+    /**
+     * HTTP连接池相关配置
+     */
+    @NestedConfigurationProperty
+    private HttpConnectionPoolConfiguration httpConnectionPool = new HttpConnectionPoolConfiguration();
+
+    /**
+     * Cookie管理器相关配置
+     */
+    @NestedConfigurationProperty
+    private CookieManageConfiguration cookieManage = new CookieManageConfiguration();
+
+    /**
+     * 响应结果转换相关的配置
+     */
+    @NestedConfigurationProperty
+    private ResponseConvertConfiguration responseConvert = new ResponseConvertConfiguration();
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -106,20 +213,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置线程池参数
      *
-     * @param threadPoolParam 线程池参数
+     * @param asyncThreadPool 线程池参数
      */
-    public void setThreadPoolParam(ThreadPoolParam threadPoolParam) {
-        this.threadPoolParam = threadPoolParam;
-    }
-
-
-    /**
-     * 设置{@link SpELRuntimeFactory SpEL运行时环境工厂}
-     *
-     * @param springElRuntimeFactory SpEL运行时环境工厂
-     */
-    public void setSpringElRuntimeFactory(SpELRuntimeFactory springElRuntimeFactory) {
-        this.springElRuntimeFactory = springElRuntimeFactory;
+    public void setAsyncThreadPool(MultipartThreadPoolParam asyncThreadPool) {
+        this.asyncThreadPool = asyncThreadPool;
     }
 
     /**
@@ -141,30 +238,33 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置{@link HttpExceptionHandleFactory 异常处理器工厂}
+     * 使用执行器枚举来指定执行器<br/>
+     * {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
+     * {@link HttpExecutorEnum#OKHTTP3 OK_HTTP}: 使用OkHttp3实现的执行器。<br/>
+     * {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
      *
-     * @param httpExceptionHandleFactory 异常处理器工厂
+     * @param httpExecutor 执行器枚举
      */
-    public void setHttpExceptionHandleFactory(HttpExceptionHandleFactory httpExceptionHandleFactory) {
-        this.httpExceptionHandleFactory = httpExceptionHandleFactory;
+    public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
+        this.httpExecutor = httpExecutor;
     }
 
     /**
-     * 设置{@link RequestAfterProcessorsFactory 请求处理器工厂}
+     * 设置异常处理器生成器
      *
-     * @param requestAfterProcessorsFactory 请求处理器工厂
+     * @param exceptionHandleGenerate 异常处理器生成器
      */
-    public void setRequestAfterProcessorsFactory(RequestAfterProcessorsFactory requestAfterProcessorsFactory) {
-        this.requestAfterProcessorsFactory = requestAfterProcessorsFactory;
+    public void setExceptionHandleGenerate(GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate) {
+        this.exceptionHandleGenerate = exceptionHandleGenerate;
     }
 
     /**
-     * 设置{@link ResponseAfterProcessorsFactory 响应处理器工厂}
+     * 设置拦截器生成器（数组）
      *
-     * @param responseAfterProcessorsFactory 响应处理器工厂
+     * @param interceptorGenerates 拦截器生成器（数组）
      */
-    public void setResponseAfterProcessorsFactory(ResponseAfterProcessorsFactory responseAfterProcessorsFactory) {
-        this.responseAfterProcessorsFactory = responseAfterProcessorsFactory;
+    public void setInterceptorGenerates(InterceptorGenerateEntry[] interceptorGenerates) {
+        this.interceptorGenerates = interceptorGenerates;
     }
 
     /**
@@ -196,11 +296,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置公共的请求头参数
+     * <pre>
+     *     1.直接配置的k-v为全局公用的参数
+     *     2.为某个接口或者接口系列配置特有参数
+     *     {@code
+     *      例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的header参数
+     *      lucky:
+     *        httpclient:
+     *           header-params:
+     *              "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
+     *                   key: value
+     *
+     *     }
+     * </pre>
      *
      * @param headerParams 公共的请求头参数
      */
-    public void setHeaderParams(ConfigurationMap headerParams) {
-        this.headerParams = headerParams;
+    public void setHeaderParams(Map<String, Object> headerParams) {
+        this.headerParams.putAll(headerParams);
     }
 
     /**
@@ -208,8 +321,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param pathParams 公共的路径参数
      */
-    public void setPathParams(ConfigurationMap pathParams) {
-        this.pathParams = pathParams;
+    public void setPathParams(Map<String, Object> pathParams) {
+        this.pathParams.putAll(pathParams);
     }
 
     /**
@@ -217,8 +330,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param queryParams 公共的URL参数
      */
-    public void setQueryParams(ConfigurationMap queryParams) {
-        this.queryParams = queryParams;
+    public void setQueryParams(Map<String, Object> queryParams) {
+        this.queryParams.putAll(queryParams);
     }
 
     /**
@@ -226,35 +339,107 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @param formParams 公共的表单参数
      */
-    public void setFormParams(ConfigurationMap formParams) {
-        this.formParams = formParams;
+    public void setFormParams(Map<String, Object> formParams) {
+        this.formParams.putAll(formParams);
     }
 
     /**
-     * 设置公共的资源参数
+     * 设置公共的multipart/form-data参数(简单参数)
      *
-     * @param resourceParams 公共的资源参数
+     * @param multipartFormSimpleParams 公共的multipart/form-data参数(简单参数)
      */
-    public void setResourceParams(ConfigurationMap resourceParams) {
-        this.resourceParams = resourceParams;
+    public void setMultipartFormSimpleParams(Map<String, Object> multipartFormSimpleParams) {
+        this.multipartFormSimpleParams.putAll(multipartFormSimpleParams);
     }
 
     /**
-     * 设置自定义SpEL表达式参数
+     * 设置公共的multipart/form-data参数(资源参数)
      *
-     * @param expressionParams 自定义参数
+     * @param multipartFormResourceParams 公共的multipart/form-data参数(资源参数)
      */
-    public void setExpressionParams(ConfigurationMap expressionParams) {
-        this.expressionParams = expressionParams;
+    public void setMultipartFormResourceParams(Map<String, Object> multipartFormResourceParams) {
+        this.multipartFormResourceParams.putAll(multipartFormResourceParams);
     }
 
     /**
-     * 向SpEL运行时环境导入的包
+     * 是否忽略SSL证书认证
      *
-     * @param springElPackageImports 向SpEL运行时环境导入的包
+     * @param ignoreSSLVerify 是否忽略SSL证书认证
      */
-    public void setSpringElPackageImports(List<String> springElPackageImports) {
-        this.springElPackageImports = springElPackageImports;
+    public void setIgnoreSSLVerify(boolean ignoreSSLVerify) {
+        this.ignoreSSLVerify = ignoreSSLVerify;
+    }
+
+    /**
+     * 设置SSL协议
+     *
+     * @param sslProtocol SSL协议，默认TLS
+     */
+    public void setSslProtocol(String sslProtocol) {
+        this.sslProtocol = sslProtocol;
+    }
+
+    /**
+     * 设置使用HTTP执行器的SpringBean的名称
+     *
+     * @param httpExecutorBean HTTP执行器的SpringBean的名称
+     */
+    public void setHttpExecutorBean(String httpExecutorBean) {
+        this.httpExecutorBean = httpExecutorBean;
+    }
+
+    /**
+     * 设置日志相关的配置
+     *
+     * @param logger 日志相关的配置
+     */
+    public void setLogger(LoggerConfiguration logger) {
+        this.logger = logger;
+    }
+
+    /**
+     * 设置SpEL相关的配置
+     *
+     * @param springEl SpEL相关的配置
+     */
+    public void setSpringEl(SpELConfiguration springEl) {
+        this.springEl = springEl;
+    }
+
+    /**
+     * 设置重定向相关的配置
+     *
+     * @param redirect 重定向相关的配置
+     */
+    public void setRedirect(RedirectConfiguration redirect) {
+        this.redirect = redirect;
+    }
+
+    /**
+     * 设置HTTP连接池相关的配置
+     *
+     * @param httpConnectionPool HTTP连接池相关的配置
+     */
+    public void setHttpConnectionPool(HttpConnectionPoolConfiguration httpConnectionPool) {
+        this.httpConnectionPool = httpConnectionPool;
+    }
+
+    /**
+     * 设置Cookie管理器相关配置
+     *
+     * @param cookieManage Cookie管理器相关配置
+     */
+    public void setCookieManage(CookieManageConfiguration cookieManage) {
+        this.cookieManage = cookieManage;
+    }
+
+    /**
+     * 设置响应结果转换相关的配置
+     *
+     * @param responseConvert 响应结果转换相关的配置
+     */
+    public void setResponseConvert(ResponseConvertConfiguration responseConvert) {
+        this.responseConvert = responseConvert;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -267,17 +452,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 线程池参数
      */
-    public ThreadPoolParam getThreadPoolParam() {
-        return threadPoolParam;
-    }
-
-    /**
-     * 获取{@link SpELRuntimeFactory SpEL运行时环境工厂}
-     *
-     * @return SpEL运行时环境工厂
-     */
-    public SpELRuntimeFactory getSpringElRuntimeFactory() {
-        return springElRuntimeFactory;
+    public MultipartThreadPoolParam getAsyncThreadPool() {
+        return asyncThreadPool;
     }
 
     /**
@@ -299,30 +475,30 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取{@link HttpExceptionHandleFactory HTTP异常处理器工厂}
+     * 获取执行器对应的执行器枚举
      *
-     * @return HTTP异常处理器
+     * @return 执行器枚举
      */
-    public HttpExceptionHandleFactory getHttpExceptionHandleFactory() {
-        return httpExceptionHandleFactory;
+    public HttpExecutorEnum getHttpExecutor() {
+        return httpExecutor;
     }
 
     /**
-     * 获取{@link HttpExceptionHandleFactory 请求处理器工厂}
+     * 获取拦截器生成器（数组）
      *
-     * @return 请求处理器工厂
+     * @return 拦截器生成器（数组）
      */
-    public RequestAfterProcessorsFactory getRequestAfterProcessorsFactory() {
-        return requestAfterProcessorsFactory;
+    public InterceptorGenerateEntry[] getInterceptorGenerates() {
+        return interceptorGenerates;
     }
 
     /**
-     * 获取{@link ResponseAfterProcessorsFactory 响应处理器工厂}
+     * 获取异常处理器生成器
      *
-     * @return 响应处理器工厂
+     * @return 异常处理器生成器
      */
-    public ResponseAfterProcessorsFactory getResponseAfterProcessorsFactory() {
-        return responseAfterProcessorsFactory;
+    public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
+        return exceptionHandleGenerate;
     }
 
     /**
@@ -357,7 +533,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的请求头参数
      */
-    public ConfigurationMap getHeaderParams() {
+    public Map<String, Object> getHeaderParams() {
         return headerParams;
     }
 
@@ -366,7 +542,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的路径参数
      */
-    public ConfigurationMap getPathParams() {
+    public Map<String, Object> getPathParams() {
         return pathParams;
     }
 
@@ -375,7 +551,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的URL参数
      */
-    public ConfigurationMap getQueryParams() {
+    public Map<String, Object> getQueryParams() {
         return queryParams;
     }
 
@@ -384,34 +560,106 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 公共的表单参数
      */
-    public ConfigurationMap getFormParams() {
+    public Map<String, Object> getFormParams() {
         return formParams;
     }
 
     /**
-     * 获取公共的资源参数
+     * 获取公共的multipart/form-data参数(简单参数)
      *
-     * @return 公共的资源参数
+     * @return 公共的multipart/form-data参数(简单参数)
      */
-    public ConfigurationMap getResourceParams() {
-        return resourceParams;
+    public Map<String, Object> getMultipartFormSimpleParams() {
+        return multipartFormSimpleParams;
     }
 
     /**
-     * 获取自定义SpEL表达式参数
+     * 获取公共的multipart/form-data参数(资源参数)
      *
-     * @return 自定义SpEL表达式参数
+     * @return 公共的multipart/form-data参数(资源参数)
      */
-    public ConfigurationMap getExpressionParams() {
-        return expressionParams;
+    public Map<String, Object> getMultipartFormResourceParams() {
+        return multipartFormResourceParams;
     }
 
     /**
-     * 向SpEL运行时环境导入的包
+     * 是否忽略SSL证书认证功能
      *
-     * @return 向SpEL运行时环境导入的包
+     * @return 是否忽略SSL证书认证功能
      */
-    public List<String> getSpringElPackageImports() {
-        return springElPackageImports;
+    public boolean isIgnoreSSLVerify() {
+        return ignoreSSLVerify;
+    }
+
+    /**
+     * 获取SSL协议
+     *
+     * @return SSL协议
+     */
+    public String getSslProtocol() {
+        return sslProtocol;
+    }
+
+    /**
+     * HTTP执行器的SpringBean的名称
+     *
+     * @return HTTP执行器的SpringBean的名称
+     */
+    public String getHttpExecutorBean() {
+        return httpExecutorBean;
+    }
+
+    /**
+     * 获取日志相关的配置
+     *
+     * @return 日志相关的配置
+     */
+    public LoggerConfiguration getLogger() {
+        return logger;
+    }
+
+    /**
+     * 获取SpEL相关的配置
+     *
+     * @return SpEL相关的配置
+     */
+    public SpELConfiguration getSpringEl() {
+        return springEl;
+    }
+
+    /**
+     * 获取重定向相关的配置
+     *
+     * @return 重定向相关的配置
+     */
+    public RedirectConfiguration getRedirect() {
+        return redirect;
+    }
+
+    /**
+     * 获取HTTP连接池相关的配置
+     *
+     * @return HTTP连接池相关的配置
+     */
+    public HttpConnectionPoolConfiguration getHttpConnectionPool() {
+        return httpConnectionPool;
+    }
+
+    /**
+     * 获取Cookie管理器相关配置
+     *
+     * @return Cookie管理器相关配置
+     */
+    public CookieManageConfiguration getCookieManage() {
+        return cookieManage;
+    }
+
+    /**
+     * 获取响应结果转换相关的配置
+     *
+     * @return 响应结果转换相关的配置
+     */
+    public ResponseConvertConfiguration getResponseConvert() {
+        return responseConvert;
     }
 }

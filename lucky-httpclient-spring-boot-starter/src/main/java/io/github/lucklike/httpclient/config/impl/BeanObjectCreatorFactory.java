@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config.impl;
 
-import com.luckyframework.httpclient.proxy.ObjectCreator;
+import com.luckyframework.httpclient.proxy.creator.AbstractObjectCreator;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.BeanObjectCreator;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
@@ -12,7 +12,7 @@ import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
  */
 public class BeanObjectCreatorFactory implements ObjectCreatorFactory {
     @Override
-    public ObjectCreator getObjectCreator() {
+    public AbstractObjectCreator getObjectCreator() {
         return new BeanObjectCreator(ApplicationContextUtils.getApplicationContext());
     }
 }
