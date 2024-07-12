@@ -104,51 +104,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
-     * 公共Form请求参数
-     * <pre>
-     *     1.直接配置的k-v为全局公用的参数
-     *       form-params:
-     *         key: value
-     *     2.为某个接口或者接口系列配置特有参数
-     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的form参数
-     *       form-params:
-     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
-     *            key: value
-     * </pre>
-     */
-    private final Map<String, Object> formParams = new ConfigurationMap();
-
-    /**
-     * 公共multipart/form-data参数(简单参数)
-     * <pre>
-     *     1.直接配置的k-v为全局公用的参数
-     *       multipart-form-simple-params:
-     *         key: value
-     *     2.为某个接口或者接口系列配置特有参数
-     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form简单参数
-     *       multipart-form-simple-params:
-     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
-     *            key: value
-     * </pre>
-     */
-    private final Map<String, Object> multipartFormSimpleParams = new ConfigurationMap();
-
-    /**
-     * 公共multipart/form-data参数(资源参数)
-     * <pre>
-     *     1.直接配置的k-v为全局公用的参数
-     *       multipart-form-resource-params:
-     *         key: value
-     *     2.为某个接口或者接口系列配置特有参数
-     *       例如：为io.github.lucklike.springboothttp.api.gitee.GiteeApi接口配置特有的multipart-form文件参数
-     *       multipart-form-resource-params:
-     *         "[io.github.lucklike.springboothttp.api.gitee.GiteeApi]":
-     *            key: value
-     * </pre>
-     */
-    private final Map<String, Object> multipartFormResourceParams = new ConfigurationMap();
-
-    /**
      * 是否忽略SSL证书认证
      */
     private boolean ignoreSSLVerify;
@@ -332,33 +287,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setQueryParams(Map<String, Object> queryParams) {
         this.queryParams.putAll(queryParams);
-    }
-
-    /**
-     * 设置公共的表单参数
-     *
-     * @param formParams 公共的表单参数
-     */
-    public void setFormParams(Map<String, Object> formParams) {
-        this.formParams.putAll(formParams);
-    }
-
-    /**
-     * 设置公共的multipart/form-data参数(简单参数)
-     *
-     * @param multipartFormSimpleParams 公共的multipart/form-data参数(简单参数)
-     */
-    public void setMultipartFormSimpleParams(Map<String, Object> multipartFormSimpleParams) {
-        this.multipartFormSimpleParams.putAll(multipartFormSimpleParams);
-    }
-
-    /**
-     * 设置公共的multipart/form-data参数(资源参数)
-     *
-     * @param multipartFormResourceParams 公共的multipart/form-data参数(资源参数)
-     */
-    public void setMultipartFormResourceParams(Map<String, Object> multipartFormResourceParams) {
-        this.multipartFormResourceParams.putAll(multipartFormResourceParams);
     }
 
     /**
@@ -553,33 +481,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public Map<String, Object> getQueryParams() {
         return queryParams;
-    }
-
-    /**
-     * 获取公共的表单参数
-     *
-     * @return 公共的表单参数
-     */
-    public Map<String, Object> getFormParams() {
-        return formParams;
-    }
-
-    /**
-     * 获取公共的multipart/form-data参数(简单参数)
-     *
-     * @return 公共的multipart/form-data参数(简单参数)
-     */
-    public Map<String, Object> getMultipartFormSimpleParams() {
-        return multipartFormSimpleParams;
-    }
-
-    /**
-     * 获取公共的multipart/form-data参数(资源参数)
-     *
-     * @return 公共的multipart/form-data参数(资源参数)
-     */
-    public Map<String, Object> getMultipartFormResourceParams() {
-        return multipartFormResourceParams;
     }
 
     /**
