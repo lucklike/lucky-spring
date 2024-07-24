@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.configapi;
 
 import com.luckyframework.httpclient.proxy.configapi.EnableConfigurationParser;
 import com.luckyframework.httpclient.proxy.configapi.EncoderUtils;
+import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.reflect.Combination;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
@@ -294,5 +295,5 @@ public @interface LocalConfigHttpClient {
      * 拦截器优先级，数值越高优先级越低
      */
     @AliasFor(annotation = EnableConfigurationParser.class, attribute = "priority")
-    int priority() default 9000;
+    int priority() default PriorityConstant.CONFIG_API_PRIORITY;
 }
