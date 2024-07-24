@@ -288,4 +288,11 @@ public @interface LocalConfigHttpClient {
      */
     @AliasFor(annotation = HttpClientComponent.class, attribute = "name")
     String name() default "";
+
+
+    /**
+     * 拦截器优先级，数值越高优先级越低
+     */
+    @AliasFor(annotation = EnableConfigurationParser.class, attribute = "priority")
+    int priority() default 9000;
 }
