@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
+import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
+
 /**
  * 重定向相关的配置
  */
@@ -31,9 +33,9 @@ public class RedirectConfiguration {
     private Integer maxCount = 5;
 
     /**
-     * 重定向拦截器的优先级，默认100
+     * 重定向拦截器的优先级，默认{@value PriorityConstant#REDIRECT_PRIORITY}
      */
-    private Integer priority = 100;
+    private Integer priority = PriorityConstant.REDIRECT_PRIORITY;
 
 
     /**

@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
+import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,9 +41,9 @@ public class LoggerConfiguration {
     private boolean forcePrintBody = false;
 
     /**
-     * 日志打印拦截器的优先级，默认{@link Integer#MAX_VALUE}
+     * 日志打印拦截器的优先级，默认{@value PriorityConstant#DEFAULT_PRIORITY}
      */
-    private Integer priority = Integer.MAX_VALUE;
+    private Integer priority = PriorityConstant.DEFAULT_PRIORITY;
 
     /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>

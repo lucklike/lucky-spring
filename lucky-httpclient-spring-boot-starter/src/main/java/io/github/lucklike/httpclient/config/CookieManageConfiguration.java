@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.core.meta.CookieStore;
+import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
@@ -20,9 +21,9 @@ public class CookieManageConfiguration {
     private SimpleGenerateEntry<CookieStore> cookieStore;
 
     /**
-     * Cookie管理器拦截器的优先级，默认1000
+     * Cookie管理器拦截器的优先级，默认{@value  PriorityConstant#COOKIE_MANAGE_PRIORITY}
      */
-    private Integer priority = 1000;
+    private Integer priority = PriorityConstant.COOKIE_MANAGE_PRIORITY;
 
 
     /**
