@@ -67,4 +67,9 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
         }
         return false;
     }
+
+    @Override
+    public String uniqueIdentification() {
+        return PrintLogInterceptor.class.getName();
+    }
 }
