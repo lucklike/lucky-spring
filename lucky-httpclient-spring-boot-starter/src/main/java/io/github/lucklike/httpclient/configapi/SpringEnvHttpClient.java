@@ -99,6 +99,7 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *            #日志打印拦截器的优先级，默认2147483647
  *            priority: 2147483647
  *            #MimeType为这些类型时，将打印响应体日志（覆盖默认值）
+ *            #(注： *//*:表示所有类型)
  *            #默认值：
  *            #application/json
  *            #application/xml
@@ -114,6 +115,7 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *              - text/plain
  *              - text/html
  *            #MimeType为这些类型时，将打印响应体日志（在默认值的基础上新增）
+ *            #(注： *//* : 表示所有类型)
  *            #默认值：
  *            #application/json
  *            #application/xml
@@ -276,6 +278,11 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *              scope: SINGLETON/PROTOTYPE/METHOD/CLASS/METHOD_CONTEXT
  *              priority: 2 #优先级，数值越小优先级越高
  *
+ *          #禁用拦截器配置,在此处配置的拦截器逻辑将不会执行，注意：此处配置的是Interceptor接口实现类中uniqueIdentification()方法的返回值
+ *          interceptor-prohibit:
+ *            - Interceptor#uniqueIdentification()
+ *            - com.luckyframework.httpclient.proxy.interceptor.PrintLogInterceptor
+ *
  *          #配置响应转换器，其中result和exception至少要写一个
  *          resp-convert:
  *            result: "#{$body$.data}"      #响应转换表达式
@@ -290,6 +297,9 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *              - assertion: "#{$status$ == 200}"
  *                result: "#{$body$.data}"
  *
+ *          #是否禁止使用响应转换器，如果禁止则直接将响应体转化为方法返回值
+ *          convert-prohibit: false
+ *
  *          #配置SSE请求的监听器
  *          sse-listener:
  *            #模式一：指定Spring容器中Bean的名称
@@ -301,7 +311,6 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  *
  *   }
  * </pre>
- *
  * @author fukang
  * @version 1.0.0
  * @date 2023/8/30 03:06
