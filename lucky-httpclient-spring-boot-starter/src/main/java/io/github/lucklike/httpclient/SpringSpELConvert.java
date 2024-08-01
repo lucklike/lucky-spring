@@ -21,6 +21,11 @@ public class SpringSpELConvert extends SpELConvert {
         this.environment = environment;
     }
 
+    public SpringSpELConvert(SpELRuntime spELRuntime, Environment environment, String nestExpressionPrefix, String nestExpressionSuffix) {
+        super(spELRuntime, nestExpressionPrefix, nestExpressionSuffix);
+        this.environment = environment;
+    }
+
     public SpringSpELConvert(SpELRuntime spELRuntime, Environment environment) {
         super(spELRuntime);
         this.environment = environment;

@@ -168,13 +168,19 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void factorySpELConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        SpELConfiguration springEl = factoryConfig.getSpringEl();
+
         // 使用工厂构建一个SpELRuntime对象
-        SpELRuntimeFactory spELRuntimeFactory = factoryConfig.getSpringEl().getRuntimeFactory();
+        SpELRuntimeFactory spELRuntimeFactory = springEl.getRuntimeFactory();
         spELRuntimeFactory = spELRuntimeFactory == null ? new BeanSpELRuntimeFactoryFactory() : spELRuntimeFactory;
         SpELRuntime spELRuntime = spELRuntimeFactory.getSpELRuntime();
 
+        // 获取嵌套表达式的前缀和后缀
+        String prefix = springEl.getNestExpressionPrefix();
+        String suffix = springEl.getNestExpressionSuffix();
+
         // 使用SpELRuntime对象构建一个SpELConvert对象
-        SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment());
+        SpELConvert spELConvert = new SpringSpELConvert(spELRuntime, applicationContext.getEnvironment(), prefix, suffix);
         factory.setSpELConverter(spELConvert);
     }
 
