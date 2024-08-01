@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import io.github.lucklike.httpclient.annotation.SpELFunction;
@@ -9,6 +10,9 @@ import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.luckyframework.httpclient.proxy.spel.SpELConvert.DEFAULT_NEST_EXPRESSION_PREFIX;
+import static com.luckyframework.httpclient.proxy.spel.SpELConvert.DEFAULT_NEST_EXPRESSION_SUFFIX;
 
 /**
  * SpEL相关的配置
@@ -19,6 +23,16 @@ public class SpELConfiguration {
      * SpEL运行时环境工厂
      */
     private SpELRuntimeFactory runtimeFactory;
+
+    /**
+     * 嵌套解析表达式前缀，默认值：``
+     */
+    private String nestExpressionPrefix = DEFAULT_NEST_EXPRESSION_PREFIX;
+
+    /**
+     * 嵌套解析表达式后缀，默认值：``
+     */
+    private String nestExpressionSuffix = DEFAULT_NEST_EXPRESSION_SUFFIX;
 
     /**
      * 向SpEL运行时环境导入的包
@@ -58,7 +72,6 @@ public class SpELConfiguration {
     private StaticClassEntry[] functionClasses;
 
 
-
     /**
      * 设置{@link SpELRuntimeFactory SpEL运行时环境工厂}
      *
@@ -66,6 +79,24 @@ public class SpELConfiguration {
      */
     public void setRuntimeFactory(SpELRuntimeFactory runtimeFactory) {
         this.runtimeFactory = runtimeFactory;
+    }
+
+    /**
+     * 设置嵌套解析表达式前缀，默认值：``
+     *
+     * @param nestExpressionPrefix 嵌套解析表达式前缀
+     */
+    public void setNestExpressionPrefix(String nestExpressionPrefix) {
+        this.nestExpressionPrefix = nestExpressionPrefix;
+    }
+
+    /**
+     * 设置嵌套解析表达式后缀，默认值：``
+     *
+     * @param nestExpressionSuffix 嵌套解析表达式后缀
+     */
+    public void setNestExpressionSuffix(String nestExpressionSuffix) {
+        this.nestExpressionSuffix = nestExpressionSuffix;
     }
 
     /**
@@ -138,6 +169,24 @@ public class SpELConfiguration {
      */
     public SpELRuntimeFactory getRuntimeFactory() {
         return runtimeFactory;
+    }
+
+    /**
+     * 获取嵌套解析表达式前缀，默认值：``
+     *
+     * @return 嵌套解析表达式前缀
+     */
+    public String getNestExpressionPrefix() {
+        return nestExpressionPrefix;
+    }
+
+    /**
+     * 获取嵌套解析表达式后缀，默认值：``
+     *
+     * @return 嵌套解析表达式后缀
+     */
+    public String getNestExpressionSuffix() {
+        return nestExpressionSuffix;
     }
 
     /**
