@@ -4,7 +4,6 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.convert.ProtobufAutoConvert;
 import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert;
@@ -17,6 +16,8 @@ import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
+import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
+import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
@@ -33,6 +34,7 @@ import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.LazyValue;
+import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
@@ -47,14 +49,14 @@ import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
 import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
+import io.github.lucklike.httpclient.config.SSLConfiguration;
+import io.github.lucklike.httpclient.config.SSLContextConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
-import io.github.lucklike.httpclient.config.impl.SSLConfiguration;
-import io.github.lucklike.httpclient.config.impl.SSLContextConfiguration;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
@@ -72,10 +74,11 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ConversionServiceFactoryBean;
-import org.springframework.core.io.Resource;
 import org.springframework.core.type.AnnotationMetadata;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -87,7 +90,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.*;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 
 /**
  * <pre>
@@ -445,19 +454,45 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void sslSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-
         SSLConfiguration sslConfig = factoryConfig.getSsl();
 
+        // 注册SSLContext
         SSLContextConfiguration[] sslContexts = sslConfig.getSslContexts();
         if (ContainerUtils.isNotEmptyArray(sslContexts)) {
             for (SSLContextConfiguration sslContext : sslContexts) {
                 factory.addSSLContext(sslContext.getId(), LazyValue.of(() -> SSLUtils.customSSL(sslContext.getProtocol(), sslContext.getCertPass(), sslContext.getKeyStoreFile(), sslContext.getKeyStoreType(), sslContext.getKeyStorePass())));
             }
         }
+
+        // 开启全局SSL配置
         if (Objects.equals(Boolean.TRUE, sslConfig.getGlobalEnable())) {
-            factory.setHostnameVerifier(TrustAllHostnameVerifier.DEFAULT_INSTANCE);
-            String sslContextId = sslConfig.getGlobalSslContext();
-            try {
+
+            // HostnameVerifier
+            HostnameVerifier hostnameVerifier = TrustAllHostnameVerifier.DEFAULT_INSTANCE;
+            SimpleGenerateEntry<HostnameVerifierFactory> hvbFactory = sslConfig.getHostnameVerifier();
+            if (hvbFactory != null) {
+                if (StringUtils.hasText(hvbFactory.getBeanName())) {
+                    hostnameVerifier = applicationContext.getBean(hvbFactory.getBeanName(), HostnameVerifierFactory.class).getHostnameVerifier();
+                } else if (hvbFactory.getType() != null) {
+                    hostnameVerifier = ClassUtils.newObject(hvbFactory.getType()).getHostnameVerifier();
+                }
+            } else if (StringUtils.hasText(sslConfig.getHostnameVerifierExpression())) {
+                hostnameVerifier = factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getHostnameVerifierExpression()).setExpectedResultType(HostnameVerifier.class));
+            }
+            factory.setHostnameVerifier(hostnameVerifier);
+
+            // SSLSocketFactory
+            SimpleGenerateEntry<SSLSocketFactoryFactory> sslFactoryConfig = sslConfig.getSslSocketFactory();
+            if (sslFactoryConfig != null && (StringUtils.hasText(sslFactoryConfig.getBeanName()) || sslFactoryConfig.getType() != null)) {
+                if (StringUtils.hasText(sslFactoryConfig.getBeanName())) {
+                    factory.setSslSocketFactory(applicationContext.getBean(sslFactoryConfig.getBeanName(), SSLSocketFactoryFactory.class).getSSLSocketFactory());
+                } else {
+                    factory.setSslSocketFactory(ClassUtils.newObject(sslFactoryConfig.getType()).getSSLSocketFactory());
+                }
+            } else if (StringUtils.hasText(sslConfig.getSslSocketFactoryExpression())) {
+                factory.setSslSocketFactory(factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getSslSocketFactoryExpression()).setExpectedResultType(SSLSocketFactory.class)));
+            } else {
+                String sslContextId = sslConfig.getGlobalSslContext();
                 if (StringUtils.hasText(sslContextId)) {
                     LazyValue<SSLContext> sslContext = factory.getSSLContext(sslContextId);
                     if (sslContext == null) {
@@ -467,11 +502,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 } else {
                     factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(sslConfig.getGlobalProtocol()).getSocketFactory());
                 }
-            } catch (Exception e) {
-                throw new LuckyRuntimeException(e);
             }
-
-
         }
     }
 

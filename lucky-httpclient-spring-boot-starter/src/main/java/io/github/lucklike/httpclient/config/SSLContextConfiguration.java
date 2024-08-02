@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.config.impl;
+package io.github.lucklike.httpclient.config;
 
 
 public class SSLContextConfiguration {

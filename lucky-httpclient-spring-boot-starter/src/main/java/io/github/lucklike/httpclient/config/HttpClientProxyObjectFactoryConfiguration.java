@@ -4,7 +4,6 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.SSLConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
