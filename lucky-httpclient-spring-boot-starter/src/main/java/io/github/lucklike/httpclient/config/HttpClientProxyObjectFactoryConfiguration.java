@@ -4,6 +4,7 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
+import io.github.lucklike.httpclient.config.impl.SSLConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
@@ -104,14 +105,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
-     * 是否忽略SSL证书认证
+     * SSL协议相关配置
      */
-    private boolean ignoreSSLVerify;
-
-    /**
-     * 使用的SSL协议，默认为TLS
-     */
-    private String sslProtocol;
+    @NestedConfigurationProperty
+    private SSLConfiguration ssl = new SSLConfiguration();
 
     /**
      * HTTP异常处理器生成器信息
@@ -290,21 +287,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 是否忽略SSL证书认证
+     * 设置SSL协议相关的配置
      *
-     * @param ignoreSSLVerify 是否忽略SSL证书认证
+     * @param ssl SSL协议相关的配置
      */
-    public void setIgnoreSSLVerify(boolean ignoreSSLVerify) {
-        this.ignoreSSLVerify = ignoreSSLVerify;
-    }
-
-    /**
-     * 设置SSL协议
-     *
-     * @param sslProtocol SSL协议，默认TLS
-     */
-    public void setSslProtocol(String sslProtocol) {
-        this.sslProtocol = sslProtocol;
+    public void setSsl(SSLConfiguration ssl) {
+        this.ssl = ssl;
     }
 
     /**
@@ -484,21 +472,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 是否忽略SSL证书认证功能
+     * 获取SSL相关的配置
      *
-     * @return 是否忽略SSL证书认证功能
+     * @return SSL相关的配置
      */
-    public boolean isIgnoreSSLVerify() {
-        return ignoreSSLVerify;
-    }
-
-    /**
-     * 获取SSL协议
-     *
-     * @return SSL协议
-     */
-    public String getSslProtocol() {
-        return sslProtocol;
+    public SSLConfiguration getSsl() {
+        return ssl;
     }
 
     /**

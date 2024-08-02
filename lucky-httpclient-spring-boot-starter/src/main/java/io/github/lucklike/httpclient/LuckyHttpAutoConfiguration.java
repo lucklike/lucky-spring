@@ -32,6 +32,7 @@ import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
+import com.luckyframework.spel.LazyValue;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
@@ -52,6 +53,8 @@ import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
+import io.github.lucklike.httpclient.config.impl.SSLConfiguration;
+import io.github.lucklike.httpclient.config.impl.SSLContextConfiguration;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
@@ -72,10 +75,12 @@ import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.type.AnnotationMetadata;
 
+import javax.net.ssl.SSLContext;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -440,14 +445,33 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void sslSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 检查是否需要注册忽略SSL证书认证的拦截器
-        if (factoryConfig.isIgnoreSSLVerify()) {
+
+        SSLConfiguration sslConfig = factoryConfig.getSsl();
+
+        SSLContextConfiguration[] sslContexts = sslConfig.getSslContexts();
+        if (ContainerUtils.isNotEmptyArray(sslContexts)) {
+            for (SSLContextConfiguration sslContext : sslContexts) {
+                factory.addSSLContext(sslContext.getId(), LazyValue.of(() -> SSLUtils.customSSL(sslContext.getProtocol(), sslContext.getCertPass(), sslContext.getKeyStoreFile(), sslContext.getKeyStoreType(), sslContext.getKeyStorePass())));
+            }
+        }
+        if (Objects.equals(Boolean.TRUE, sslConfig.getGlobalEnable())) {
+            factory.setHostnameVerifier(TrustAllHostnameVerifier.DEFAULT_INSTANCE);
+            String sslContextId = sslConfig.getGlobalSslContext();
             try {
-                factory.setHostnameVerifier(TrustAllHostnameVerifier.DEFAULT_INSTANCE);
-                factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(factoryConfig.getSslProtocol()).getSocketFactory());
+                if (StringUtils.hasText(sslContextId)) {
+                    LazyValue<SSLContext> sslContext = factory.getSSLContext(sslContextId);
+                    if (sslContext == null) {
+                        throw new LuckyRuntimeException("SSLContext not found, id: " + sslContextId);
+                    }
+                    factory.setSslSocketFactory(sslContext.getValue().getSocketFactory());
+                } else {
+                    factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(sslConfig.getGlobalProtocol()).getSocketFactory());
+                }
             } catch (Exception e) {
                 throw new LuckyRuntimeException(e);
             }
+
+
         }
     }
 
