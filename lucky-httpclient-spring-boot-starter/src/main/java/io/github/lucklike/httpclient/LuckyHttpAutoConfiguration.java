@@ -4,7 +4,6 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.convert.ProtobufAutoConvert;
 import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert;
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
@@ -17,6 +16,8 @@ import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
+import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
+import com.luckyframework.httpclient.core.ssl.SSLException;
 import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
@@ -33,7 +34,6 @@ import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
-import com.luckyframework.spel.LazyValue;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
@@ -44,13 +44,13 @@ import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfigur
 import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
+import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
 import io.github.lucklike.httpclient.config.LoggerConfiguration;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
 import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
-import io.github.lucklike.httpclient.config.SSLContextConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
@@ -77,8 +77,8 @@ import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.type.AnnotationMetadata;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -457,10 +457,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         SSLConfiguration sslConfig = factoryConfig.getSsl();
 
         // 注册SSLContext
-        SSLContextConfiguration[] sslContexts = sslConfig.getSslContexts();
+        KeyStoreConfiguration[] sslContexts = sslConfig.getKeyStores();
         if (ContainerUtils.isNotEmptyArray(sslContexts)) {
-            for (SSLContextConfiguration sslContext : sslContexts) {
-                factory.addSSLContext(sslContext.getId(), LazyValue.of(() -> SSLUtils.customSSL(sslContext.getProtocol(), sslContext.getCertPass(), sslContext.getKeyStoreFile(), sslContext.getKeyStoreType(), sslContext.getKeyStorePass())));
+            for (KeyStoreConfiguration sslContext : sslContexts) {
+                factory.addKeyStoreInfo(sslContext.getId(), sslContext);
             }
         }
 
@@ -492,16 +492,31 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             } else if (StringUtils.hasText(sslConfig.getSslSocketFactoryExpression())) {
                 factory.setSslSocketFactory(factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getSslSocketFactoryExpression()).setExpectedResultType(SSLSocketFactory.class)));
             } else {
-                String sslContextId = sslConfig.getGlobalSslContext();
-                if (StringUtils.hasText(sslContextId)) {
-                    LazyValue<SSLContext> sslContext = factory.getSSLContext(sslContextId);
-                    if (sslContext == null) {
-                        throw new LuckyRuntimeException("SSLContext not found, id: " + sslContextId);
+                KeyStoreInfo keyStoreInfo= null;
+                KeyStoreInfo trustStoreInfo= null;
+
+                String keyStoreId = sslConfig.getGlobalKeyStore();
+                String trustStoreId = sslConfig.getGlobalTrustStore();
+                if (StringUtils.hasText(keyStoreId)) {
+                    keyStoreInfo = factory.getKeyStoreInfo(keyStoreId);
+                    if (keyStoreInfo == null) {
+                        throw new SSLException("Not found in the HttpClientProxyObjectFactory KeyStoreInfo object called {}", keyStoreId);
                     }
-                    factory.setSslSocketFactory(sslContext.getValue().getSocketFactory());
-                } else {
-                    factory.setSslSocketFactory(SSLUtils.createIgnoreVerifySSL(sslConfig.getGlobalProtocol()).getSocketFactory());
                 }
+
+                if (StringUtils.hasText(trustStoreId)) {
+                    trustStoreInfo = factory.getKeyStoreInfo(trustStoreId);
+                    if (trustStoreInfo == null) {
+                        throw new SSLException("Not found in the HttpClientProxyObjectFactory KeyStoreInfo object called {}", keyStoreId);
+                    }
+                }
+
+                String pro = sslConfig.getGlobalProtocol();
+                String protocol = StringUtils.hasText(pro) ? pro : (keyStoreInfo != null ? keyStoreInfo.getProtocol() : null);
+                String certPassword = keyStoreInfo != null ? keyStoreInfo.getCertPassword() : null;
+                KeyStore keyStore = keyStoreInfo != null ? SSLUtils.createKeyStore(keyStoreInfo) : null;
+                KeyStore trustStore = trustStoreInfo != null ? SSLUtils.createKeyStore(trustStoreInfo) : null;
+                factory.setSslSocketFactory(SSLUtils.createSSLContext(protocol, certPassword, keyStore, trustStore).getSocketFactory());
             }
         }
     }
