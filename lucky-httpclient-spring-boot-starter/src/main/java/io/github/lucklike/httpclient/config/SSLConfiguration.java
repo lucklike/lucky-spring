@@ -47,14 +47,19 @@ public class SSLConfiguration {
     private String globalProtocol = "TLS";
 
     /**
-     * 全局SSL上下文ID，如果不配做则默认使用单向认证
+     * 全局KeyStore，如果不配做则默认使用单向认证
      */
-    private String globalSslContext;
+    private String globalKeyStore;
 
     /**
-     * SSL上下文配置
+     * 全局TrustStore，如果不配做则默忽略服务器端证书认证
      */
-    private SSLContextConfiguration[] sslContexts;
+    private String globalTrustStore;
+
+    /**
+     * KeyStore配置
+     */
+    private KeyStoreConfiguration[] keyStores;
 
     /**
      * 是否全局开启SSL，为true时默认开启的时单向认证并且忽略域名校验<br/>
@@ -164,17 +169,25 @@ public class SSLConfiguration {
      *
      * @return 全局SSL上下文ID
      */
-    public String getGlobalSslContext() {
-        return globalSslContext;
+    public String getGlobalKeyStore() {
+        return globalKeyStore;
     }
 
     /**
      * 设置全局SSL上下文ID，如果不配做则默认使用单向认证
      *
-     * @param globalSslContext 全局SSL上下文ID
+     * @param globalKeyStore 全局SSL上下文ID
      */
-    public void setGlobalSslContext(String globalSslContext) {
-        this.globalSslContext = globalSslContext;
+    public void setGlobalKeyStore(String globalKeyStore) {
+        this.globalKeyStore = globalKeyStore;
+    }
+
+    public String getGlobalTrustStore() {
+        return globalTrustStore;
+    }
+
+    public void setGlobalTrustStore(String globalTrustStore) {
+        this.globalTrustStore = globalTrustStore;
     }
 
     /**
@@ -182,16 +195,16 @@ public class SSLConfiguration {
      *
      * @return 所有SSL上下文配置
      */
-    public SSLContextConfiguration[] getSslContexts() {
-        return sslContexts;
+    public KeyStoreConfiguration[] getKeyStores() {
+        return keyStores;
     }
 
     /**
      * 设置一组SSL上下文配置
      *
-     * @param sslContexts 一组SSL上下文配置
+     * @param keyStores 一组SSL上下文配置
      */
-    public void setSslContexts(SSLContextConfiguration[] sslContexts) {
-        this.sslContexts = sslContexts;
+    public void setKeyStores(KeyStoreConfiguration[] keyStores) {
+        this.keyStores = keyStores;
     }
 }
