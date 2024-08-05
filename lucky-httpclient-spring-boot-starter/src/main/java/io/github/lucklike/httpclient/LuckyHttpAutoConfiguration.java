@@ -78,7 +78,6 @@ import org.springframework.core.type.AnnotationMetadata;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
-import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -90,13 +89,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
+import static io.github.lucklike.httpclient.Constant.*;
 
 /**
  * <pre>
@@ -492,8 +485,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             } else if (StringUtils.hasText(sslConfig.getSslSocketFactoryExpression())) {
                 factory.setSslSocketFactory(factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getSslSocketFactoryExpression()).setExpectedResultType(SSLSocketFactory.class)));
             } else {
-                KeyStoreInfo keyStoreInfo= null;
-                KeyStoreInfo trustStoreInfo= null;
+                KeyStoreInfo keyStoreInfo = null;
+                KeyStoreInfo trustStoreInfo = null;
 
                 String keyStoreId = sslConfig.getGlobalKeyStore();
                 String trustStoreId = sslConfig.getGlobalTrustStore();
@@ -511,12 +504,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     }
                 }
 
-                String pro = sslConfig.getGlobalProtocol();
-                String protocol = StringUtils.hasText(pro) ? pro : (keyStoreInfo != null ? keyStoreInfo.getProtocol() : null);
-                String certPassword = keyStoreInfo != null ? keyStoreInfo.getCertPassword() : null;
-                KeyStore keyStore = keyStoreInfo != null ? SSLUtils.createKeyStore(keyStoreInfo) : null;
-                KeyStore trustStore = trustStoreInfo != null ? SSLUtils.createKeyStore(trustStoreInfo) : null;
-                factory.setSslSocketFactory(SSLUtils.createSSLContext(protocol, certPassword, keyStore, trustStore).getSocketFactory());
+                factory.setSslSocketFactory(SSLUtils.createSSLContext(sslConfig.getGlobalProtocol(), keyStoreInfo, trustStoreInfo).getSocketFactory());
             }
         }
     }
