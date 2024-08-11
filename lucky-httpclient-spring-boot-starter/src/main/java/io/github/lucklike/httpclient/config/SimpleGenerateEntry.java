@@ -13,11 +13,11 @@ public class SimpleGenerateEntry<T> {
      * 生成器需要生成对象的Class
      */
     private Class<T> type;
+
     /**
      * 对象在SpringIOC容器中的名称
      */
     private String beanName = "";
-
 
     /**
      * 生成对象的Class
