@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
 
-    private static final Logger log = LoggerFactory.getLogger(LuckyHttpClientBeanDefinitionGenerator.class);
+    private static final Logger log = LoggerFactory.getLogger(LuckyHttpClientImportBeanDefinitionRegistrar.class);
 
     private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
 
