@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 
 /**
+ * <b>如下所有配置均支持松散绑定</b><br/><br/>
  * 声明式Http客户端的注解，支持从Spring环境变量中获取请求与响应转化的相关配置<br/>
  *
  * <b>配置内容：</b><br/>

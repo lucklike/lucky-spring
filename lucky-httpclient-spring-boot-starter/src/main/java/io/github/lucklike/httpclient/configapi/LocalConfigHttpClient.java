@@ -19,6 +19,8 @@ import java.lang.annotation.Target;
 import static com.luckyframework.httpclient.proxy.configapi.Source.LOCAL_FILE;
 
 /**
+ *
+ * <b>如下所有配置均支持松散绑定</b><br/><br/>
  * 声明式Http客户端的注解，支持从本地文件中获取请求与响应转化的相关配置<br/>
  *
  * <b>配置内容：</b><br/>
