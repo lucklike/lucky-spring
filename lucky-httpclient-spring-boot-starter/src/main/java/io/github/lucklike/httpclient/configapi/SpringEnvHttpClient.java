@@ -7,6 +7,7 @@ import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
 import com.luckyframework.reflect.Combination;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
@@ -460,4 +461,10 @@ public @interface SpringEnvHttpClient {
      */
     @AliasFor(annotation = EnableConfigurationParser.class, attribute = "priority")
     int priority() default PriorityConstant.CONFIG_API_PRIORITY;
+
+    /**
+     * 代理模式
+     */
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "proxyModel")
+    ProxyModel proxyModel() default ProxyModel.DEFAULT;
 }

@@ -50,8 +50,8 @@ public @interface EnableLuckyHttpClient {
     String proxyFactoryName() default PROXY_FACTORY_BEAN_NAME;
 
     /**
-     * 是否启用Cglib代理方式，默认使用Jdk代理方式
+     * 代理模式，默认使用Jdk代理方式
      */
-    @AliasFor(annotation = LuckyHttpClientScan.class, attribute = "useCglibProxy")
-    boolean useCglibProxy() default false;
+    @AliasFor(annotation = LuckyHttpClientScan.class, attribute = "proxyModel")
+    ProxyModel proxyModel() default ProxyModel.JDK;
 }

@@ -49,7 +49,7 @@ public @interface LuckyHttpClientScan {
     String proxyFactoryName() default PROXY_FACTORY_BEAN_NAME;
 
     /**
-     * 是否启用Cglib代理方式，默认使用Jdk代理方式
+     * 代理模式，默认使用Jdk代理方式
      */
-    boolean useCglibProxy() default false;
+    ProxyModel proxyModel() default ProxyModel.JDK;
 }

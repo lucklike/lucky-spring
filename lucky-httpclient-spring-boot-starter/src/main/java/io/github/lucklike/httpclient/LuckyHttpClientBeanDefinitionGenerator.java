@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient;
 
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 
@@ -23,37 +24,58 @@ public class LuckyHttpClientBeanDefinitionGenerator {
 
     private final String httpClientProxyObjectFactoryBeanName;
 
-    private final String proxyMethodName;
+    private final Set<ProxyInfo> proxyInfoSet = new LinkedHashSet<>(16);
 
-    private final Set<Class<?>> httpClientClasses = new LinkedHashSet<>(16);
+    private final ProxyModel proxyModel;
 
-    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, boolean useCglibProxy) {
+    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, ProxyModel proxyModel) {
         this.httpClientProxyObjectFactoryBeanName = httpClientProxyObjectFactoryBeanName;
-        this.proxyMethodName = useCglibProxy ? CGLIB_PROXY_METHOD : JDK_PROXY_METHOD;
+        this.proxyModel = proxyModel == ProxyModel.DEFAULT ? ProxyModel.JDK : proxyModel;
     }
 
     public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName) {
-        this(httpClientProxyObjectFactoryBeanName, false);
+        this(httpClientProxyObjectFactoryBeanName, ProxyModel.JDK);
     }
 
-    public void addHttpClientClasses(Class<?>... httpClientClasses) {
-        this.httpClientClasses.addAll(Arrays.asList(httpClientClasses));
+    public void addHttpClientClass(Class<?> httpClientClasses, ProxyModel proxyModel) {
+        proxyModel = proxyModel == ProxyModel.DEFAULT ? this.proxyModel : proxyModel;
+        this.proxyInfoSet.add(new ProxyInfo(httpClientClasses, proxyModel));
     }
 
     public List<BeanDefinition> getLuckyHttpClientBeanDefinitions() {
-        return this.httpClientClasses
+        return this.proxyInfoSet
                 .stream()
                 .map(this::createHttpClientBeanDefinition)
                 .collect(Collectors.toList());
     }
 
-    private BeanDefinition createHttpClientBeanDefinition(Class<?> httpClientClass) {
-        RootBeanDefinition beanDefinition = new RootBeanDefinition(httpClientClass);
+    private BeanDefinition createHttpClientBeanDefinition(ProxyInfo proxyInfo) {
+        RootBeanDefinition beanDefinition = new RootBeanDefinition(proxyInfo.getProxyClass());
         beanDefinition.setFactoryBeanName(httpClientProxyObjectFactoryBeanName);
-        beanDefinition.setFactoryMethodName(proxyMethodName);
-        beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(httpClientClass);
+        beanDefinition.setFactoryMethodName(proxyInfo.getProxyModel().getProxyMethod());
+        beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(proxyInfo.getProxyClass());
         return beanDefinition;
     }
 
+    /**
+     * 代理信息类
+     */
+    class ProxyInfo {
+        private final Class<?> proxyClass;
+        private final ProxyModel proxyModel;
+
+        ProxyInfo(Class<?> proxyClass, ProxyModel proxyModel) {
+            this.proxyClass = proxyClass;
+            this.proxyModel = proxyModel;
+        }
+
+        public Class<?> getProxyClass() {
+            return proxyClass;
+        }
+
+        public ProxyModel getProxyModel() {
+            return proxyModel;
+        }
+    }
 
 }

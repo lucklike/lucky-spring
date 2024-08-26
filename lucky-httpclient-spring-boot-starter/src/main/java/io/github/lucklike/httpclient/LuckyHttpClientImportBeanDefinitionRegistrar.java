@@ -5,6 +5,7 @@ import com.luckyframework.common.ScanUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -33,11 +34,11 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
-        boolean useCglibProxy = (boolean) attributes.get("useCglibProxy");
+        ProxyModel proxyModel = (ProxyModel) attributes.get("proxyModel");
         String proxyFactoryName = (String) attributes.get("proxyFactoryName");
-        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, (useCglibProxy ? "CGLIB" : "JDK"));
+        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, proxyModel);
         LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
-                new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, useCglibProxy);
+                new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, proxyModel);
         addHttpClientClasses(beanDefinitionGenerator, importingClassMetadata);
         beanDefinitionGenerator.getLuckyHttpClientBeanDefinitions().forEach(definition -> {
             String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(definition, registry);
@@ -59,8 +60,9 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         log.info("Lucky-HttpClient Start scanning the package {}", Arrays.toString(finalScannedPackages));
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
-            if (annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
-                beanDefinitionGenerator.addHttpClientClasses(ClassUtils.getClass(annotationMetadata.getClassName()));
+            if (!annotationMetadata.isAnnotation() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
+                ProxyModel proxyModel = (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
+                beanDefinitionGenerator.addHttpClientClass(ClassUtils.getClass(annotationMetadata.getClassName()), proxyModel);
                 if (log.isDebugEnabled()) {
                     log.debug("@HttpClientComponent '{}' is registered", annotationMetadata.getClassName());
                 }
