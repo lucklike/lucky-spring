@@ -1,17 +1,9 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static io.github.lucklike.httpclient.Constant.CGLIB_PROXY_METHOD;
-import static io.github.lucklike.httpclient.Constant.JDK_PROXY_METHOD;
 
 /**
  * lucky-http-client接口代理对象定义信息生成器
@@ -22,60 +14,49 @@ import static io.github.lucklike.httpclient.Constant.JDK_PROXY_METHOD;
  */
 public class LuckyHttpClientBeanDefinitionGenerator {
 
+    /**
+     * Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     */
     private final String httpClientProxyObjectFactoryBeanName;
 
-    private final Set<ProxyInfo> proxyInfoSet = new LinkedHashSet<>(16);
+    /**
+     * 全局代理模式
+     */
+    private final ProxyModel globalProxyModel;
 
-    private final ProxyModel proxyModel;
-
-    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, ProxyModel proxyModel) {
+    /**
+     * HTTP客户端BeanDefinition生成器构造器
+     *
+     * @param httpClientProxyObjectFactoryBeanName 指定Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     * @param globalProxyModel                     全局代理模式
+     */
+    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, ProxyModel globalProxyModel) {
         this.httpClientProxyObjectFactoryBeanName = httpClientProxyObjectFactoryBeanName;
-        this.proxyModel = proxyModel == ProxyModel.DEFAULT ? ProxyModel.JDK : proxyModel;
+        this.globalProxyModel = globalProxyModel == ProxyModel.DEFAULT ? ProxyModel.JDK : globalProxyModel;
     }
 
+    /**
+     * HTTP客户端BeanDefinition生成器构造器，全局使用JDK动态代理
+     *
+     * @param httpClientProxyObjectFactoryBeanName 指定Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     */
     public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName) {
         this(httpClientProxyObjectFactoryBeanName, ProxyModel.JDK);
     }
 
-    public void addHttpClientClass(Class<?> httpClientClasses, ProxyModel proxyModel) {
-        proxyModel = proxyModel == ProxyModel.DEFAULT ? this.proxyModel : proxyModel;
-        this.proxyInfoSet.add(new ProxyInfo(httpClientClasses, proxyModel));
-    }
-
-    public List<BeanDefinition> getLuckyHttpClientBeanDefinitions() {
-        return this.proxyInfoSet
-                .stream()
-                .map(this::createHttpClientBeanDefinition)
-                .collect(Collectors.toList());
-    }
-
-    private BeanDefinition createHttpClientBeanDefinition(ProxyInfo proxyInfo) {
-        RootBeanDefinition beanDefinition = new RootBeanDefinition(proxyInfo.getProxyClass());
+    /**
+     * 创建一个HTTP客户端代理对象的BeanDefinition
+     *
+     * @param httpClientClass 代理对象的Class
+     * @param proxyModel      代理模式
+     * @return 代理对象的BeanDefinition
+     */
+    public BeanDefinition createHttpClientBeanDefinition(Class<?> httpClientClass, ProxyModel proxyModel) {
+        proxyModel = proxyModel == ProxyModel.DEFAULT ? this.globalProxyModel : proxyModel;
+        RootBeanDefinition beanDefinition = new RootBeanDefinition(httpClientClass);
         beanDefinition.setFactoryBeanName(httpClientProxyObjectFactoryBeanName);
-        beanDefinition.setFactoryMethodName(proxyInfo.getProxyModel().getProxyMethod());
-        beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(proxyInfo.getProxyClass());
+        beanDefinition.setFactoryMethodName(proxyModel.getProxyMethod());
+        beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(httpClientClass);
         return beanDefinition;
     }
-
-    /**
-     * 代理信息类
-     */
-    class ProxyInfo {
-        private final Class<?> proxyClass;
-        private final ProxyModel proxyModel;
-
-        ProxyInfo(Class<?> proxyClass, ProxyModel proxyModel) {
-            this.proxyClass = proxyClass;
-            this.proxyModel = proxyModel;
-        }
-
-        public Class<?> getProxyClass() {
-            return proxyClass;
-        }
-
-        public ProxyModel getProxyModel() {
-            return proxyModel;
-        }
-    }
-
 }
