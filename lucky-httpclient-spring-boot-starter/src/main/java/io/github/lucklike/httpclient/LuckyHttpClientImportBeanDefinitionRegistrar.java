@@ -2,17 +2,24 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
+import java.beans.Introspector;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -30,41 +37,66 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
 
+    private final String SPRING_COMPONENT = Component.class.getName();
+
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
-        Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
-        boolean useCglibProxy = (boolean) attributes.get("useCglibProxy");
-        String proxyFactoryName = (String) attributes.get("proxyFactoryName");
-        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, (useCglibProxy ? "CGLIB" : "JDK"));
-        LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
-                new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, useCglibProxy);
-        addHttpClientClasses(beanDefinitionGenerator, importingClassMetadata);
-        beanDefinitionGenerator.getLuckyHttpClientBeanDefinitions().forEach(definition -> {
-            String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(definition, registry);
-            if (!registry.containsBeanDefinition(beanName)) {
-                registry.registerBeanDefinition(beanName, definition);
-            }
-        });
-    }
 
-    private void addHttpClientClasses(LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator, AnnotationMetadata importingClassMetadata) {
+        // 构造BeanDefinition生成器
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
+        ProxyModel globalProxyModel = (ProxyModel) attributes.get("proxyModel");
+        String proxyFactoryName = (String) attributes.get("proxyFactoryName");
+        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, globalProxyModel);
+        LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
+                new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, globalProxyModel);
+
+
+        // 获取需要扫描的包
         String[] scannedPackages = (String[]) attributes.get("basePackages");
         Class<?>[] scannedClasses = (Class<?>[]) attributes.get("basePackageClasses");
-
         if (ContainerUtils.isEmptyArray(scannedPackages) && ContainerUtils.isEmptyArray(scannedClasses)) {
             scannedClasses = new Class[]{ClassUtils.getClass(importingClassMetadata.getClassName())};
         }
         String[] finalScannedPackages = ScanUtils.getPackages(scannedClasses, scannedPackages);
         log.info("Lucky-HttpClient Start scanning the package {}", Arrays.toString(finalScannedPackages));
+
+        // 包扫描以及BeanDefinition注册
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
-            if (annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
-                beanDefinitionGenerator.addHttpClientClasses(ClassUtils.getClass(annotationMetadata.getClassName()));
-                if (log.isDebugEnabled()) {
-                    log.debug("@HttpClientComponent '{}' is registered", annotationMetadata.getClassName());
+            if (!annotationMetadata.isAnnotation() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
+
+                // 创建BeanDefinition
+                String beanClassName = annotationMetadata.getClassName();
+                ProxyModel proxyModel = (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
+                BeanDefinition definition = beanDefinitionGenerator.createHttpClientBeanDefinition(ClassUtils.getClass(beanClassName), proxyModel);
+
+                // 获取Bean名称并注册
+                String beanName = generateBeanName(annotationMetadata);
+                if (!registry.containsBeanDefinition(beanName)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("@HttpClientComponent '{}' is registered", beanClassName);
+                    }
+                    registry.registerBeanDefinition(beanName, definition);
+                } else {
+                    throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
                 }
             }
         });
+    }
+
+    /**
+     *
+     * @param annotationMetadata
+     * @return
+     */
+    private String generateBeanName(AnnotationMetadata annotationMetadata) {
+        Map<String, Object> attributes = annotationMetadata.getAnnotationAttributes(SPRING_COMPONENT);
+        String value = (String) attributes.get("value");
+        if (StringUtils.hasText(value)) {
+            return value;
+        }
+        String beanClassName = annotationMetadata.getClassName();
+        String shortClassName = org.springframework.util.ClassUtils.getShortName(beanClassName);
+        return Introspector.decapitalize(shortClassName);
     }
 }

@@ -1,16 +1,9 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static io.github.lucklike.httpclient.Constant.CGLIB_PROXY_METHOD;
-import static io.github.lucklike.httpclient.Constant.JDK_PROXY_METHOD;
 
 /**
  * lucky-http-client接口代理对象定义信息生成器
@@ -21,39 +14,49 @@ import static io.github.lucklike.httpclient.Constant.JDK_PROXY_METHOD;
  */
 public class LuckyHttpClientBeanDefinitionGenerator {
 
+    /**
+     * Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     */
     private final String httpClientProxyObjectFactoryBeanName;
 
-    private final String proxyMethodName;
+    /**
+     * 全局代理模式
+     */
+    private final ProxyModel globalProxyModel;
 
-    private final Set<Class<?>> httpClientClasses = new LinkedHashSet<>(16);
-
-    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, boolean useCglibProxy) {
+    /**
+     * HTTP客户端BeanDefinition生成器构造器
+     *
+     * @param httpClientProxyObjectFactoryBeanName 指定Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     * @param globalProxyModel                     全局代理模式
+     */
+    public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, ProxyModel globalProxyModel) {
         this.httpClientProxyObjectFactoryBeanName = httpClientProxyObjectFactoryBeanName;
-        this.proxyMethodName = useCglibProxy ? CGLIB_PROXY_METHOD : JDK_PROXY_METHOD;
+        this.globalProxyModel = globalProxyModel == ProxyModel.DEFAULT ? ProxyModel.JDK : globalProxyModel;
     }
 
+    /**
+     * HTTP客户端BeanDefinition生成器构造器，全局使用JDK动态代理
+     *
+     * @param httpClientProxyObjectFactoryBeanName 指定Spring容器中{@link HttpClientProxyObjectFactory}对象的Bean的名称
+     */
     public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName) {
-        this(httpClientProxyObjectFactoryBeanName, false);
+        this(httpClientProxyObjectFactoryBeanName, ProxyModel.JDK);
     }
 
-    public void addHttpClientClasses(Class<?>... httpClientClasses) {
-        this.httpClientClasses.addAll(Arrays.asList(httpClientClasses));
-    }
-
-    public List<BeanDefinition> getLuckyHttpClientBeanDefinitions() {
-        return this.httpClientClasses
-                .stream()
-                .map(this::createHttpClientBeanDefinition)
-                .collect(Collectors.toList());
-    }
-
-    private BeanDefinition createHttpClientBeanDefinition(Class<?> httpClientClass) {
+    /**
+     * 创建一个HTTP客户端代理对象的BeanDefinition
+     *
+     * @param httpClientClass 代理对象的Class
+     * @param proxyModel      代理模式
+     * @return 代理对象的BeanDefinition
+     */
+    public BeanDefinition createHttpClientBeanDefinition(Class<?> httpClientClass, ProxyModel proxyModel) {
+        proxyModel = proxyModel == ProxyModel.DEFAULT ? this.globalProxyModel : proxyModel;
         RootBeanDefinition beanDefinition = new RootBeanDefinition(httpClientClass);
         beanDefinition.setFactoryBeanName(httpClientProxyObjectFactoryBeanName);
-        beanDefinition.setFactoryMethodName(proxyMethodName);
+        beanDefinition.setFactoryMethodName(proxyModel.getProxyMethod());
         beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(httpClientClass);
         return beanDefinition;
     }
-
-
 }

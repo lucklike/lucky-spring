@@ -42,4 +42,11 @@ public @interface HttpClient {
     @AliasFor(annotation = HttpClientComponent.class, attribute = "name")
     String name() default "";
 
+
+    /**
+     * 代理模式
+     */
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "proxyModel")
+    ProxyModel proxyModel() default ProxyModel.DEFAULT;
+
 }
