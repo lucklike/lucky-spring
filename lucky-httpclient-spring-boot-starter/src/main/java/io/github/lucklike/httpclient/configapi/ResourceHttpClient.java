@@ -443,7 +443,7 @@ import static com.luckyframework.httpclient.proxy.configapi.Source.LOCAL_FILE;
 @HttpClientComponent
 @EnableConfigurationParser(sourceType = LOCAL_FILE)
 @Combination({EnableConfigurationParser.class})
-public @interface LocalConfigHttpClient {
+public @interface ResourceHttpClient {
 
     /**
      * 配置源信息
