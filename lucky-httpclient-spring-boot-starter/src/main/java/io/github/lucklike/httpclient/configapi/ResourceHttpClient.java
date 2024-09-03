@@ -17,7 +17,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static com.luckyframework.httpclient.proxy.configapi.Source.LOCAL_FILE;
+import static com.luckyframework.httpclient.proxy.configapi.Source.RESOURCE;
+
 
 /**
  *
@@ -441,7 +442,7 @@ import static com.luckyframework.httpclient.proxy.configapi.Source.LOCAL_FILE;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @HttpClientComponent
-@EnableConfigurationParser(sourceType = LOCAL_FILE)
+@EnableConfigurationParser(sourceType = RESOURCE)
 @Combination({EnableConfigurationParser.class})
 public @interface ResourceHttpClient {
 
