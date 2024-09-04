@@ -67,7 +67,11 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
                 // 创建BeanDefinition
                 String beanClassName = annotationMetadata.getClassName();
-                ProxyModel proxyModel = (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
+
+                // 确认代理模式
+                ProxyModel proxyModel = getProxyModel(annotationMetadata);
+
+                // 生成BeanDefinition
                 BeanDefinition definition = beanDefinitionGenerator.createHttpClientBeanDefinition(ClassUtils.getClass(beanClassName), proxyModel);
 
                 // 获取Bean名称并注册
@@ -85,9 +89,27 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
     }
 
     /**
+     * 确定某个注解元素使用的代理模型
+     * <pre>
+     *     1.非接口强制使用CGLIB进行代理
+     *     2.接口则使用配置的代理模型进行代理
+     * </pre>
      *
-     * @param annotationMetadata
-     * @return
+     * @param annotationMetadata 注解元素
+     * @return 代理模型
+     */
+    private ProxyModel getProxyModel(AnnotationMetadata annotationMetadata) {
+        if (!annotationMetadata.isInterface()) {
+            return ProxyModel.CGLIB;
+        }
+        return (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
+    }
+
+    /**
+     * 为注解元素生成Bean名称
+     *
+     * @param annotationMetadata 注解元素
+     * @return Bean名称
      */
     private String generateBeanName(AnnotationMetadata annotationMetadata) {
         Map<String, Object> attributes = annotationMetadata.getAnnotationAttributes(SPRING_COMPONENT);
