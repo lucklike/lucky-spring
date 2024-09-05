@@ -41,9 +41,9 @@ public class LoggerConfiguration {
     private boolean forcePrintBody = false;
 
     /**
-     * 日志打印拦截器的优先级，默认{@value PriorityConstant#DEFAULT_PRIORITY}
+     * 日志打印拦截器的优先级，默认{@value PriorityConstant#OVERALL_LOGGER_PRIORITY}
      */
-    private Integer priority = PriorityConstant.DEFAULT_PRIORITY;
+    private Integer priority = PriorityConstant.OVERALL_LOGGER_PRIORITY;
 
     /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
