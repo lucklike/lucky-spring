@@ -13,11 +13,9 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
-import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import java.beans.Introspector;
 import java.util.Arrays;
@@ -118,7 +116,6 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             return value;
         }
         String beanClassName = annotationMetadata.getClassName();
-        String shortClassName = org.springframework.util.ClassUtils.getShortName(beanClassName);
-        return Introspector.decapitalize(shortClassName);
+        return Introspector.decapitalize(beanClassName);
     }
 }
