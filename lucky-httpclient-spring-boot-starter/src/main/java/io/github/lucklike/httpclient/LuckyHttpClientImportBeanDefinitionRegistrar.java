@@ -61,7 +61,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         // 包扫描以及BeanDefinition注册
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
-            if (!annotationMetadata.isAnnotation() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
+            if (!annotationMetadata.isAnnotation() && annotationMetadata.isIndependent() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
 
                 // 创建BeanDefinition
                 String beanClassName = annotationMetadata.getClassName();
