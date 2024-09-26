@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.spel.AnnotationAccessor;
 import com.luckyframework.spel.ClassFieldAccessor;
 import com.luckyframework.spel.EvaluationContextFactory;
+import com.luckyframework.spel.LazyValueAccessor;
 import com.luckyframework.spel.NotExistReturnNullMapAccessor;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
@@ -37,6 +38,7 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
     @Override
     public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
         StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+        evaluationContext.addPropertyAccessor(new LazyValueAccessor());
         evaluationContext.addPropertyAccessor(new NotExistReturnNullMapAccessor());
         evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
         evaluationContext.addPropertyAccessor(new BeanFactoryAccessor());
