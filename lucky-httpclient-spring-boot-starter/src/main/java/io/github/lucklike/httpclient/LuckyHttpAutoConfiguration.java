@@ -225,7 +225,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             String[] packages = ScanUtils.getPackages(ContainerUtils.setToArray(springElConfig.getFunctionPackages(), String.class));
             ScanUtils.resourceHandle(packages, resource -> {
                 AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(resource);
-                if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN)) {
+                if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN) && !annotationMetadata.isAnnotation()) {
                     factory.addSpringElFunctionClass(ClassUtils.getClass(annotationMetadata.getClassName()));
                     if (log.isDebugEnabled()) {
                         log.debug("@SpELFunction '{}' is registered", annotationMetadata.getClassName());
