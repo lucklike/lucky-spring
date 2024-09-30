@@ -41,6 +41,11 @@ public class LoggerConfiguration {
     private boolean forcePrintBody = false;
 
     /**
+     * 是否打印响应头信息
+     */
+    private boolean enableRespHeaderLog = true;
+
+    /**
      * 日志打印拦截器的优先级，默认{@value PriorityConstant#OVERALL_LOGGER_PRIORITY}
      */
     private Integer priority = PriorityConstant.OVERALL_LOGGER_PRIORITY;
@@ -213,6 +218,15 @@ public class LoggerConfiguration {
     }
 
     /**
+     * 设置是否打印响应头信息
+     *
+     * @param enableRespHeaderLog 是否打印响应头信息
+     */
+    public void setEnableRespHeaderLog(boolean enableRespHeaderLog) {
+        this.enableRespHeaderLog = enableRespHeaderLog;
+    }
+
+    /**
      * 设置是否强制打印响应体信息
      *
      * @param forcePrintBody 是否强制打印响应体信息
@@ -344,5 +358,14 @@ public class LoggerConfiguration {
      */
     public boolean isForcePrintBody() {
         return forcePrintBody;
+    }
+
+    /**
+     * 是否打印响应头信息
+     *
+     * @return 是否打印响应头信息
+     */
+    public boolean isEnableRespHeaderLog() {
+        return enableRespHeaderLog;
     }
 }
