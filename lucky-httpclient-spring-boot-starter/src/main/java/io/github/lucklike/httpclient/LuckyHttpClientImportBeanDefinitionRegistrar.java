@@ -63,7 +63,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
             if (!annotationMetadata.isAnnotation() && annotationMetadata.isIndependent() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
 
-                // 创建BeanDefinition
+                // 获取Class名称
                 String beanClassName = annotationMetadata.getClassName();
 
                 // 确认代理模式
@@ -116,6 +116,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             return value;
         }
         String beanClassName = annotationMetadata.getClassName();
-        return Introspector.decapitalize(beanClassName);
+        String shortClassName = org.springframework.util.ClassUtils.getShortName(beanClassName);
+        return Introspector.decapitalize(shortClassName);
     }
 }
