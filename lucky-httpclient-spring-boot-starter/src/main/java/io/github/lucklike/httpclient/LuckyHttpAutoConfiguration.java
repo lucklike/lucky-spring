@@ -68,6 +68,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -89,7 +90,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.*;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 
 /**
  * <pre>
@@ -112,6 +119,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
         ApplicationContextUtils.setApplicationContext(applicationContext);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "lucky.http-client.field-inject-enable", havingValue = "true")
+    public HttpClientAutoInjectBeanPostProcessor httpClientAutoInjectBeanPostProcessor() {
+        return new HttpClientAutoInjectBeanPostProcessor();
     }
 
     /**
