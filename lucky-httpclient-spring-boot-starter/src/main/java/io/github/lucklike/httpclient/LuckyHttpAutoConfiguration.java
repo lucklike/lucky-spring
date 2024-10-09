@@ -38,6 +38,7 @@ import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.annotation.HttpReference;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
@@ -66,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -121,6 +123,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         ApplicationContextUtils.setApplicationContext(applicationContext);
     }
 
+    /**
+     * 基于{@link HttpReference @HttpReference}注解进行属性自动注入的{@link BeanPostProcessor}，<br/>
+     * 如果需要开启此功能需要进行如下配置：{@code lucky.http-client.field-inject-enable=true}
+     */
     @Bean
     @ConditionalOnProperty(name = "lucky.http-client.field-inject-enable", havingValue = "true")
     public HttpClientAutoInjectBeanPostProcessor httpClientAutoInjectBeanPostProcessor() {

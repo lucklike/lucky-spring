@@ -10,4 +10,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface HttpReference {
+
+    /**
+     * 代理模式
+     */
+    ProxyModel proxyModel() default ProxyModel.DEFAULT;
 }
