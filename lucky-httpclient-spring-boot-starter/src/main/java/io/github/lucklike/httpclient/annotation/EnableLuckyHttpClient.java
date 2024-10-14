@@ -21,6 +21,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@EnableHttpReference
 @LuckyHttpClientScan
 @EnableLuckyHttpClientAutoConfiguration
 public @interface EnableLuckyHttpClient {

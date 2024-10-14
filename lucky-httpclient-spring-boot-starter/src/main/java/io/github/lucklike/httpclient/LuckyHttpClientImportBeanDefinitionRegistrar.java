@@ -33,8 +33,14 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     private static final Logger log = LoggerFactory.getLogger(LuckyHttpClientImportBeanDefinitionRegistrar.class);
 
+    /**
+     * HTTP组件注解全类名
+     */
     private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
 
+    /**
+     * Spring组件注解全类名
+     */
     private final String SPRING_COMPONENT = Component.class.getName();
 
     @Override

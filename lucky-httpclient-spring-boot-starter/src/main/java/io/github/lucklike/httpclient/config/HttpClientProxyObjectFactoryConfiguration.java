@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
-import io.github.lucklike.httpclient.annotation.HttpReference;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -18,11 +17,6 @@ import java.util.Map;
  * @date 2023/9/8 11:35
  */
 public class HttpClientProxyObjectFactoryConfiguration {
-
-    /**
-     * 是否启用属性/方法注入功能，Bean对象的属性或者方法被{@link HttpReference}标注时会自动的注入HttpClient代理对象
-     */
-    private boolean fieldInjectEnable = false;
 
     /**
      * 指定使用的HTTP执行器Bean的名称
@@ -166,15 +160,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
-
-    /**
-     * 是否启用属性/方法注入功能，Bean对象的属性或者方法被{@link HttpReference}标注时会自动的注入HttpClient代理对象
-     *
-     * @param fieldInjectEnable 是否开启功能
-     */
-    public void setFieldInjectEnable(boolean fieldInjectEnable) {
-        this.fieldInjectEnable = fieldInjectEnable;
-    }
 
     /**
      * 设置线程池参数
@@ -375,16 +360,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
-
-
-    /**
-     * 是否启用属性/方法注入功能，Bean对象的属性或者方法被{@link HttpReference}标注时会自动的注入HttpClient代理对象
-     *
-     * @return 是否开启功能
-     */
-    public boolean isFieldInjectEnable() {
-        return fieldInjectEnable;
-    }
 
     /**
      * 获取线程池参数

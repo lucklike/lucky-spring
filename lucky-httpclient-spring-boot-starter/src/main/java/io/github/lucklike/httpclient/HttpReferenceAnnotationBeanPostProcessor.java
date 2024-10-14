@@ -19,7 +19,14 @@ import java.lang.reflect.Parameter;
 
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 
-public class HttpClientAutoInjectBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
+/**
+ * 给Bean对象被{@link HttpReference @HttpReference}注解标注的属性或方法注入代理对象
+ *
+ * @author fukang
+ * @version 1.0.0
+ * @date 2024/10/12 03:59
+ */
+public class HttpReferenceAnnotationBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
 
     /**
      * HttpClient代理对象工厂
@@ -41,14 +48,13 @@ public class HttpClientAutoInjectBeanPostProcessor implements BeanPostProcessor,
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        // Bean的类型是JDK中定义的直接忽略
-        if (ClassUtils.isJdkBasic(bean.getClass())) {
-            return bean;
+        //Bean类型为非JDK原生类型时执行属性注入操作
+        if (!ClassUtils.isJdkBasic(bean.getClass())) {
+            // 属性注入
+            fieldInject(bean);
+            // 方法注入
+            methodInject(bean);
         }
-        // 属性注入
-        fieldInject(bean);
-        // 方法注入
-        methodInject(bean);
         return bean;
     }
 
