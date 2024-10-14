@@ -125,6 +125,9 @@ public class HttpReferenceAnnotationBeanPostProcessor implements BeanPostProcess
         if (httpReference.proxyModel() == ProxyModel.CGLIB) {
             return proxyObjectFactory.getCglibProxyObject(clazz);
         }
+        if (httpReference.proxyModel() == ProxyModel.JDK) {
+            return proxyObjectFactory.getJdkProxyObject(clazz);
+        }
         return proxyObjectFactory.getProxyObject(clazz);
     }
 }
