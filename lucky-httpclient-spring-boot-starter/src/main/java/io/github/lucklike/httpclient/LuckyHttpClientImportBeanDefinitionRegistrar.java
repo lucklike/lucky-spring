@@ -13,11 +13,9 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
-import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import java.beans.Introspector;
 import java.util.Arrays;
@@ -35,8 +33,14 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     private static final Logger log = LoggerFactory.getLogger(LuckyHttpClientImportBeanDefinitionRegistrar.class);
 
+    /**
+     * HTTP组件注解全类名
+     */
     private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
 
+    /**
+     * Spring组件注解全类名
+     */
     private final String SPRING_COMPONENT = Component.class.getName();
 
     @Override
@@ -63,9 +67,9 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         // 包扫描以及BeanDefinition注册
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
-            if (!annotationMetadata.isAnnotation() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
+            if (!annotationMetadata.isAnnotation() && annotationMetadata.isIndependent() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
 
-                // 创建BeanDefinition
+                // 获取Class名称
                 String beanClassName = annotationMetadata.getClassName();
 
                 // 确认代理模式
@@ -90,18 +94,11 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     /**
      * 确定某个注解元素使用的代理模型
-     * <pre>
-     *     1.非接口强制使用CGLIB进行代理
-     *     2.接口则使用配置的代理模型进行代理
-     * </pre>
      *
      * @param annotationMetadata 注解元素
      * @return 代理模型
      */
     private ProxyModel getProxyModel(AnnotationMetadata annotationMetadata) {
-        if (!annotationMetadata.isInterface()) {
-            return ProxyModel.CGLIB;
-        }
         return (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
     }
 

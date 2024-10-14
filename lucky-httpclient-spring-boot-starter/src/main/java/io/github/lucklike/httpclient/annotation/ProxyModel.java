@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.annotation;
 
-import javax.xml.bind.annotation.XmlType;
-
+import static io.github.lucklike.httpclient.Constant.AUTO_METHOD;
 import static io.github.lucklike.httpclient.Constant.CGLIB_PROXY_METHOD;
 import static io.github.lucklike.httpclient.Constant.JDK_PROXY_METHOD;
 
@@ -23,7 +22,16 @@ public enum ProxyModel {
     CGLIB(CGLIB_PROXY_METHOD),
 
     /**
-     * 默认代理
+     * 自动选择代理模式
+     * <pre>
+     *     1.代理类为接口时使用JDK代理
+     *     2.代理类为非接口时使用Cglib代理
+     * </pre>
+     */
+    AUTO(AUTO_METHOD),
+
+    /**
+     * 跟随全局
      */
     DEFAULT("");
 

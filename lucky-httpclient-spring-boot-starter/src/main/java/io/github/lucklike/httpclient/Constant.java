@@ -19,6 +19,7 @@ public class Constant {
     public static final String DESTROY_METHOD = "shutdown";
     public static final String JDK_PROXY_METHOD = "getJdkProxyObject";
     public static final String CGLIB_PROXY_METHOD = "getCglibProxyObject";
+    public static final String AUTO_METHOD = "getProxyObject";
 
     public static final String SPRING_ENV_CONFIG_SOURCE = "__springEnvConfigSource__";
 

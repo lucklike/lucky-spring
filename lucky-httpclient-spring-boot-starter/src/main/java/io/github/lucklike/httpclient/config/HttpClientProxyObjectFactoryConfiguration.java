@@ -361,7 +361,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
 
-
     /**
      * 获取线程池参数
      *

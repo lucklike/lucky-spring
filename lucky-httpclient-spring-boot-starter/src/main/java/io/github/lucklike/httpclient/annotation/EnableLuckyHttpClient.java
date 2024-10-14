@@ -21,6 +21,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@EnableHttpReference
 @LuckyHttpClientScan
 @EnableLuckyHttpClientAutoConfiguration
 public @interface EnableLuckyHttpClient {
@@ -50,8 +51,8 @@ public @interface EnableLuckyHttpClient {
     String proxyFactoryName() default PROXY_FACTORY_BEAN_NAME;
 
     /**
-     * 代理模式，默认使用Jdk代理方式
+     * 代理模式，默认使用自适应代理方式
      */
     @AliasFor(annotation = LuckyHttpClientScan.class, attribute = "proxyModel")
-    ProxyModel proxyModel() default ProxyModel.JDK;
+    ProxyModel proxyModel() default ProxyModel.AUTO;
 }

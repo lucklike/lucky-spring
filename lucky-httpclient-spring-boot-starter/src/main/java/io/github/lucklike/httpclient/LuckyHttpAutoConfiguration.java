@@ -89,7 +89,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.lucklike.httpclient.Constant.*;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 
 /**
  * <pre>
@@ -225,7 +231,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             String[] packages = ScanUtils.getPackages(ContainerUtils.setToArray(springElConfig.getFunctionPackages(), String.class));
             ScanUtils.resourceHandle(packages, resource -> {
                 AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(resource);
-                if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN)) {
+                if (annotationMetadata.isAnnotated(SPEL_FUNCTION_ANN) && !annotationMetadata.isAnnotation()) {
                     factory.addSpringElFunctionClass(ClassUtils.getClass(annotationMetadata.getClassName()));
                     if (log.isDebugEnabled()) {
                         log.debug("@SpELFunction '{}' is registered", annotationMetadata.getClassName());
@@ -412,6 +418,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 interceptor.setPrintAnnotationInfo(loggerConfig.isEnableAnnotationLog());
                 interceptor.setPrintArgsInfo(loggerConfig.isEnableArgsLog());
                 interceptor.setForcePrintBody(loggerConfig.isForcePrintBody());
+                interceptor.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
                 Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
                 if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
                     interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
