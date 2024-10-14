@@ -32,7 +32,7 @@ public class LuckyHttpClientBeanDefinitionGenerator {
      */
     public LuckyHttpClientBeanDefinitionGenerator(String httpClientProxyObjectFactoryBeanName, ProxyModel globalProxyModel) {
         this.httpClientProxyObjectFactoryBeanName = httpClientProxyObjectFactoryBeanName;
-        this.globalProxyModel = globalProxyModel == ProxyModel.DEFAULT ? ProxyModel.JDK : globalProxyModel;
+        this.globalProxyModel = globalProxyModel == ProxyModel.DEFAULT ? ProxyModel.AUTO : globalProxyModel;
     }
 
     /**

@@ -21,5 +21,5 @@ public @interface HttpReference {
     /**
      * 代理模式
      */
-    ProxyModel proxyModel() default ProxyModel.DEFAULT;
+    ProxyModel proxyModel() default ProxyModel.AUTO;
 }

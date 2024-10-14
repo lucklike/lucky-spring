@@ -534,5 +534,5 @@ public @interface SpringEnvHttpClient {
      * 代理模式
      */
     @AliasFor(annotation = HttpClientComponent.class, attribute = "proxyModel")
-    ProxyModel proxyModel() default ProxyModel.DEFAULT;
+    ProxyModel proxyModel() default ProxyModel.AUTO;
 }
