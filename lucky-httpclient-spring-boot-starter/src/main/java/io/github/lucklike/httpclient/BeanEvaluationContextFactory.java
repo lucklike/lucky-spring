@@ -6,6 +6,7 @@ import com.luckyframework.spel.EvaluationContextFactory;
 import com.luckyframework.spel.LazyValueAccessor;
 import com.luckyframework.spel.NotExistReturnNullMapAccessor;
 import com.luckyframework.spel.ParamWrapper;
+import com.luckyframework.spel.PropertySourcesAccessor;
 import com.luckyframework.spel.SpELRuntime;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.convert.ApplicationConversionService;
@@ -39,6 +40,7 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
     public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
         StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
         evaluationContext.addPropertyAccessor(new LazyValueAccessor());
+        evaluationContext.addPropertyAccessor(new PropertySourcesAccessor());
         evaluationContext.addPropertyAccessor(new NotExistReturnNullMapAccessor());
         evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
         evaluationContext.addPropertyAccessor(new BeanFactoryAccessor());
