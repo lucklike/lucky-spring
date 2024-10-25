@@ -1,6 +1,5 @@
 package io.github.lucklike.httpclient.annotation;
 
-import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
@@ -9,8 +8,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 
 /**
  * 开启lucky-http-client的自动配置功能
