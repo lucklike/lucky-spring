@@ -1,6 +1,8 @@
 package io.github.lucklike.httpclient.annotation;
 
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
+import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
+import io.github.lucklike.httpclient.LuckyHttpClientImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
@@ -12,15 +14,12 @@ import java.lang.annotation.Target;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 
 /**
- * 开启lucky-http-client声明式编程功能
+ * 开启HTTP组件自动扫描与注册功能
  * <pre>
- *     包括:
- *     1.基于{@link HttpReference @HttpReference}属性注入功能和
- *     2.基于{@link HttpClientComponent @HttpClientComponent}注解的自动扫描与注册功能
- *
- *     相当于以下两个注解的组合：
- *     {@link EnableHttpReferenceInject @EnableHttpReferenceInject} + {@link EnableLuckyHttpAutoScan @EnableLuckyHttpAutoScan}
+ *     1.向Spring容器中注入一个自动配置类{@link LuckyHttpAutoConfiguration}，来完成重要组件的初始化工作
+ *     2.向Spring容器中注入一个用于发现和注册HTTP组件Bean（{@link HttpClientComponent @HttpClientComponent}）的组件扫描器{@link LuckyHttpClientImportBeanDefinitionRegistrar}
  * </pre>
+ *
  * @author fukang
  * @version 1.0.0
  * @date 2023/8/30 01:45
@@ -29,9 +28,8 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @LuckyHttpClientScan
-@HttpReferenceAutoImport
 @EnableLuckyHttpClientAutoConfiguration
-public @interface EnableLuckyHttpClient {
+public @interface EnableLuckyHttpAutoScan {
 
     /**
      * 配置需要扫描的包

@@ -54,6 +54,7 @@ public class LuckyHttpClientBeanDefinitionGenerator {
     public BeanDefinition createHttpClientBeanDefinition(Class<?> httpClientClass, ProxyModel proxyModel) {
         proxyModel = proxyModel == ProxyModel.DEFAULT ? this.globalProxyModel : proxyModel;
         RootBeanDefinition beanDefinition = new RootBeanDefinition(httpClientClass);
+        beanDefinition.setPrimary(true);
         beanDefinition.setFactoryBeanName(httpClientProxyObjectFactoryBeanName);
         beanDefinition.setFactoryMethodName(proxyModel.getProxyMethod());
         beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(httpClientClass);
