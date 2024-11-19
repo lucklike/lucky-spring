@@ -1,7 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
+import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import io.github.lucklike.httpclient.annotation.SpELFunction;
 
@@ -68,7 +68,7 @@ public class SpELConfiguration {
      * SpEL表达式函数工具类, 此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
      * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
      */
-    private StaticClassEntry[] functionClasses;
+    private ClassStaticElement[] functionClasses;
 
 
     /**
@@ -148,7 +148,7 @@ public class SpELConfiguration {
      *
      * @param functionClasses 自定义SpEL表达式函数类
      */
-    public void setFunctionClasses(StaticClassEntry[] functionClasses) {
+    public void setFunctionClasses(ClassStaticElement[] functionClasses) {
         this.functionClasses = functionClasses;
     }
 
@@ -239,7 +239,7 @@ public class SpELConfiguration {
      *
      * @return 自定义SpEL表达式函数类
      */
-    public StaticClassEntry[] getFunctionClasses() {
+    public ClassStaticElement[] getFunctionClasses() {
         return functionClasses;
     }
 

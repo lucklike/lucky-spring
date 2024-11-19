@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.annotation;
 
-import com.luckyframework.httpclient.proxy.spel.FunctionNamespace;
+import com.luckyframework.httpclient.proxy.spel.Namespace;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.ElementType;
@@ -18,13 +18,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@FunctionNamespace
+@Namespace
 public @interface SpELFunction {
 
     /**
      * 命名空间名称
      */
-    @AliasFor(annotation = FunctionNamespace.class, attribute = "value")
+    @AliasFor(annotation = Namespace.class, attribute = "value")
     String value() default "";
 
 }

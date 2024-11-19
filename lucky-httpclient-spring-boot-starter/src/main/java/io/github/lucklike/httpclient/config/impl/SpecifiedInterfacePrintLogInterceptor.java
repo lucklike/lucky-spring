@@ -59,7 +59,7 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
         if (ContainerUtils.isEmptyCollection(printLogPackageSet)) {
             return false;
         }
-        String className = ((Class<?>) context.getParentContext().getCurrentAnnotatedElement()).getName();
+        String className = context.getClassContext().getCurrentAnnotatedElement().getName();
         for (String packagePrefix : printLogPackageSet) {
             if (className.startsWith(packagePrefix)) {
                 return true;
