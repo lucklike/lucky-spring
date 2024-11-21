@@ -39,18 +39,13 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
     public void beforeExecute(Request request, InterceptorContext context) {
         if (isPrintMethod(context.getContext()) && printRequestLog) {
             super.beforeExecute(request, context);
-        } else {
-            initStartTime();
         }
-
     }
 
     @Override
     public Response afterExecute(Response response, InterceptorContext context) {
         if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
             return super.afterExecute(response, context);
-        } else {
-            initEndTime();
         }
         return response;
     }
