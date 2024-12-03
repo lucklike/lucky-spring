@@ -241,10 +241,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 注册配置文件中的SpEL函数
-        ClassStaticElement[] springElFunctionClasses = springElConfig.getFunctionClasses();
+        ClassStaticElement[] springElFunctionClasses = springElConfig.getClasses();
         if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
             for (ClassStaticElement springElFunctionClass : springElFunctionClasses) {
-                factory.addSpringElFunctionClass(springElFunctionClass);
+                factory.addSpringElFunctionClass(springElFunctionClass.getNamespace(), springElFunctionClass.getClazz());
             }
         }
 

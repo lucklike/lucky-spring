@@ -68,7 +68,7 @@ public class SpELConfiguration {
      * SpEL表达式函数工具类, 此处导入的函数可以在支持SpEL表达式的地方通过变量的方式调用<br/>
      * 例如：#{#toInt('9527')}、#{#format('hello {}', 'Jack')}
      */
-    private ClassStaticElement[] functionClasses;
+    private ClassStaticElement[] classes;
 
 
     /**
@@ -146,10 +146,10 @@ public class SpELConfiguration {
     /**
      * 设置自定义SpEL表达式函数类
      *
-     * @param functionClasses 自定义SpEL表达式函数类
+     * @param classes 自定义SpEL表达式函数类
      */
-    public void setFunctionClasses(ClassStaticElement[] functionClasses) {
-        this.functionClasses = functionClasses;
+    public void setClasses(ClassStaticElement[] classes) {
+        this.classes = classes;
     }
 
     /**
@@ -239,8 +239,8 @@ public class SpELConfiguration {
      *
      * @return 自定义SpEL表达式函数类
      */
-    public ClassStaticElement[] getFunctionClasses() {
-        return functionClasses;
+    public ClassStaticElement[] getClasses() {
+        return classes;
     }
 
     /**
