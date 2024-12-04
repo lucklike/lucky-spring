@@ -39,18 +39,13 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
     public void beforeExecute(Request request, InterceptorContext context) {
         if (isPrintMethod(context.getContext()) && printRequestLog) {
             super.beforeExecute(request, context);
-        } else {
-            initStartTime();
         }
-
     }
 
     @Override
     public Response afterExecute(Response response, InterceptorContext context) {
         if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
             return super.afterExecute(response, context);
-        } else {
-            initEndTime();
         }
         return response;
     }
@@ -59,7 +54,7 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
         if (ContainerUtils.isEmptyCollection(printLogPackageSet)) {
             return false;
         }
-        String className = ((Class<?>) context.getParentContext().getCurrentAnnotatedElement()).getName();
+        String className = context.getClassContext().getCurrentAnnotatedElement().getName();
         for (String packagePrefix : printLogPackageSet) {
             if (className.startsWith(packagePrefix)) {
                 return true;

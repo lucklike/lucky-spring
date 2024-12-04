@@ -31,7 +31,7 @@ import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
-import com.luckyframework.httpclient.proxy.spel.StaticClassEntry;
+import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.ParamWrapper;
@@ -241,10 +241,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 注册配置文件中的SpEL函数
-        StaticClassEntry[] springElFunctionClasses = springElConfig.getFunctionClasses();
+        ClassStaticElement[] springElFunctionClasses = springElConfig.getClasses();
         if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
-            for (StaticClassEntry springElFunctionClass : springElFunctionClasses) {
-                factory.addSpringElFunctionClass(springElFunctionClass);
+            for (ClassStaticElement springElFunctionClass : springElFunctionClasses) {
+                factory.addSpringElFunctionClass(springElFunctionClass.getNamespace(), springElFunctionClass.getClazz());
             }
         }
 
