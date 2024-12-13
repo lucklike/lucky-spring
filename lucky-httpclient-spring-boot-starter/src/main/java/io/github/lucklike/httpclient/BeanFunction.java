@@ -1,6 +1,11 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
+import com.luckyframework.reflect.AnnotationUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.lang.reflect.Parameter;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$FIND_INSTANCE_BY_TYPE_FUNCTION_NAME$__;
 
@@ -10,15 +15,19 @@ import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$FIND_I
 public class BeanFunction {
 
     /**
-     * 使用Bean类型获取Bean实例
+     * 获取参数对应的实例对象
      *
-     * @param clazz Bean的Class
-     * @param <T>   Bea那类型泛型
+     * @param parameter 参数实例
      * @return Bean的实例
      */
     @FunctionAlias(__$FIND_INSTANCE_BY_TYPE_FUNCTION_NAME$__)
-    public static <T> T getBeanByType(Class<T> clazz) {
-        return ApplicationContextUtils.getBean(clazz);
+    public static Object getParameterInstance(Parameter parameter) {
+        Class<?> parameterType = parameter.getType();
+        Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameter, Qualifier.class);
+        if (qualifierAnn != null && StringUtils.hasText(qualifierAnn.value())) {
+            return ApplicationContextUtils.getBean(qualifierAnn.value(), parameterType);
+        }
+        return ApplicationContextUtils.getBean(parameterType);
     }
 
     /**
