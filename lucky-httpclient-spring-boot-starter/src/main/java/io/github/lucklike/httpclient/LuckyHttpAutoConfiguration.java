@@ -30,8 +30,8 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
-import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
+import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.ParamWrapper;
@@ -157,6 +157,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
 
+        registeredUniversalFunction(factory);
         objectCreateSetting(factory, factoryConfig);
         factorySpELConvertSetting(factory, factoryConfig);
         factoryExpressionParamSetting(factory, factoryConfig);
@@ -169,8 +170,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         parameterSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
         configApiSourceSetting();
-
         return factory;
+    }
+
+    /**
+     * 注册通用函数
+     *
+     * @param factory 工厂实例
+     */
+    private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
+        factory.addSpringElFunctionClass(BeanFunction.class);
     }
 
     /**
