@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.lang.reflect.Parameter;
 
-import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$FIND_INSTANCE_BY_TYPE_FUNCTION_NAME$__;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
 
 /**
  * 提供Bean相关操作的函数
@@ -20,7 +20,7 @@ public class BeanFunction {
      * @param parameter 参数实例
      * @return Bean的实例
      */
-    @FunctionAlias(__$FIND_INSTANCE_BY_TYPE_FUNCTION_NAME$__)
+    @FunctionAlias(__$PARAMETER_INSTANCE_FUNCTION$__)
     public static Object getParameterInstance(Parameter parameter) {
         Class<?> parameterType = parameter.getType();
         Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameter, Qualifier.class);
