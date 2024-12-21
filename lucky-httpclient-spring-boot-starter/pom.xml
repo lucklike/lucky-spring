@@ -44,6 +44,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
+        <lucky-version>3.0.0</lucky-version>
     </properties>
 
     <dependencies>
@@ -70,7 +71,7 @@
         <dependency>
             <groupId>io.github.lucklike</groupId>
             <artifactId>lucky-httpclient</artifactId>
-            <version>2.1.1</version>
+            <version>${lucky-version}</version>
         </dependency>
 
     </dependencies>
