@@ -6,7 +6,7 @@
 
     <groupId>io.github.lucklike</groupId>
     <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 
     <name>lucky-httpclient-spring-boot-starter</name>
     <description>lucky-httpclient模块与SpringBoot整合</description>
