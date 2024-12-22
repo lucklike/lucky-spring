@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.Version;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
@@ -90,6 +91,8 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 }
             }
         });
+
+        Version.printVersion();
     }
 
     /**
