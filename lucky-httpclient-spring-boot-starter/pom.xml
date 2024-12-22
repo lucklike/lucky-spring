@@ -44,7 +44,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
-        <lucky-version>3.0.0</lucky-version>
+        <lucky-version>3.0.1</lucky-version>
     </properties>
 
     <dependencies>
