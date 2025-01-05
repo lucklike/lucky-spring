@@ -56,7 +56,7 @@ import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.OkHttp3ExecutorFactory;
+import io.github.lucklike.httpclient.config.impl.OkHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
@@ -91,7 +91,7 @@ import java.util.stream.Stream;
 
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
-import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
@@ -684,9 +684,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @ConditionalOnClass(name = {"okhttp3.OkHttpClient"})
     static class OkHttpExecutorConfig {
 
-        @Bean(DEFAULT_OKHTTP3_EXECUTOR_BEAN_NAME)
+        @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
         public HttpExecutor luckyOkHttp3Executor() {
-            return new OkHttp3ExecutorFactory().getHttpExecutor();
+            return new OkHttpExecutorFactory().getHttpExecutor();
         }
 
     }
