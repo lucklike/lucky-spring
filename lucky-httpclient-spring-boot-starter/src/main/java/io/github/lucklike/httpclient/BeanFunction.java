@@ -3,6 +3,8 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.AnnotationUtils;
+import io.github.lucklike.httpclient.annotation.AllowNull;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.lang.reflect.Parameter;
@@ -27,7 +29,16 @@ public class BeanFunction {
         if (qualifierAnn != null && StringUtils.hasText(qualifierAnn.value())) {
             return ApplicationContextUtils.getBean(qualifierAnn.value(), parameterType);
         }
-        return ApplicationContextUtils.getBean(parameterType);
+        try {
+            return ApplicationContextUtils.getBean(parameterType);
+        } catch (NoSuchBeanDefinitionException e) {
+            AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameter, AllowNull.class);
+            if (allowNullAnn != null && allowNullAnn.value()) {
+                return null;
+            }
+            throw e;
+        }
+
     }
 
     /**
