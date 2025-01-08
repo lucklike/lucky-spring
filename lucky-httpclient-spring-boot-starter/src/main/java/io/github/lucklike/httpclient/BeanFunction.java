@@ -1,11 +1,14 @@
 package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.lang.reflect.Parameter;
 
@@ -25,10 +28,21 @@ public class BeanFunction {
     @FunctionAlias(__$PARAMETER_INSTANCE_FUNCTION$__)
     public static Object getParameterInstance(Parameter parameter) {
         Class<?> parameterType = parameter.getType();
+
+        // 使用@Qualifier注解指定Bean的名称
         Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameter, Qualifier.class);
         if (qualifierAnn != null && StringUtils.hasText(qualifierAnn.value())) {
             return ApplicationContextUtils.getBean(qualifierAnn.value(), parameterType);
         }
+
+        // 使用Value注解注入环境变量
+        Value valueAnn = AnnotationUtils.findMergedAnnotation(parameter, Value.class);
+        if (valueAnn != null) {
+            Environment env = ApplicationContextUtils.getEnvironment();
+            return ConversionUtils.conversion(env.resolveRequiredPlaceholders(valueAnn.value()), parameterType);
+        }
+
+        // 使用类型查找
         try {
             return ApplicationContextUtils.getBean(parameterType);
         } catch (NoSuchBeanDefinitionException e) {

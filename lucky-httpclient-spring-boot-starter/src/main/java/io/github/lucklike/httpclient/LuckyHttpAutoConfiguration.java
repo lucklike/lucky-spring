@@ -520,7 +520,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     }
                 }
 
-                factory.setSslSocketFactory(SSLUtils.createSSLContext(sslConfig.getGlobalProtocol(), keyStoreInfo, trustStoreInfo).getSocketFactory());
+                factory.setSslSocketFactory(SSLUtils.createSSLContext(sslConfig.getGlobalProtocol(), keyStoreInfo, trustStoreInfo).getSslContext().getSocketFactory());
             }
         }
     }
