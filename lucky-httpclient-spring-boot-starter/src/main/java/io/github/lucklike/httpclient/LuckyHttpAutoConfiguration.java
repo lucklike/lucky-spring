@@ -55,6 +55,7 @@ import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
+import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.OkHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
@@ -350,12 +351,20 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         // 导入用户配置的的Executor
         MultipartThreadPoolParam multiPoolParam = factoryConfig.getAsyncThreadPool();
         if (multiPoolParam != null) {
-            factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(multiPoolParam));
+            if (multiPoolParam.isLazy()) {
+                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(multiPoolParam));
+            } else {
+                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(multiPoolParam));
+            }
 
-            Map<String, ThreadPoolParam> alternativePoolParamMap = multiPoolParam.getAlternative();
+            Map<String, LazyThreadPoolParam> alternativePoolParamMap = multiPoolParam.getAlternative();
             if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
                 alternativePoolParamMap.forEach((name, poolParam) -> {
-                    factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
+                    if (poolParam.isLazy()) {
+                        factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
+                    } else {
+                        factory.addAlternativeAsyncExecutor(name, ThreadPoolFactory.createThreadPool(poolParam));
+                    }
                 });
             }
         }
