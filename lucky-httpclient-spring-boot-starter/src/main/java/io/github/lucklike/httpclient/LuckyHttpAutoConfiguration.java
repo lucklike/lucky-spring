@@ -30,6 +30,7 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
@@ -157,7 +158,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
-
         registeredUniversalFunction(factory);
         objectCreateSetting(factory, factoryConfig);
         factorySpELConvertSetting(factory, factoryConfig);
@@ -170,6 +170,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         sslSetting(factory, factoryConfig);
         parameterSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
+        pluginSetting(factory, factoryConfig);
         configApiSourceSetting();
         return factory;
     }
@@ -590,6 +591,29 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 acceptEncoding = sb.substring(0, sb.length() - 2);
             }
             factory.addHeader("Accept-Encoding", acceptEncoding);
+        }
+    }
+
+    /**
+     * 设置插件相关的配置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void pluginSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 注册Spring容器中的插件
+        String[] pluginBeanNames = applicationContext.getBeanNamesForType(ProxyPlugin.class);
+        for (String pluginBeanName : pluginBeanNames) {
+            factory.addPlugin(applicationContext.getBean(pluginBeanName, ProxyPlugin.class));
+        }
+
+        // 注册环境变量中配置的插件
+        Class<? extends ProxyPlugin>[] pluginClasses = factoryConfig.getPlugins();
+        if (ContainerUtils.isNotEmptyArray(pluginClasses)) {
+            for (Class<? extends ProxyPlugin> pluginClass : pluginClasses) {
+                factory.addPlugin(pluginClass);
+            }
         }
     }
 
