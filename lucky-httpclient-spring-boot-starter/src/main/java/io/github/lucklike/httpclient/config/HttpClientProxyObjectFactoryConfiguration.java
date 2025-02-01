@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
+import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -156,6 +157,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private ResponseConvertConfiguration responseConvert = new ResponseConvertConfiguration();
+
+    /**
+     * 插件相关配置
+     */
+    private Class<? extends ProxyPlugin>[] plugins;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -357,6 +363,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.responseConvert = responseConvert;
     }
 
+    /**
+     * 设置插件
+     *
+     * @param plugins 插件集合
+     */
+    public void setPlugins(Class<? extends ProxyPlugin>[] plugins) {
+        this.plugins = plugins;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -539,5 +554,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public ResponseConvertConfiguration getResponseConvert() {
         return responseConvert;
+    }
+
+    /**
+     * 获取所有的插件配置
+     *
+     * @return 所有的插件配置
+     */
+    public Class<? extends ProxyPlugin>[] getPlugins() {
+        return plugins;
     }
 }
