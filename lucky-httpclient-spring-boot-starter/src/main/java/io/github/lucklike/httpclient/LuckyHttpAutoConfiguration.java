@@ -34,6 +34,7 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
@@ -64,6 +65,7 @@ import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSou
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
+import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -606,6 +608,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         String[] pluginBeanNames = applicationContext.getBeanNamesForType(ProxyPlugin.class);
         for (String pluginBeanName : pluginBeanNames) {
             factory.addPlugin(applicationContext.getBean(pluginBeanName, ProxyPlugin.class));
+        }
+
+        // 注册Spring容器中由@HttpPlugin注解声明的插件
+        String[] annPluginBeanNames = applicationContext.getBeanNamesForAnnotation(HttpPlugin.class);
+        for (String pluginBeanName : annPluginBeanNames) {
+            Object bean = applicationContext.getBean(pluginBeanName);
+            PluginGenerate generate = new PluginGenerate(bean);
+            generate.generate().forEach(factory::addPlugin);
         }
 
         // 注册环境变量中配置的插件
