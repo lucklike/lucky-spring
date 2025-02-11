@@ -22,6 +22,9 @@ import java.beans.Introspector;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.luckyframework.httpclient.proxy.Version.printLogo;
+import static com.luckyframework.httpclient.proxy.Version.printVersion;
+
 /**
  * lucky-http-clientBean定义信息注册器，用于收集项目中需要代理的http接口，并为其生成BeanDefinition信息
  * 之后注入到Spring容器中
@@ -68,7 +71,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         // 包扫描以及BeanDefinition注册
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
-            if (!annotationMetadata.isAnnotation() && annotationMetadata.isIndependent() && annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT)) {
+            if (isLuckyHttpComponent(annotationMetadata)) {
 
                 // 获取Class名称
                 String beanClassName = annotationMetadata.getClassName();
@@ -92,7 +95,8 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             }
         });
 
-        Version.printVersion();
+        printVersion();
+        printLogo();
     }
 
     /**
@@ -120,5 +124,24 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         String beanClassName = annotationMetadata.getClassName();
         String shortClassName = org.springframework.util.ClassUtils.getShortName(beanClassName);
         return Introspector.decapitalize(shortClassName);
+    }
+
+    /**
+     * 判断某个注解元数据是否为Lucky的Http组件
+     * <pre>
+     *     1.不能是注解类型
+     *     2.不能是具体类型（必须是接口或者抽象类）
+     *     3.必须是独立的
+     *     4.必须被{@link HttpClientComponent}注解标注
+     * </pre>
+     *
+     * @param annotationMetadata 注解元数据
+     * @return 该注解元数据是否为Lucky的Http组件
+     */
+    private boolean isLuckyHttpComponent(AnnotationMetadata annotationMetadata) {
+        return !annotationMetadata.isAnnotation() &&
+                !annotationMetadata.isConcrete() &&
+                annotationMetadata.isIndependent() &&
+                annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT);
     }
 }

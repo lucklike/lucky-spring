@@ -11,11 +11,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * httpclient注解，用于将某个接口声明为httpclient代理接口
+ * HttpClient注解，用于将某个接口声明为httpclient代理接口
+ * 该注解是一个组合注解，功能=@DomainName + @HttpClientComponent
  *
  * @author fukang
  * @version 1.0.0
  * @date 2023/8/30 03:06
+ * @see DomainName
+ * @see HttpClientComponent
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
