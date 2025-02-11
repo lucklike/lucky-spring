@@ -11,6 +11,12 @@ import java.lang.annotation.Target;
 
 /**
  * 声明式Http客户端的注解，被标记的接口将会被Lucky自动发现并代理
+ * <pre>
+ *   被标注的类必须满足如下三个条件时Lucky才会为其创建代理对象：
+ *     1.不能是注解类型
+ *     2.不能是具体类型（必须是接口或者抽象类）
+ *     3.必须是独立的（独立类，或者静态内部类）
+ * </pre>
  *
  * @author fukang
  * @version 1.0.0
