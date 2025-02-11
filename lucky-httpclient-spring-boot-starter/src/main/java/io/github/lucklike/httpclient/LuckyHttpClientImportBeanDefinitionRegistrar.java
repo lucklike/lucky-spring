@@ -22,6 +22,9 @@ import java.beans.Introspector;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.luckyframework.httpclient.proxy.Version.printLogo;
+import static com.luckyframework.httpclient.proxy.Version.printVersion;
+
 /**
  * lucky-http-clientBean定义信息注册器，用于收集项目中需要代理的http接口，并为其生成BeanDefinition信息
  * 之后注入到Spring容器中
@@ -92,7 +95,8 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             }
         });
 
-        Version.printVersion();
+        printVersion();
+        printLogo();
     }
 
     /**
