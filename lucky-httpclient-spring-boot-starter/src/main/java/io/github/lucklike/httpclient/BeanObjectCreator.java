@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.httpclient.proxy.creator.ReflectObjectCreator;
 import com.luckyframework.reflect.ClassUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
@@ -25,8 +26,35 @@ public class BeanObjectCreator extends ReflectObjectCreator {
 
     @Override
     protected <T> T doCreateObject(Class<T> clazz, String msg) {
-        return StringUtils.hasText(msg)
-                ? (T) applicationContext.getBean(msg)
-                : super.doCreateObject(clazz, msg);
+        boolean hasClass = clazz != null;
+        boolean hasName = StringUtils.hasText(msg);
+
+        if (hasName) {
+            return hasClass
+                    ? applicationContext.getBean(msg, clazz)
+                    : (T) applicationContext.getBean(msg);
+        } else {
+            return createObjectByClass(clazz);
+        }
+
+    }
+
+
+    /**
+     * 使用Class来创建实例
+     * <pre>
+     *     1.尝试从Spring容器中获取Bean对象
+     *     2.使用反射创建对象
+     * </pre>
+     *
+     * @param clazz Class
+     * @return Class的实例对象
+     */
+    private <T> T createObjectByClass(Class<T> clazz) {
+        try {
+            return applicationContext.getBean(clazz);
+        } catch (BeansException e) {
+            return super.doCreateObject(clazz);
+        }
     }
 }
