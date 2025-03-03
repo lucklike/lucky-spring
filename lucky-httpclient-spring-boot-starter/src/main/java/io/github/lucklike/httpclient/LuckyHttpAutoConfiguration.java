@@ -40,16 +40,19 @@ import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
+import io.github.lucklike.httpclient.config.AutoConvertConfig;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
+import io.github.lucklike.httpclient.config.IAutoConvert;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
 import io.github.lucklike.httpclient.config.LoggerConfiguration;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
+import io.github.lucklike.httpclient.config.RType;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
 import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
@@ -187,7 +190,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 设置{@link SpELConvert SPEL表达式转换器}，首先尝试从配置中读取用户配置的{@link io.github.lucklike.httpclient.config.SpELRuntimeFactory},
+     * 设置{@link SpELConvert SPEL表达式转换器}，首先尝试从配置中读取用户配置的{@link SpELRuntimeFactory},
      * 如果存在则采用该工厂创建，否则使用默认实例
      *
      * @param factory       工厂实例
@@ -556,24 +559,80 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void responseConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        autoConvertSetting(factory, factoryConfig);
+        contentEncodingConvertorSetting(factory, factoryConfig);
+    }
 
+    /**
+     * 注册Response.AutoConvert
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void autoConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 注册Spring容器中的Response.AutoConvert
         for (String autoConvertBeanName : applicationContext.getBeanNamesForType(Response.AutoConvert.class)) {
-            Response.addAutoConvert(applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class));
+            Response.AutoConvert convertBean = applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class);
+            if (convertBean instanceof IAutoConvert) {
+                IAutoConvert iCBean = (IAutoConvert) convertBean;
+                addAutoConvert(convertBean, iCBean.rType(), iCBean.index(), iCBean.indexClass());
+            } else {
+                Response.addAutoConvert(convertBean);
+            }
         }
 
         ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
 
         // 注册配置文件中配置的Response.AutoConvert
-        Class<? extends Response.AutoConvert>[] responseAutoConverts = responseConvertConfig.getResponseAutoConverts();
+        AutoConvertConfig[] responseAutoConverts = responseConvertConfig.getAutoConverts();
         if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
-            Stream.of(responseAutoConverts).forEach(racClass -> Response.addAutoConvert(ClassUtils.newObject(racClass)));
+            for (AutoConvertConfig config : responseAutoConverts) {
+                Class<? extends Response.AutoConvert> clazz = config.getClazz();
+                Response.AutoConvert autoConvert = ClassUtils.newObject(clazz);
+                addAutoConvert(autoConvert, config.getType(), config.getIndex(), config.getIndexClass());
+            }
         }
+
+    }
+
+    private void addAutoConvert(Response.AutoConvert convert, RType rType, Integer index, Class<? extends Response.AutoConvert> indexClass) {
+
+        if (index == null && indexClass == null) {
+            Response.addAutoConvert(convert);
+            return;
+        }
+
+        int _index;
+        if (index != null) {
+            _index = index;
+        } else {
+            _index = Response.getAutoConvertIndex(indexClass);
+        }
+
+        switch (rType) {
+            case ADD:
+                Response.addAutoConvert(_index, convert);
+                break;
+            case COVER:
+                Response.setAutoConvert(_index, convert);
+                break;
+        }
+    }
+
+    /**
+     * 注册ContentEncodingConvertor
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void contentEncodingConvertorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
         // 注册Spring容器中的ContentEncodingConvertor
         for (String autoConvertBeanName : applicationContext.getBeanNamesForType(ContentEncodingConvertor.class)) {
             AbstractSaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
         }
+
+        ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
 
         // 注册配置文件中配置的ContentEncodingConvertor
         Class<? extends ContentEncodingConvertor>[] contentEncodingDecoders = responseConvertConfig.getContentEncodingDecoder();

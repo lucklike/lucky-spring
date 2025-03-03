@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.config;
 
 
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
-import com.luckyframework.httpclient.core.meta.Response;
 
 /**
  * 响应内容转换相关配置
@@ -12,7 +11,7 @@ public class ResponseConvertConfiguration {
     /**
      * 响应结果自动转换器
      */
-    private Class<? extends Response.AutoConvert>[] responseAutoConverts;
+    private AutoConvertConfig[] autoConverts;
 
     /**
      * 响应内容解码器
@@ -33,10 +32,10 @@ public class ResponseConvertConfiguration {
     /**
      * 设置响应结果自动转换器
      *
-     * @param responseAutoConverts 应结果自动转换器
+     * @param autoConverts 应结果自动转换器
      */
-    public void setResponseAutoConverts(Class<? extends Response.AutoConvert>[] responseAutoConverts) {
-        this.responseAutoConverts = responseAutoConverts;
+    public void setAutoConverts(AutoConvertConfig[] autoConverts) {
+        this.autoConverts = autoConverts;
     }
 
     /**
@@ -72,8 +71,8 @@ public class ResponseConvertConfiguration {
      *
      * @return 应结果自动转换器数组
      */
-    public Class<? extends Response.AutoConvert>[] getResponseAutoConverts() {
-        return responseAutoConverts;
+    public AutoConvertConfig[] getAutoConverts() {
+        return autoConverts;
     }
 
     /**
