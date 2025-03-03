@@ -4,6 +4,7 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.exception.LuckyRuntimeException;
 import com.luckyframework.httpclient.core.convert.ProtobufAutoConvert;
 import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert;
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
@@ -30,11 +31,11 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
-import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
@@ -609,6 +610,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             _index = index;
         } else {
             _index = Response.getAutoConvertIndex(indexClass);
+            if (_index == -1) {
+                throw new LuckyRuntimeException("No such auto-convert '{}'", indexClass.getName());
+            }
         }
 
         switch (rType) {
