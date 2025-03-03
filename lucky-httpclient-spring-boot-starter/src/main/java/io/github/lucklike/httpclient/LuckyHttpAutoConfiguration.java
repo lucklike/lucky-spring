@@ -571,19 +571,21 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void autoConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 注册Spring容器中的Response.AutoConvert
-        for (String autoConvertBeanName : applicationContext.getBeanNamesForType(Response.AutoConvert.class)) {
-            Response.AutoConvert convertBean = applicationContext.getBean(autoConvertBeanName, Response.AutoConvert.class);
-            if (convertBean instanceof IAutoConvert) {
-                IAutoConvert iCBean = (IAutoConvert) convertBean;
-                addAutoConvert(convertBean, iCBean.rType(), iCBean.index(), iCBean.indexClass());
-            } else {
-                Response.addAutoConvert(convertBean);
-            }
+        Set<String> baseAutoConvertBeanNames = ContainerUtils.arrayToSet(applicationContext.getBeanNamesForType(Response.AutoConvert.class));
+        Set<String> autoConvertBeanNames = ContainerUtils.arrayToSet(applicationContext.getBeanNamesForType(IAutoConvert.class));
+
+        baseAutoConvertBeanNames.removeAll(autoConvertBeanNames);
+        for (String baseAutoConvertBeanName : baseAutoConvertBeanNames) {
+            Response.addAutoConvert(applicationContext.getBean(baseAutoConvertBeanName, Response.AutoConvert.class));
         }
 
-        ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
+        for (String autoConvertBeanName : autoConvertBeanNames) {
+            IAutoConvert iCBean = applicationContext.getBean(autoConvertBeanName, IAutoConvert.class);
+            addAutoConvert(iCBean, iCBean.rType(), iCBean.index(), iCBean.indexClass());
+        }
 
         // 注册配置文件中配置的Response.AutoConvert
+        ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
         AutoConvertConfig[] responseAutoConverts = responseConvertConfig.getAutoConverts();
         if (ContainerUtils.isNotEmptyArray(responseAutoConverts)) {
             for (AutoConvertConfig config : responseAutoConverts) {
