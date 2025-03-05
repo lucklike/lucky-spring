@@ -81,6 +81,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.type.AnnotationMetadata;
 
@@ -104,6 +105,7 @@ import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
+import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 /**
  * <pre>
@@ -116,6 +118,7 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
  * @date 2023/8/30 03:35
  */
 @Configuration
+@Role(ROLE_INFRASTRUCTURE)
 public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     private static final Logger log = LoggerFactory.getLogger(LuckyHttpAutoConfiguration.class);
@@ -132,6 +135,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * 转换器相关的配置
      */
     @Bean("conversionService")
+    @Role(ROLE_INFRASTRUCTURE)
     public ConversionServiceFactoryBean conversionServiceFactoryBean() {
         ConversionServiceFactoryBean factoryBean = new ConversionServiceFactoryBean();
         factoryBean.setConverters(new HashSet<>(Arrays.asList(
@@ -143,6 +147,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     @Bean(SPRING_ENV_CONFIG_SOURCE)
+    @Role(ROLE_INFRASTRUCTURE)
     public ConfigurationSource springEnvConfigSource() {
         return new SpringEnvironmentConfigurationSource();
     }
@@ -150,6 +155,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     /**
      * 从环境变量获取必要的配置
      */
+    @Role(ROLE_INFRASTRUCTURE)
     @Bean(PROXY_FACTORY_CONFIG_BEAN_NAME)
     @ConfigurationProperties("lucky.http-client")
     public HttpClientProxyObjectFactoryConfiguration httpClientProxyObjectFactoryConfiguration() {
@@ -161,6 +167,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      *
      * @param factoryConfig 配置实例
      */
+    @Role(ROLE_INFRASTRUCTURE)
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
@@ -738,19 +745,24 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /********************** ContentEncodingConvertor *************************************/
 
+
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"org.brotli.dec.BrotliInputStream"})
     static class BrotliContentEncodingConvertorConfig {
 
         @Bean
+        @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor brotliContentEncodingConvertor() {
             return new BrotliContentEncodingConvertor();
         }
     }
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"com.github.luben.zstd.Zstd"})
     static class ZstdContentEncodingConvertorConfig {
 
         @Bean
+        @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor zstdContentEncodingConvertor() {
             return new ZstdContentEncodingConvertor();
         }
@@ -758,18 +770,22 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /********************** Response.AutoConvert *************************************/
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"com.google.protobuf.Parser"})
     static class ProtobufAutoConvertConfig {
 
         @Bean
+        @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert protobufAutoConvert() {
             return new ProtobufAutoConvert();
         }
     }
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"org.springframework.web.multipart.MultipartFile"})
     static class SpringMultipartFileAutoConvertConfig {
         @Bean
+        @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert springMultipartFileAutoConvert() {
             HttpClientProxyObjectFactory.addNotAutoCloseResourceTypes(ClassUtils.getClass("org.springframework.web.multipart.MultipartFile"));
             return new SpringMultipartFileAutoConvert();
@@ -779,30 +795,36 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /********************** HttpExecutor *************************************/
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient"})
     static class JdkHttpExecutorConfig {
 
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
+        @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyJdkHttpExecutor() {
             return new JdkHttpExecutor();
         }
 
     }
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"okhttp3.OkHttpClient"})
     static class OkHttpExecutorConfig {
 
         @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
+        @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyOkHttp3Executor() {
             return new OkHttpExecutorFactory().getHttpExecutor();
         }
 
     }
 
+    @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"org.apache.http.client.HttpClient"})
     static class ApacheHttpExecutorConfig {
 
         @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
+        @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor() {
             return new HttpClientExecutor();
         }
