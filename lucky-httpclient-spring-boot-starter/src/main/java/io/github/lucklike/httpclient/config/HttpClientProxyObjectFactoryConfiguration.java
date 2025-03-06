@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
@@ -38,6 +39,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 使用执行器枚举来指定执行器
      */
     private HttpExecutorEnum httpExecutor;
+
+    /**
+     * 异步模型
+     */
+    private Model asyncModel;
 
     /**
      * 拦截器生成器数组
@@ -204,6 +210,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
         this.httpExecutor = httpExecutor;
+    }
+
+    /**
+     * 设置异步模型
+     *
+     * @param asyncModel 异步模型
+     */
+    public void setAsyncModel(Model asyncModel) {
+        this.asyncModel = asyncModel;
     }
 
     /**
@@ -410,6 +425,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public HttpExecutorEnum getHttpExecutor() {
         return httpExecutor;
+    }
+
+    /**
+     * 获取异步模型
+     *
+     * @return 异步模型
+     */
+    public Model getAsyncModel() {
+        return asyncModel;
     }
 
     /**

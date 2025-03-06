@@ -23,6 +23,7 @@ import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
+import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationSource;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
@@ -353,6 +354,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        Model asyncModel = factoryConfig.getAsyncModel();
+        if (asyncModel != null) {
+            factory.setAsyncModel(asyncModel);
+        }
 
         // 导入Spring容器中配置的Executor
         String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
