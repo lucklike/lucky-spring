@@ -41,9 +41,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private HttpExecutorEnum httpExecutor;
 
     /**
-     * 异步模型
+     * HTTP请求的异步模型
      */
-    private Model asyncModel;
+    private Model httpAsyncModel;
+
+    /**
+     * Hook方法执行的异步模型
+     */
+    private Model hookAsyncModel;
 
     /**
      * 拦截器生成器数组
@@ -213,12 +218,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置异步模型
+     * 设置HTTP异步模型
      *
-     * @param asyncModel 异步模型
+     * @param httpAsyncModel 异步模型
      */
-    public void setAsyncModel(Model asyncModel) {
-        this.asyncModel = asyncModel;
+    public void setHttpAsyncModel(Model httpAsyncModel) {
+        this.httpAsyncModel = httpAsyncModel;
+    }
+
+    /**
+     * 设置Hook方法执行的异步模型
+     *
+     * @param hookAsyncModel 异步模型
+     */
+    public void setHookAsyncModel(Model hookAsyncModel) {
+        this.hookAsyncModel = hookAsyncModel;
     }
 
     /**
@@ -428,12 +442,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取异步模型
+     * 获取HTTP异步模型
      *
      * @return 异步模型
      */
-    public Model getAsyncModel() {
-        return asyncModel;
+    public Model getHttpAsyncModel() {
+        return httpAsyncModel;
+    }
+
+    /**
+     * 获取Hook执行的异步模型
+     *
+     * @return Hook执行的异步模型
+     */
+    public Model getHookAsyncModel() {
+        return hookAsyncModel;
     }
 
     /**

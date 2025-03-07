@@ -354,9 +354,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        Model asyncModel = factoryConfig.getAsyncModel();
-        if (asyncModel != null) {
-            factory.setAsyncModel(asyncModel);
+
+        // 设置异步模型
+        Model httpAsyncModel = factoryConfig.getHttpAsyncModel();
+        if (httpAsyncModel != null) {
+            factory.setHttpAsyncModel(httpAsyncModel);
+        }
+
+        Model hookAsyncModel = factoryConfig.getHookAsyncModel();
+        if (hookAsyncModel != null) {
+            factory.setHookAsyncModel(hookAsyncModel);
         }
 
         // 导入Spring容器中配置的Executor
