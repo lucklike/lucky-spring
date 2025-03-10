@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
@@ -38,6 +39,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 使用执行器枚举来指定执行器
      */
     private HttpExecutorEnum httpExecutor;
+
+    /**
+     * HTTP请求的异步模型
+     */
+    private Model asyncModel;
+
+    /**
+     * 默认异步执行器的最大并发数，小于0时表示不限制并发数
+     */
+    private int defaultExecutorConcurrency = -1;
 
     /**
      * 拦截器生成器数组
@@ -204,6 +215,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
         this.httpExecutor = httpExecutor;
+    }
+
+    /**
+     * 设置HTTP异步模型
+     *
+     * @param asyncModel 异步模型
+     */
+    public void setAsyncModel(Model asyncModel) {
+        this.asyncModel = asyncModel;
+    }
+
+    /**
+     * 设置默认异步执行器的最大并发数，小于0表示不限制并发数
+     * @param defaultExecutorConcurrency 默认异步执行器的最大并发数
+     */
+    public void setDefaultExecutorConcurrency(int defaultExecutorConcurrency) {
+        this.defaultExecutorConcurrency = defaultExecutorConcurrency;
     }
 
     /**
@@ -410,6 +438,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public HttpExecutorEnum getHttpExecutor() {
         return httpExecutor;
+    }
+
+    /**
+     * 获取HTTP异步模型
+     *
+     * @return 异步模型
+     */
+    public Model getAsyncModel() {
+        return asyncModel;
+    }
+
+    /**
+     * 获取默认异步执行器的最大并发数
+     * @return 默认异步执行器的最大并发数
+     */
+    public int getDefaultExecutorConcurrency() {
+        return defaultExecutorConcurrency;
     }
 
     /**
