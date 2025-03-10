@@ -43,12 +43,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * HTTP请求的异步模型
      */
-    private Model httpAsyncModel;
+    private Model asyncModel;
 
     /**
-     * Hook方法执行的异步模型
+     * 默认异步执行器的最大并发数，小于0时表示不限制并发数
      */
-    private Model hookAsyncModel;
+    private int defaultExecutorConcurrency = -1;
 
     /**
      * 拦截器生成器数组
@@ -220,19 +220,18 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置HTTP异步模型
      *
-     * @param httpAsyncModel 异步模型
+     * @param asyncModel 异步模型
      */
-    public void setHttpAsyncModel(Model httpAsyncModel) {
-        this.httpAsyncModel = httpAsyncModel;
+    public void setAsyncModel(Model asyncModel) {
+        this.asyncModel = asyncModel;
     }
 
     /**
-     * 设置Hook方法执行的异步模型
-     *
-     * @param hookAsyncModel 异步模型
+     * 设置默认异步执行器的最大并发数，小于0表示不限制并发数
+     * @param defaultExecutorConcurrency 默认异步执行器的最大并发数
      */
-    public void setHookAsyncModel(Model hookAsyncModel) {
-        this.hookAsyncModel = hookAsyncModel;
+    public void setDefaultExecutorConcurrency(int defaultExecutorConcurrency) {
+        this.defaultExecutorConcurrency = defaultExecutorConcurrency;
     }
 
     /**
@@ -446,17 +445,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 异步模型
      */
-    public Model getHttpAsyncModel() {
-        return httpAsyncModel;
+    public Model getAsyncModel() {
+        return asyncModel;
     }
 
     /**
-     * 获取Hook执行的异步模型
-     *
-     * @return Hook执行的异步模型
+     * 获取默认异步执行器的最大并发数
+     * @return 默认异步执行器的最大并发数
      */
-    public Model getHookAsyncModel() {
-        return hookAsyncModel;
+    public int getDefaultExecutorConcurrency() {
+        return defaultExecutorConcurrency;
     }
 
     /**
