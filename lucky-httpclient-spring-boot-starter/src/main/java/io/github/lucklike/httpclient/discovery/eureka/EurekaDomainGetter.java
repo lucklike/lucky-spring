@@ -5,8 +5,8 @@ import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import com.luckyframework.httpclient.proxy.url.DomainNameGetter;
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.EurekaClient;
-import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.discovery.RegistryConfigurationException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -19,9 +19,12 @@ import io.github.lucklike.httpclient.discovery.RegistryConfigurationException;
 public class EurekaDomainGetter implements DomainNameGetter {
 
 
+    @Autowired(required = false)
+    private EurekaClient eurekaClient;
 
     @Override
     public String getDomainName(DomainNameContext context) throws Exception {
+
         // 获取注解实例并检验配置
         EurekaHttpClient eurekaAnn = context.toAnnotation(EurekaHttpClient.class);
         requiredConfigCheck(eurekaAnn);
@@ -46,7 +49,10 @@ public class EurekaDomainGetter implements DomainNameGetter {
         if (StringUtils.hasText(eurekaClientConfig)) {
             return context.parseExpression(eurekaClientConfig, EurekaClient.class);
         }
-        return ApplicationContextUtils.getBean(EurekaClient.class);
+        if (eurekaClient == null) {
+            throw new RegistryConfigurationException("It is detected that the current Eureka environment is not available and service information cannot be obtained");
+        }
+        return eurekaClient;
     }
 
     private void requiredConfigCheck(EurekaHttpClient eurekaHttpClient) {

@@ -4,7 +4,6 @@ import com.alibaba.nacos.api.common.Constants;
 import com.luckyframework.httpclient.proxy.annotations.DomainNameMeta;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
@@ -12,8 +11,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import static io.github.lucklike.httpclient.discovery.Constant.NACOS_DOMAIN_GETTER_BEAN_NAME;
 
 /**
  * 提供对Nacos注册中心的支持, 注：使用此注解需要导入Nacos相关的依赖
@@ -26,7 +23,7 @@ import static io.github.lucklike.httpclient.discovery.Constant.NACOS_DOMAIN_GETT
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @HttpClientComponent
-@DomainNameMeta(getter = @ObjectGenerate(msg = NACOS_DOMAIN_GETTER_BEAN_NAME))
+@DomainNameMeta(getter = @ObjectGenerate(NacosDomainGetter.class))
 public @interface NacosHttpClient {
 
     /**

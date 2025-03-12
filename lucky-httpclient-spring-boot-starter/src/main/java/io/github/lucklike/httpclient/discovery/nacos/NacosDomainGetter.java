@@ -61,6 +61,9 @@ public class NacosDomainGetter implements DomainNameGetter {
         if (StringUtils.hasText(namingServiceConfig)) {
             return context.parseExpression(namingServiceConfig, NamingService.class);
         }
+        if (namingService == null) {
+            throw new RegistryConfigurationException("It is detected that the current Nacos environment is not available and service information cannot be obtained");
+        }
         return this.namingService;
     }
 
