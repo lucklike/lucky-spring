@@ -45,6 +45,7 @@
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
         <lucky-version>3.0.1</lucky-version>
+        <nacos.version>2.1.2</nacos.version>
     </properties>
 
     <dependencies>
@@ -72,6 +73,23 @@
             <groupId>io.github.lucklike</groupId>
             <artifactId>lucky-httpclient</artifactId>
             <version>${lucky-version}</version>
+        </dependency>
+
+
+        <!--Nacos-->
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>nacos-discovery-spring-boot-starter</artifactId>
+            <version>0.2.12</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--Eureka-->
+        <dependency>
+            <groupId>com.netflix.eureka</groupId>
+            <artifactId>eureka-client</artifactId>
+            <version>1.10.18</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -114,24 +132,6 @@
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- JavaDoc -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <executions>
-                            <execution>
-                                <configuration>
-                                    <additionalparam>-Xdoclint:none</additionalparam>
-                                </configuration>
-                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
