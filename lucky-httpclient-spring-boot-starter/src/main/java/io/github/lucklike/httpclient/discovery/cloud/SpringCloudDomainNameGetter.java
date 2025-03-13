@@ -24,16 +24,21 @@ public class SpringCloudDomainNameGetter implements DomainNameGetter {
 
     @Override
     public String getDomainName(DomainNameContext context) throws Exception {
+        // 获取注解实例并检验配置
+        HttpClient httpclientAnn = context.toAnnotation(HttpClient.class);
 
+        String serviceName = context.parseExpression(httpclientAnn.service(), String.class);
+        String path = context.parseExpression(httpclientAnn.path(), String.class);
+
+        return getDomainName(serviceName, path);
+    }
+
+    public String getDomainName(String serviceName, String path) {
         if (loadBalancerClient == null) {
             throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service information cannot be obtained");
         }
 
-        // 获取注解实例并检验配置
-        HttpClient httpclientAnn = context.toAnnotation(HttpClient.class);
-
         // 解析注解配置
-        String serviceName = context.parseExpression(httpclientAnn.service(), String.class);
         if (!StringUtils.hasText(serviceName)) {
             throw new ServerDiscoveryConfigurationException("The service name is not configured");
         }
@@ -46,7 +51,6 @@ public class SpringCloudDomainNameGetter implements DomainNameGetter {
 
         // 拼接URL返回
         String baseUrl = instance.getUri().toString();
-        String path = context.parseExpression(httpclientAnn.path(), String.class);
         if (StringUtils.hasText(path)) {
             return StringUtils.joinUrlPath(baseUrl, path);
         }
