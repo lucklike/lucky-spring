@@ -5,7 +5,7 @@ import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import com.luckyframework.httpclient.proxy.url.DomainNameGetter;
 import io.github.lucklike.httpclient.discovery.HttpClient;
 import io.github.lucklike.httpclient.discovery.ServerDiscoveryConfigurationException;
-import io.github.lucklike.httpclient.discovery.ServiceInstanceNotFountException;
+import io.github.lucklike.httpclient.discovery.ServiceInstanceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
@@ -41,7 +41,7 @@ public class SpringCloudDomainNameGetter implements DomainNameGetter {
         // 获取服务实例，并检验服务实例是否存在
         ServiceInstance instance = loadBalancerClient.choose(serviceName);
         if (instance == null) {
-            throw new ServiceInstanceNotFountException("No service instance named '{}' was found", serviceName);
+            throw new ServiceInstanceNotFoundException("No service instance named '{}' was found", serviceName);
         }
 
         // 拼接URL返回
