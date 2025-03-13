@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.annotation;
 
 import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
+import io.github.lucklike.httpclient.discovery.ServerDiscoveryAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -19,7 +20,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(LuckyHttpAutoConfiguration.class)
+@Import({LuckyHttpAutoConfiguration.class, ServerDiscoveryAutoConfiguration.class})
 public @interface EnableLuckyHttpClientAutoConfiguration {
 
 

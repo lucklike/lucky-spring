@@ -26,7 +26,7 @@ public class BeanObjectCreator extends ReflectObjectCreator {
 
     @Override
     protected <T> T doCreateObject(Class<T> clazz, String msg) {
-        boolean hasClass = clazz != null;
+        boolean hasClass = clazz != null && clazz != Void.class;
         boolean hasName = StringUtils.hasText(msg);
 
         if (hasName) {

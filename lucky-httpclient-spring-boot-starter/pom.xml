@@ -45,6 +45,8 @@
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
         <lucky-version>3.0.1</lucky-version>
+        <spring-cloud-common>3.1.8</spring-cloud-common>
+        <spring-cloud-nacos>0.2.12</spring-cloud-nacos>
     </properties>
 
     <dependencies>
@@ -73,6 +75,15 @@
             <artifactId>lucky-httpclient</artifactId>
             <version>${lucky-version}</version>
         </dependency>
+
+        <!--Spring Cloud-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-commons</artifactId>
+            <version>${spring-cloud-common}</version>
+            <scope>provided</scope>
+        </dependency>
+
 
     </dependencies>
 
@@ -114,24 +125,6 @@
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- JavaDoc -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <executions>
-                            <execution>
-                                <configuration>
-                                    <additionalparam>-Xdoclint:none</additionalparam>
-                                </configuration>
-                                <id>attach-javadocs</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
