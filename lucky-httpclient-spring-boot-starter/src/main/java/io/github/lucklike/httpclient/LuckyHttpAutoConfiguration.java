@@ -37,6 +37,9 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
+import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
+import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
@@ -48,11 +51,14 @@ import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorFactory;
-import io.github.lucklike.httpclient.config.IAutoConvert;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
+import io.github.lucklike.httpclient.config.Locator;
+import io.github.lucklike.httpclient.config.LocatorAutoConvert;
+import io.github.lucklike.httpclient.config.LocatorParameterConvert;
 import io.github.lucklike.httpclient.config.LoggerConfiguration;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
+import io.github.lucklike.httpclient.config.ParameterConvertConfig;
 import io.github.lucklike.httpclient.config.PoolParamHttpExecutorFactory;
 import io.github.lucklike.httpclient.config.RType;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
@@ -88,6 +94,7 @@ import org.springframework.core.type.AnnotationMetadata;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -96,7 +103,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
@@ -568,6 +577,41 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         factory.setHeaders(factoryConfig.getHeaderParams());
         factory.setPathParameters(factoryConfig.getPathParams());
         factory.setQueryParameters(factoryConfig.getQueryParams());
+        parameterConvertSetting(factoryConfig);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void parameterConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        // 收集Spring容器中的ParameterConvert
+        String[] beanNamesForType = applicationContext.getBeanNamesForType(ParameterConvert.class);
+
+        List<Locator<ParameterConvert>> locators = new ArrayList<>();
+        List<ParameterConvert> parameterConverts = new ArrayList<>();
+
+        for (String parameterConvertName : beanNamesForType) {
+            ParameterConvert parameterConvert = applicationContext.getBean(parameterConvertName, ParameterConvert.class);
+            if (parameterConvert instanceof Locator) {
+                locators.add((Locator<ParameterConvert>) parameterConvert);
+            } else {
+                parameterConverts.add(parameterConvert);
+            }
+        }
+
+        // 注册配置文件中配置的ParameterConvert
+        ParameterConvertConfig[] parameterConvertConfigs = factoryConfig.getParameterConverts();
+        if (ContainerUtils.isNotEmptyArray(parameterConvertConfigs)) {
+            for (ParameterConvertConfig config : parameterConvertConfigs) {
+                Class<? extends ParameterConvert> clazz = config.getClazz();
+                ParameterConvert parameterConvert = ClassUtils.newObject(clazz);
+                locators.add(LocatorParameterConvert.of(parameterConvert, config.getType(), config.getIndex(), config.getIndexClass()));
+            }
+        }
+
+
+        parameterConverts.forEach(ContextValueUnpack::addParameterConvert);
+        locators.forEach(this::addLocatorParameterConvert);
+
     }
 
     /**
@@ -577,29 +621,30 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void responseConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        autoConvertSetting(factory, factoryConfig);
+        autoConvertSetting(factoryConfig);
         contentEncodingConvertorSetting(factory, factoryConfig);
     }
 
     /**
      * 注册Response.AutoConvert
      *
-     * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void autoConvertSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 注册Spring容器中的Response.AutoConvert
-        Set<String> baseAutoConvertBeanNames = ContainerUtils.arrayToSet(applicationContext.getBeanNamesForType(Response.AutoConvert.class));
-        Set<String> autoConvertBeanNames = ContainerUtils.arrayToSet(applicationContext.getBeanNamesForType(IAutoConvert.class));
+    @SuppressWarnings("unchecked")
+    private void autoConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 收集Spring容器中的Response.AutoConvert
+        String[] autoConvertNames = applicationContext.getBeanNamesForType(Response.AutoConvert.class);
 
-        baseAutoConvertBeanNames.removeAll(autoConvertBeanNames);
-        for (String baseAutoConvertBeanName : baseAutoConvertBeanNames) {
-            Response.addAutoConvert(applicationContext.getBean(baseAutoConvertBeanName, Response.AutoConvert.class));
-        }
+        List<Locator<Response.AutoConvert>> locators = new ArrayList<>();
+        List<Response.AutoConvert> autoConverts = new ArrayList<>();
 
-        for (String autoConvertBeanName : autoConvertBeanNames) {
-            IAutoConvert iCBean = applicationContext.getBean(autoConvertBeanName, IAutoConvert.class);
-            addAutoConvert(iCBean, iCBean.rType(), iCBean.index(), iCBean.indexClass());
+        for (String autoConvertName : autoConvertNames) {
+            Response.AutoConvert autoConvert = applicationContext.getBean(autoConvertName, Response.AutoConvert.class);
+            if (autoConvert instanceof Locator) {
+                locators.add((Locator<Response.AutoConvert>) autoConvert);
+            } else {
+                autoConverts.add(autoConvert);
+            }
         }
 
         // 注册配置文件中配置的Response.AutoConvert
@@ -609,16 +654,49 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             for (AutoConvertConfig config : responseAutoConverts) {
                 Class<? extends Response.AutoConvert> clazz = config.getClazz();
                 Response.AutoConvert autoConvert = ClassUtils.newObject(clazz);
-                addAutoConvert(autoConvert, config.getType(), config.getIndex(), config.getIndexClass());
+                locators.add(LocatorAutoConvert.of(autoConvert, config.getType(), config.getIndex(), config.getIndexClass()));
             }
         }
 
+        autoConverts.forEach(Response::addAutoConvert);
+        locators.forEach(this::addLocatorAutoConvert);
+
     }
 
-    private void addAutoConvert(Response.AutoConvert convert, RType rType, Integer index, Class<? extends Response.AutoConvert> indexClass) {
+    private void addLocatorParameterConvert(Locator<ParameterConvert> locator) {
+        addLocatorObject(
+                locator,
+                ContextValueUnpack::addParameterConvert,
+                ContextValueUnpack::addParameterConvert,
+                ContextValueUnpack::setParameterConvert,
+                cz -> ContextValueUnpack.getParameterConvertIndex(cz)
+        );
+    }
+
+    private void addLocatorAutoConvert(Locator<Response.AutoConvert> locator) {
+        addLocatorObject(
+                locator,
+                Response::addAutoConvert,
+                Response::addAutoConvert,
+                Response::setAutoConvert,
+                cz -> Response.getAutoConvertIndex(cz)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> void addLocatorObject(Locator<T> locator,
+                                      Consumer<T> addLast,
+                                      BiConsumer<Integer, T> addIndex,
+                                      BiConsumer<Integer, T> set,
+                                      Function<Class<? extends T>, Integer> indexFun) {
+
+        Integer index = locator.index();
+        Class<? extends T> indexClass = locator.indexClass();
+        RType rType = locator.rType();
+        T element = (T) locator;
 
         if (index == null && indexClass == null) {
-            Response.addAutoConvert(convert);
+            addLast.accept(element);
             return;
         }
 
@@ -626,18 +704,18 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (index != null) {
             _index = index;
         } else {
-            _index = Response.getAutoConvertIndex(indexClass);
+            _index = indexFun.apply(indexClass);
             if (_index == -1) {
-                throw new LuckyRuntimeException("No such auto-convert '{}'", indexClass.getName());
+                throw new LuckyRuntimeException("The element of type '{}' does not exist", indexClass.getName());
             }
         }
 
         switch (rType) {
             case ADD:
-                Response.addAutoConvert(_index, convert);
+                addIndex.accept(_index, element);
                 break;
             case COVER:
-                Response.setAutoConvert(_index, convert);
+                set.accept(_index, element);
                 break;
         }
     }
@@ -799,6 +877,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         public Response.AutoConvert springMultipartFileAutoConvert() {
             HttpClientProxyObjectFactory.addNotAutoCloseResourceTypes(ClassUtils.getClass("org.springframework.web.multipart.MultipartFile"));
             return new SpringMultipartFileAutoConvert();
+        }
+
+        @Bean
+        @Role(ROLE_INFRASTRUCTURE)
+        public ParameterConvert springMultipartFileParameterConvert() {
+            return new SpringMultipartFileParameterConvert();
         }
     }
 

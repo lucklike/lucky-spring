@@ -174,6 +174,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     private Class<? extends ProxyPlugin>[] plugins;
 
+    /**
+     * 参数转换器相关配置
+     */
+    private ParameterConvertConfig[] parameterConverts;
+
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
@@ -228,6 +233,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 设置默认异步执行器的最大并发数，小于0表示不限制并发数
+     *
      * @param defaultExecutorConcurrency 默认异步执行器的最大并发数
      */
     public void setDefaultExecutorConcurrency(int defaultExecutorConcurrency) {
@@ -400,6 +406,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.plugins = plugins;
     }
 
+    /**
+     * 设置参数转换器
+     *
+     * @param parameterConverts 参数转换器
+     */
+    public void setParameterConverts(ParameterConvertConfig[] parameterConverts) {
+        this.parameterConverts = parameterConverts;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -451,6 +466,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
      * 获取默认异步执行器的最大并发数
+     *
      * @return 默认异步执行器的最大并发数
      */
     public int getDefaultExecutorConcurrency() {
@@ -608,5 +624,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public Class<? extends ProxyPlugin>[] getPlugins() {
         return plugins;
+    }
+
+    /**
+     * 获取参数转换器
+     *
+     * @return 参数转换器
+     */
+    public ParameterConvertConfig[] getParameterConverts() {
+        return parameterConverts;
     }
 }
