@@ -1,11 +1,13 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.core.meta.Response;
-
 /**
- * 用于指定注册类型的接口
+ * 定位器
+ *
+ * @author fukang
+ * @version 1.0.0
+ * @date 2025/3/15 02:13
  */
-public interface IAutoConvert extends Response.AutoConvert {
+public interface Locator<T> {
 
     /**
      * 指定注册类型
@@ -26,11 +28,11 @@ public interface IAutoConvert extends Response.AutoConvert {
     }
 
     /**
-     * 用于定位注册位置的转换类Class
+     * 用于定位位置的Class
      *
-     * @return 用于定位注册位置的转换类Class
+     * @return 用于定位位置的Class
      */
-    default Class<? extends Response.AutoConvert> indexClass() {
+    default Class<? extends T> indexClass() {
         return null;
     }
 }
