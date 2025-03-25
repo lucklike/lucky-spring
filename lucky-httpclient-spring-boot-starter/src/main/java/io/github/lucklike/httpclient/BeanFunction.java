@@ -2,9 +2,12 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
+import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
+import io.github.lucklike.httpclient.annotation.HttpReference;
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +31,21 @@ public class BeanFunction {
     @FunctionAlias(__$PARAMETER_INSTANCE_FUNCTION$__)
     public static Object getParameterInstance(Parameter parameter) {
         Class<?> parameterType = parameter.getType();
+
+        // 使用@HttpReference标注的HttpClient组件
+        HttpReference httpReferenceAnn = AnnotationUtils.findMergedAnnotation(parameter, HttpReference.class);
+        if (httpReferenceAnn != null) {
+            HttpClientProxyObjectFactory factory = ApplicationContextUtils.getBean(HttpClientProxyObjectFactory.class);
+            ProxyModel proxyModel = httpReferenceAnn.proxyModel();
+            switch (proxyModel) {
+                case JDK:
+                    return factory.getJdkProxyObject(parameterType);
+                case CGLIB:
+                    return factory.getCglibProxyObject(parameterType);
+                default:
+                    return factory.getProxyObject(parameterType);
+            }
+        }
 
         // 使用@Qualifier注解指定Bean的名称
         Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameter, Qualifier.class);
