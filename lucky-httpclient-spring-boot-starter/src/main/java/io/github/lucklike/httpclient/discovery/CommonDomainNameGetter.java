@@ -22,7 +22,6 @@ public class CommonDomainNameGetter implements DomainNameGetter {
     public String getDomainName(DomainNameContext context) throws Exception {
         HttpClient httpClientAnn = context.toAnnotation(HttpClient.class);
 
-
         String url = context.parseExpression(httpClientAnn.url(), String.class);
         String serviceName = context.parseExpression(httpClientAnn.service(), String.class);
         String path = context.parseExpression(httpClientAnn.path(), String.class);
