@@ -31,9 +31,9 @@ public class CommonDomainNameGetter implements DomainNameGetter {
             return StringUtils.joinUrlPath(url, path);
         }
 
-        // url和service均为配置时报错提示
+        // url和service均为配置时返回空字符串
         if (!StringUtils.hasText(serviceName)) {
-            throw new ServerDiscoveryConfigurationException("Missing url configuration and service name configuration");
+            return DomainNameMeta.EMPTY;
         }
 
         // 尝试使用server配置进行解析，server解析需要依赖SpringCloud环境，如果不在SprigCloud环境时将无法解析，会直接返回空字符串
