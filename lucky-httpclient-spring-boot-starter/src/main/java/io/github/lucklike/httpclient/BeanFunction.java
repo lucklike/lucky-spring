@@ -1,19 +1,14 @@
 package io.github.lucklike.httpclient;
 
-import com.luckyframework.common.StringUtils;
-import com.luckyframework.conversion.ConversionUtils;
-import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
+import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
-import io.github.lucklike.httpclient.annotation.HttpReference;
-import io.github.lucklike.httpclient.annotation.ProxyModel;
+import io.github.lucklike.httpclient.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.ObjectProvider;
 
-import java.lang.reflect.Parameter;
+import java.util.Iterator;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
 
@@ -25,46 +20,27 @@ public class BeanFunction {
     /**
      * 获取参数对应的实例对象
      *
-     * @param parameter 参数实例
+     * @param parameterInfo 参数实例
      * @return Bean的实例
      */
     @FunctionAlias(__$PARAMETER_INSTANCE_FUNCTION$__)
-    public static Object getParameterInstance(Parameter parameter) {
-        Class<?> parameterType = parameter.getType();
+    public static Object getParameterInstance(ParameterInfo parameterInfo) {
 
-        // 使用@HttpReference标注的HttpClient组件
-        HttpReference httpReferenceAnn = AnnotationUtils.findMergedAnnotation(parameter, HttpReference.class);
-        if (httpReferenceAnn != null) {
-            HttpClientProxyObjectFactory factory = ApplicationContextUtils.getBean(HttpClientProxyObjectFactory.class);
-            ProxyModel proxyModel = httpReferenceAnn.proxyModel();
-            switch (proxyModel) {
-                case JDK:
-                    return factory.getJdkProxyObject(parameterType);
-                case CGLIB:
-                    return factory.getCglibProxyObject(parameterType);
-                default:
-                    return factory.getProxyObject(parameterType);
+        // 使用Spring容器中的ParameterInstanceFactory来创建参数实例
+        ObjectProvider<ParameterInstanceFactory> beanProvider = ApplicationContextUtils.getBeanProvider(ParameterInstanceFactory.class);
+        Iterator<ParameterInstanceFactory> iterator = beanProvider.orderedStream().iterator();
+        while (iterator.hasNext()) {
+            ParameterInstanceFactory factory = iterator.next();
+            if (factory.canCreateInstance(parameterInfo)) {
+                return factory.createInstance(parameterInfo);
             }
-        }
-
-        // 使用@Qualifier注解指定Bean的名称
-        Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameter, Qualifier.class);
-        if (qualifierAnn != null && StringUtils.hasText(qualifierAnn.value())) {
-            return ApplicationContextUtils.getBean(qualifierAnn.value(), parameterType);
-        }
-
-        // 使用Value注解注入环境变量
-        Value valueAnn = AnnotationUtils.findMergedAnnotation(parameter, Value.class);
-        if (valueAnn != null) {
-            Environment env = ApplicationContextUtils.getEnvironment();
-            return ConversionUtils.conversion(env.resolveRequiredPlaceholders(valueAnn.value()), parameterType);
         }
 
         // 使用类型查找
         try {
-            return ApplicationContextUtils.getBean(parameterType);
+            return ApplicationContextUtils.getBeanProvider(parameterInfo.getResolvableType()).getObject();
         } catch (NoSuchBeanDefinitionException e) {
-            AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameter, AllowNull.class);
+            AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
             if (allowNullAnn != null && allowNullAnn.value()) {
                 return null;
             }
