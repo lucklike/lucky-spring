@@ -27,8 +27,8 @@ public class BeanFunction {
     public static Object getParameterInstance(ParameterInfo parameterInfo) {
 
         // 使用Spring容器中的ParameterInstanceFactory来创建参数实例
-        ObjectProvider<ParameterInstanceFactory> beanProvider = ApplicationContextUtils.getBeanProvider(ParameterInstanceFactory.class);
-        Iterator<ParameterInstanceFactory> iterator = beanProvider.orderedStream().iterator();
+        ObjectProvider<ParameterInstanceFactory> factoryBeanProvider = ApplicationContextUtils.getBeanProvider(ParameterInstanceFactory.class);
+        Iterator<ParameterInstanceFactory> iterator = factoryBeanProvider.orderedStream().iterator();
         while (iterator.hasNext()) {
             ParameterInstanceFactory factory = iterator.next();
             if (factory.canCreateInstance(parameterInfo)) {
@@ -37,9 +37,16 @@ public class BeanFunction {
         }
 
         // 使用类型查找
+        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(parameterInfo.getResolvableType());
         try {
-            return ApplicationContextUtils.getBeanProvider(parameterInfo.getResolvableType()).getObject();
+            return beanProvider.getObject();
         } catch (NoSuchBeanDefinitionException e) {
+            // 找到多个Bean时抛异常
+            if (beanProvider.stream().count() > 1) {
+                throw e;
+            }
+
+            // 找不到Bean时判断有无@AllowNull注解，有则注入null值，否则抛异常
             AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
             if (allowNullAnn != null && allowNullAnn.value()) {
                 return null;
