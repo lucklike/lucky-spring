@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
@@ -7,6 +9,10 @@ import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.ConfigurationPropertyName;
+import org.springframework.core.env.Environment;
 
 import java.util.Iterator;
 
@@ -133,5 +139,29 @@ public class BeanFunction {
      */
     public static long startupDate() {
         return ApplicationContextUtils.getStartupDate();
+    }
+
+    /**
+     * 获取环境变量中的某段配置，并映射成指定的类型的对象
+     *
+     * @param prefix 配置
+     * @param clazz  指定的映射类型
+     * @param <T>    映射类型的泛型
+     * @return 配置值
+     */
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public static <T> T env(String prefix, Class<T>... clazz) {
+        Environment env = ApplicationContextUtils.getEnvironment();
+
+        if (env.containsProperty(prefix)) {
+            Class<?> type = ContainerUtils.isNotEmptyArray(clazz) ? clazz[0] : String.class;
+            return (T) env.getRequiredProperty(prefix, type);
+        }
+
+        Class<?> type = ContainerUtils.isNotEmptyArray(clazz) ? clazz[0] : ConfigurationMap.class;
+        return (T) Binder.get(env)
+                .bind(ConfigurationPropertyName.adapt(prefix, '.'), Bindable.of(type))
+                .orElseThrow(() -> new IllegalStateException("Required key '" + prefix + "' not found"));
     }
 }
