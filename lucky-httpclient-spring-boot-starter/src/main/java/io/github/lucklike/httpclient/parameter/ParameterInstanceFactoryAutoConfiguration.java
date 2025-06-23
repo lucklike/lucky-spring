@@ -30,4 +30,10 @@ public class ParameterInstanceFactoryAutoConfiguration {
     public ParameterInstanceFactory valueParameterInstanceFactory() {
         return new ValueParameterInstanceFactory();
     }
+
+    @Order(Integer.MIN_VALUE + 4)
+    @Bean("__bindParameterInstanceFactory__")
+    public ParameterInstanceFactory bindParameterInstanceFactory() {
+        return new BindParameterInstanceFactory();
+    }
 }
