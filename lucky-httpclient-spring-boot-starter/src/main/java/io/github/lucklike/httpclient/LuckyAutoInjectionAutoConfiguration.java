@@ -1,0 +1,68 @@
+package io.github.lucklike.httpclient;
+
+import io.github.lucklike.httpclient.injection.BindAnnotationFieldInjection;
+import io.github.lucklike.httpclient.injection.FieldInjection;
+import io.github.lucklike.httpclient.injection.HttpReferenceAnnotationFieldInjection;
+import io.github.lucklike.httpclient.injection.parameter.BindParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.HttpReferenceParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.ObjectProviderParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.QualifierParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.ValueParameterInstanceFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+
+@Configuration
+public class LuckyAutoInjectionAutoConfiguration {
+
+    //---------------------------------------------------------------------------------------------------------
+    //                                  ParameterInstanceFactory
+    //---------------------------------------------------------------------------------------------------------
+
+    @Order(Integer.MIN_VALUE)
+    @Bean("__httpReferenceParameterInstanceFactory__")
+    public ParameterInstanceFactory httpReferenceParameterInstanceFactory() {
+        return new HttpReferenceParameterInstanceFactory();
+    }
+
+    @Order(Integer.MIN_VALUE + 1)
+    @Bean("__objectProviderParameterInstanceFactory__")
+    public ParameterInstanceFactory objectProviderParameterInstanceFactory() {
+        return new ObjectProviderParameterInstanceFactory();
+    }
+
+    @Order(Integer.MIN_VALUE + 2)
+    @Bean("__qualifierParameterInstanceFactory__")
+    public ParameterInstanceFactory qualifierParameterInstanceFactory() {
+        return new QualifierParameterInstanceFactory();
+    }
+
+    @Order(Integer.MIN_VALUE + 3)
+    @Bean("__valueParameterInstanceFactory__")
+    public ParameterInstanceFactory valueParameterInstanceFactory() {
+        return new ValueParameterInstanceFactory();
+    }
+
+    @Order(Integer.MIN_VALUE + 4)
+    @Bean("__bindParameterInstanceFactory__")
+    public ParameterInstanceFactory bindParameterInstanceFactory() {
+        return new BindParameterInstanceFactory();
+    }
+
+    //---------------------------------------------------------------------------------------------------------
+    //                                  FieldInjection
+    //---------------------------------------------------------------------------------------------------------
+
+    @Order(Integer.MIN_VALUE + 1)
+    @Bean("__httpReferenceAnnotationFieldInjection__")
+    public FieldInjection httpReferenceAnnotationFieldInjection() {
+        return new HttpReferenceAnnotationFieldInjection();
+    }
+
+    @Order(Integer.MIN_VALUE + 1)
+    @Bean("__bindAnnotationFieldInjection__")
+    public FieldInjection bindAnnotationFieldInjection() {
+        return new BindAnnotationFieldInjection();
+    }
+}

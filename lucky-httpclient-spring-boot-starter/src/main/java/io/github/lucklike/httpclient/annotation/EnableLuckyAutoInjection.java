@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.annotation;
 
-import io.github.lucklike.httpclient.HttpReferenceAnnotationBeanPostProcessor;
+import io.github.lucklike.httpclient.injection.HttpReference;
+import io.github.lucklike.httpclient.injection.LuckyAutoInjectionBeanPostProcessor;
 import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
 
 import java.lang.annotation.Documented;
@@ -13,7 +14,7 @@ import java.lang.annotation.Target;
  * 开启{@link HttpReference @HttpReference}注解注入功能
  * <pre>
  *     1.向Spring容器中注入一个自动配置类{@link LuckyHttpAutoConfiguration}，来完成重要组件的初始化工作
- *     2.向Spring容器中注入一个用于支持{@link HttpReference @HttpReference}注解导入的Bean后置处理器{@link HttpReferenceAnnotationBeanPostProcessor}
+ *     2.向Spring容器中注入一个用于支持属性注入扩展的{@link LuckyAutoInjectionBeanPostProcessor}，用于完成特殊属性注入的功能
  * </pre>
  *
  * @author fukang
@@ -23,8 +24,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@HttpReferenceAutoImport
+@LuckyAutoInjectionImport
 @EnableLuckyHttpClientAutoConfiguration
-public @interface EnableHttpReferenceInject {
+public @interface EnableLuckyAutoInjection {
 
 }

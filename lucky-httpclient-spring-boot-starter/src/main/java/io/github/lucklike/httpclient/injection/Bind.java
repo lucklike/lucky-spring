@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.parameter;
+package io.github.lucklike.httpclient.injection;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

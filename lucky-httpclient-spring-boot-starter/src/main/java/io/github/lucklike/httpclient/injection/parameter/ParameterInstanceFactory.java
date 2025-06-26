@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.parameter;
+package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 

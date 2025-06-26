@@ -1,10 +1,10 @@
-package io.github.lucklike.httpclient.parameter;
+package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
-import io.github.lucklike.httpclient.annotation.HttpReference;
+import io.github.lucklike.httpclient.injection.HttpReference;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 
 import java.lang.reflect.Parameter;

@@ -1,8 +1,9 @@
-package io.github.lucklike.httpclient.parameter;
+package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpackException;
 import com.luckyframework.httpclient.proxy.unpack.ValueUnpackContext;
+import io.github.lucklike.httpclient.injection.Bind;
 
 public class BindContentValueUnpack implements ContextValueUnpack {
 

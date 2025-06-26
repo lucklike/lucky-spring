@@ -1,4 +1,6 @@
-package io.github.lucklike.httpclient.annotation;
+package io.github.lucklike.httpclient.injection;
+
+import io.github.lucklike.httpclient.annotation.ProxyModel;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

@@ -1,8 +1,9 @@
-package io.github.lucklike.httpclient.parameter;
+package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.BeanFunction;
+import io.github.lucklike.httpclient.injection.Bind;
 
 /**
  * 支持{@link Bind @Bind}注解功能的参数实例工厂

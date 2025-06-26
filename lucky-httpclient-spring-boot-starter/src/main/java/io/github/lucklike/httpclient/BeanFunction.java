@@ -7,7 +7,7 @@ import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
-import io.github.lucklike.httpclient.parameter.ParameterInstanceFactory;
+import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.bind.Bindable;
