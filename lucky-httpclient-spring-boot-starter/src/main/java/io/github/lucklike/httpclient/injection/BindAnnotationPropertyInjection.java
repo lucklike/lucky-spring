@@ -6,11 +6,14 @@ import org.springframework.core.ResolvableType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 
-public class BindAnnotationFieldInjection extends AnnotationFieldInjection<Bind> {
-
-    public BindAnnotationFieldInjection() {
-        super(Bind.class);
-    }
+/**
+ * 给Bean对象被{@link Bind @Bind}注解标注的属性或方法绑定一段配置
+ *
+ * @author fukang
+ * @version 1.0.0
+ * @date 2025/06/27 15:27
+ */
+public class BindAnnotationPropertyInjection extends AnnotationPropertyInjection<Bind> {
 
     @Override
     protected Object getInjectObjectByField(Object bean, String beanName, Field field, ResolvableType fieldType, Bind annotation) {

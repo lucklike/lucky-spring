@@ -1,8 +1,5 @@
 package io.github.lucklike.httpclient;
 
-import io.github.lucklike.httpclient.injection.BindAnnotationFieldInjection;
-import io.github.lucklike.httpclient.injection.FieldInjection;
-import io.github.lucklike.httpclient.injection.HttpReferenceAnnotationFieldInjection;
 import io.github.lucklike.httpclient.injection.parameter.BindParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.HttpReferenceParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.ObjectProviderParameterInstanceFactory;
@@ -50,19 +47,4 @@ public class LuckyAutoInjectionAutoConfiguration {
         return new BindParameterInstanceFactory();
     }
 
-    //---------------------------------------------------------------------------------------------------------
-    //                                  FieldInjection
-    //---------------------------------------------------------------------------------------------------------
-
-    @Order(Integer.MIN_VALUE)
-    @Bean("__httpReferenceAnnotationFieldInjection__")
-    public FieldInjection httpReferenceAnnotationFieldInjection() {
-        return new HttpReferenceAnnotationFieldInjection();
-    }
-
-    @Order(Integer.MIN_VALUE + 1)
-    @Bean("__bindAnnotationFieldInjection__")
-    public FieldInjection bindAnnotationFieldInjection() {
-        return new BindAnnotationFieldInjection();
-    }
 }

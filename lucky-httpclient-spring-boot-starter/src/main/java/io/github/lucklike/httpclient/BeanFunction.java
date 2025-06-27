@@ -7,6 +7,7 @@ import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
+import io.github.lucklike.httpclient.injection.BindException;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -166,7 +167,7 @@ public class BeanFunction {
 
         return (T) Binder.get(env)
                 .bind(ConfigurationPropertyName.adapt(prefix, '.'), Bindable.of(getConvertType(type)))
-                .orElseThrow(() -> new IllegalStateException("Required key '" + prefix + "' not found"));
+                .orElseThrow(() -> new BindException("     \n❌ An exception occurred when binding the configuration ['{0}'] to an object of type {1}. \n👉 1. Please check whether the configuration ['{0}'] exists? \n👉 2. Please check whether the binding type {1} is reasonable?", prefix, getConvertType(type)));
     }
 
     /**
