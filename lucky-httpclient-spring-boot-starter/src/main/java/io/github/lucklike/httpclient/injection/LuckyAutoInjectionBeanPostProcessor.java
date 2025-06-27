@@ -27,7 +27,7 @@ public class LuckyAutoInjectionBeanPostProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         //Bean类型为非JDK原生类型时执行属性注入操作
-        if (!ClassUtils.isJdkBasic(bean.getClass())) {
+        if (!ClassUtils.isJdkBasic(bean.getClass()) && !(bean instanceof FieldInjection)) {
             // 属性注入
             fieldInject(bean, beanName);
             // 方法注入

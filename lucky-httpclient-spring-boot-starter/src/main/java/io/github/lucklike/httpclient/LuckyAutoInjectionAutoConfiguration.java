@@ -54,7 +54,7 @@ public class LuckyAutoInjectionAutoConfiguration {
     //                                  FieldInjection
     //---------------------------------------------------------------------------------------------------------
 
-    @Order(Integer.MIN_VALUE + 1)
+    @Order(Integer.MIN_VALUE)
     @Bean("__httpReferenceAnnotationFieldInjection__")
     public FieldInjection httpReferenceAnnotationFieldInjection() {
         return new HttpReferenceAnnotationFieldInjection();
