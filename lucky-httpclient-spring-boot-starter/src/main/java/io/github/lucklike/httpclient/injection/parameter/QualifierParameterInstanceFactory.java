@@ -2,24 +2,24 @@ package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
-import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ResolvableType;
 
 /**
  * 支持{@link Qualifier @Qualifier}注解功能的参数实例工厂
  */
-public class QualifierParameterInstanceFactory implements ParameterInstanceFactory {
+public class QualifierParameterInstanceFactory extends AnnotationParameterInstanceFactory<Qualifier> {
+
 
     @Override
     public boolean canCreateInstance(ParameterInfo parameterInfo) {
-        Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameterInfo.getParameter(), Qualifier.class);
-        return qualifierAnn != null && StringUtils.hasText(qualifierAnn.value());
+        Qualifier annotation = getAnnotation(parameterInfo);
+        return annotation != null && StringUtils.hasText(annotation.value());
     }
 
     @Override
-    public Object createInstance(ParameterInfo parameterInfo) {
-        Qualifier qualifierAnn = AnnotationUtils.findMergedAnnotation(parameterInfo.getParameter(), Qualifier.class);
-        return ApplicationContextUtils.getBean(qualifierAnn.value());
+    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Qualifier annotation) {
+        return ApplicationContextUtils.getBean(annotation.value());
     }
 }

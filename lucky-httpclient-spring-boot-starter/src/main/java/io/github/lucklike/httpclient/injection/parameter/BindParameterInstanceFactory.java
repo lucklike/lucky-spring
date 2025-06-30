@@ -4,19 +4,18 @@ import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.BeanFunction;
 import io.github.lucklike.httpclient.injection.Bind;
+import org.springframework.core.ResolvableType;
+
+import java.lang.annotation.Annotation;
 
 /**
  * 支持{@link Bind @Bind}注解功能的参数实例工厂
  */
-public class BindParameterInstanceFactory implements ParameterInstanceFactory {
-    @Override
-    public boolean canCreateInstance(ParameterInfo parameterInfo) {
-        return AnnotationUtils.isAnnotated(parameterInfo.getParameter(), Bind.class);
-    }
+public class BindParameterInstanceFactory extends AnnotationParameterInstanceFactory<Bind> {
 
     @Override
-    public Object createInstance(ParameterInfo parameterInfo) {
-        Bind bindAnn = AnnotationUtils.getMergedAnnotation(parameterInfo.getParameter(), Bind.class);
-        return BeanFunction.env(bindAnn.value(), parameterInfo.getResolvableType());
+    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Bind annotation) {
+        return BeanFunction.env(annotation.value(), realType);
     }
+
 }

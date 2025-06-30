@@ -2,31 +2,23 @@ package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
-import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.injection.HttpReference;
-import io.github.lucklike.httpclient.annotation.ProxyModel;
+import org.springframework.core.ResolvableType;
 
-import java.lang.reflect.Parameter;
+import java.util.Objects;
 
 
 /**
  * 支持{@link HttpReference @HttpReference}注解功能的参数实例工厂
  */
-public class HttpReferenceParameterInstanceFactory implements ParameterInstanceFactory {
-    @Override
-    public boolean canCreateInstance(ParameterInfo parameterInfo) {
-        return AnnotationUtils.isAnnotated(parameterInfo.getParameter(), HttpReference.class);
-    }
+public class HttpReferenceParameterInstanceFactory extends AnnotationParameterInstanceFactory<HttpReference> {
 
     @Override
-    public Object createInstance(ParameterInfo parameterInfo) {
-        Parameter parameter = parameterInfo.getParameter();
-        Class<?> parameterType = parameter.getType();
-        HttpReference httpReferenceAnn = AnnotationUtils.findMergedAnnotation(parameter, HttpReference.class);
+    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, HttpReference httpReferenceAnn) {
         HttpClientProxyObjectFactory factory = ApplicationContextUtils.getBean(HttpClientProxyObjectFactory.class);
-        ProxyModel proxyModel = httpReferenceAnn.proxyModel();
-        switch (proxyModel) {
+        Class<?> parameterType = Objects.requireNonNull(realType.resolve());
+        switch (httpReferenceAnn.proxyModel()) {
             case JDK:
                 return factory.getJdkProxyObject(parameterType);
             case CGLIB:
@@ -35,4 +27,5 @@ public class HttpReferenceParameterInstanceFactory implements ParameterInstanceF
                 return factory.getProxyObject(parameterType);
         }
     }
+
 }

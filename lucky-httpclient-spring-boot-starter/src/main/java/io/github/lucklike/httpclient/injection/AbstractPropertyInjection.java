@@ -3,7 +3,6 @@ package io.github.lucklike.httpclient.injection;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.LazyValue;
-import io.github.lucklike.httpclient.SupplierObjectProvider;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
@@ -11,7 +10,12 @@ import org.springframework.core.ResolvableType;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
+import java.util.Optional;
 import java.util.function.Supplier;
+
+import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getConvertType;
+import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getTypeType;
+import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getWapperObject;
 
 
 /**
@@ -26,6 +30,7 @@ import java.util.function.Supplier;
  *     {@link LazyValue}
  *     {@link Supplier}
  *     {@link ObjectProvider}
+ *     {@link Optional}
  * </pre>
  *
  * @author fukang
@@ -53,19 +58,9 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
             AnnotatedElement element = propertyInfo.getElement();
             ResolvableType sourceType = propertyInfo.getType();
 
-            // 懒加载值的情况
-            boolean isObjectProvider = sourceType.resolve() == ObjectProvider.class && sourceType.hasGenerics();
-            boolean isLazyValue = sourceType.resolve() == LazyValue.class && sourceType.hasGenerics();
-            boolean isSupplier = sourceType.resolve() == Supplier.class && sourceType.hasGenerics();
-
-
             // 确定真实的参数类型
-            ResolvableType realType;
-            if (isObjectProvider || isLazyValue || isSupplier) {
-                realType = sourceType.getGeneric(0);
-            } else {
-                realType = sourceType;
-            }
+            int typeType = getTypeType(sourceType);
+            ResolvableType realType = getConvertType(typeType, sourceType);
 
             // 将注入值获取的过程封装成Supplier对象
             Supplier<?> objectSupplier;
@@ -77,23 +72,7 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
                 throw new IllegalArgumentException("Unsupported field type: " + propertyInfo.getType());
             }
 
-            // 处理ObjectProvider的情况
-            if (isObjectProvider) {
-                return SupplierObjectProvider.of(objectSupplier);
-            }
-
-            // 处理LazyValue的情况
-            if (isLazyValue) {
-                return LazyValue.of(objectSupplier);
-            }
-
-            // 处理Supplier的情况
-            if (isSupplier) {
-                return objectSupplier;
-            }
-
-            // 一般情况
-            return objectSupplier.get();
+            return getWapperObject(typeType, objectSupplier);
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException) {
                 throw e;

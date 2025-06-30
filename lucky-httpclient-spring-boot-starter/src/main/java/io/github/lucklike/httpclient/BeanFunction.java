@@ -8,6 +8,7 @@ import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
+import io.github.lucklike.httpclient.injection.TypeConvertUtils;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,6 +22,7 @@ import org.springframework.lang.NonNull;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
 
@@ -49,23 +51,36 @@ public class BeanFunction {
         }
 
         // 使用类型查找
-        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(parameterInfo.getResolvableType());
-        try {
-            return beanProvider.getObject();
-        } catch (NoSuchBeanDefinitionException e) {
-            // 找到多个Bean时抛异常
-            if (beanProvider.stream().count() > 1) {
-                throw e;
-            }
+        ResolvableType paramType = parameterInfo.getResolvableType();
+        int typeType = TypeConvertUtils.getTypeType(paramType);
+        ResolvableType convertType = TypeConvertUtils.getConvertType(typeType, paramType);
+        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(convertType);
 
-            // 找不到Bean时判断有无@AllowNull注解，有则注入null值，否则抛异常
-            AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
-            if (allowNullAnn != null && allowNullAnn.value()) {
-                return null;
-            }
-            throw e;
+        // ObjectProvider类型不用包装，直接返回
+        if (typeType == TypeConvertUtils.TYPE_OBJECT_PROVIDER) {
+            return beanProvider;
         }
 
+        // 将参数实例获取逻辑封装为Supplier
+        Supplier<?> objectSupplier = () -> {
+            try {
+                return beanProvider.getObject();
+            } catch (NoSuchBeanDefinitionException e) {
+                // 找到多个Bean时抛异常
+                if (beanProvider.stream().count() > 1) {
+                    throw e;
+                }
+
+                // 找不到Bean时判断有无@AllowNull注解，有则注入null值，否则抛异常
+                AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
+                if (allowNullAnn != null && allowNullAnn.value()) {
+                    return null;
+                }
+                throw e;
+            }
+        };
+
+        return TypeConvertUtils.getWapperObject(typeType, objectSupplier);
     }
 
     /**
@@ -167,7 +182,7 @@ public class BeanFunction {
 
         return (T) Binder.get(env)
                 .bind(ConfigurationPropertyName.adapt(prefix, '.'), Bindable.of(getConvertType(type)))
-                .orElseThrow(() -> new BindException("     \n❌ An exception occurred when binding the configuration ['{0}'] to an object of type {1}. \n👉 1. Please check whether the configuration ['{0}'] exists? \n👉 2. Please check whether the binding type {1} is reasonable?", prefix, getConvertType(type)));
+                .orElseThrow(() -> new BindException("     \n❌ An exception occurred when binding the configuration ['{0}'] to an object of type {1}. \n👉 1. Please check whether the configuration ['{0}'] exists? \n👉 2. Please check whether the binding type [{1}] is reasonable?", prefix, getConvertType(type)));
     }
 
     /**
@@ -197,7 +212,7 @@ public class BeanFunction {
             return ((ResolvableType) type0);
         }
 
-        throw new IllegalArgumentException("type of " +  ClassUtils.getClassName(type0) + " is not supported.");
+        throw new IllegalArgumentException("type of " + ClassUtils.getClassName(type0) + " is not supported.");
     }
 
     @NonNull
@@ -216,6 +231,6 @@ public class BeanFunction {
             return Objects.requireNonNull(((ResolvableType) type0).resolve());
         }
 
-        throw new IllegalArgumentException("type of " +  ClassUtils.getClassName(type0) + " is not supported.");
+        throw new IllegalArgumentException("type of " + ClassUtils.getClassName(type0) + " is not supported.");
     }
 }

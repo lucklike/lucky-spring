@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient;
 
 import io.github.lucklike.httpclient.injection.parameter.BindParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.HttpReferenceParameterInstanceFactory;
-import io.github.lucklike.httpclient.injection.parameter.ObjectProviderParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.QualifierParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.ValueParameterInstanceFactory;
@@ -24,24 +23,18 @@ public class LuckyAutoInjectionAutoConfiguration {
     }
 
     @Order(Integer.MIN_VALUE + 1)
-    @Bean("__objectProviderParameterInstanceFactory__")
-    public ParameterInstanceFactory objectProviderParameterInstanceFactory() {
-        return new ObjectProviderParameterInstanceFactory();
-    }
-
-    @Order(Integer.MIN_VALUE + 2)
     @Bean("__qualifierParameterInstanceFactory__")
     public ParameterInstanceFactory qualifierParameterInstanceFactory() {
         return new QualifierParameterInstanceFactory();
     }
 
-    @Order(Integer.MIN_VALUE + 3)
+    @Order(Integer.MIN_VALUE + 2)
     @Bean("__valueParameterInstanceFactory__")
     public ParameterInstanceFactory valueParameterInstanceFactory() {
         return new ValueParameterInstanceFactory();
     }
 
-    @Order(Integer.MIN_VALUE + 4)
+    @Order(Integer.MIN_VALUE + 3)
     @Bean("__bindParameterInstanceFactory__")
     public ParameterInstanceFactory bindParameterInstanceFactory() {
         return new BindParameterInstanceFactory();
