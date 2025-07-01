@@ -16,12 +16,12 @@ import java.lang.reflect.Parameter;
 public class BindAnnotationPropertyInjection extends AnnotationPropertyInjection<Bind> {
 
     @Override
-    protected Object getInjectObjectByField(Object bean, String beanName, Field field, ResolvableType fieldType, Bind annotation) {
-        return BeanFunction.env(annotation.value(), fieldType);
+    protected Object getInjectObjectByField(Object bean, String beanName, Field field, ResolvableType fieldType, Bind bindAnn) {
+        return BeanFunction.env(bindAnn.value(), fieldType);
     }
 
     @Override
-    protected Object getInjectObjectByParam(Object bean, String beanName, Parameter param, ResolvableType paramType, Bind annotation) {
-        return BeanFunction.env(annotation.value(), paramType);
+    protected Object getInjectObjectByParam(Object bean, String beanName, Parameter param, ResolvableType paramType, Bind bindAnn) {
+        return BeanFunction.env(bindAnn.value(), paramType);
     }
 }

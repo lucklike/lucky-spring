@@ -2,15 +2,13 @@ package io.github.lucklike.httpclient.injection.parameter;
 
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.spel.LazyValue;
+import io.github.lucklike.httpclient.injection.WrapType;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getConvertType;
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getTypeType;
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getWapperObject;
 
 /**
  * 1. 参数实例工厂的基本实现，该抽象类将属性注入拆分为如下两种具体的情况
@@ -31,16 +29,15 @@ public abstract class AbstractParameterInstanceFactory implements ParameterInsta
 
     @Override
     public boolean canCreateInstance(ParameterInfo parameterInfo) {
-        return doCanCreateInstance(parameterInfo, getConvertType(parameterInfo.getResolvableType()));
+        ResolvableType paramType = parameterInfo.getResolvableType();
+        return doCanCreateInstance(parameterInfo, WrapType.of(paramType).getTargetType(paramType));
     }
 
     @Override
     public Object createInstance(ParameterInfo parameterInfo) {
         ResolvableType paramType = parameterInfo.getResolvableType();
-        int typeType = getTypeType(paramType);
-        ResolvableType convertType = getConvertType(typeType, paramType);
-        Supplier<?> objectSupplier = () -> doCreateInstance(parameterInfo, convertType);
-        return getWapperObject(typeType, objectSupplier);
+        WrapType wrapType = WrapType.of(paramType);
+        return wrapType.wrap(() -> doCreateInstance(parameterInfo, wrapType.getTargetType(paramType)));
     }
 
     /**

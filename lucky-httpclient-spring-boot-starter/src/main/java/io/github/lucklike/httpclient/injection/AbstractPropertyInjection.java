@@ -13,10 +13,6 @@ import java.lang.reflect.Parameter;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getConvertType;
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getTypeType;
-import static io.github.lucklike.httpclient.injection.TypeConvertUtils.getWapperObject;
-
 
 /**
  * 1. 属性注入器的基本实现，该抽象类将属性注入拆分为如下两种具体的情况
@@ -59,8 +55,8 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
             ResolvableType sourceType = propertyInfo.getType();
 
             // 确定真实的参数类型
-            int typeType = getTypeType(sourceType);
-            ResolvableType realType = getConvertType(typeType, sourceType);
+            WrapType wrapType = WrapType.of(sourceType);
+            ResolvableType realType = wrapType.getTargetType(sourceType);
 
             // 将注入值获取的过程封装成Supplier对象
             Supplier<?> objectSupplier;
@@ -72,7 +68,7 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
                 throw new IllegalArgumentException("Unsupported field type: " + propertyInfo.getType());
             }
 
-            return getWapperObject(typeType, objectSupplier);
+            return wrapType.wrap(objectSupplier);
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException) {
                 throw e;

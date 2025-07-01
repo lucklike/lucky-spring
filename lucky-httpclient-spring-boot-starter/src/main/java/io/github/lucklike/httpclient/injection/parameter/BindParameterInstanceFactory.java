@@ -14,8 +14,8 @@ import java.lang.annotation.Annotation;
 public class BindParameterInstanceFactory extends AnnotationParameterInstanceFactory<Bind> {
 
     @Override
-    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Bind annotation) {
-        return BeanFunction.env(annotation.value(), realType);
+    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Bind bindAnn) {
+        return BeanFunction.env(bindAnn.value(), realType);
     }
 
 }

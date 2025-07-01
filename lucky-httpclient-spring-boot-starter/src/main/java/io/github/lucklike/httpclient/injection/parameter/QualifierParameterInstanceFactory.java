@@ -19,7 +19,7 @@ public class QualifierParameterInstanceFactory extends AnnotationParameterInstan
     }
 
     @Override
-    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Qualifier annotation) {
-        return ApplicationContextUtils.getBean(annotation.value());
+    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Qualifier qualifierAnn) {
+        return ApplicationContextUtils.getBean(qualifierAnn.value());
     }
 }

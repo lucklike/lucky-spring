@@ -8,7 +8,7 @@ import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
-import io.github.lucklike.httpclient.injection.TypeConvertUtils;
+import io.github.lucklike.httpclient.injection.WrapType;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -52,12 +52,11 @@ public class BeanFunction {
 
         // 使用类型查找
         ResolvableType paramType = parameterInfo.getResolvableType();
-        int typeType = TypeConvertUtils.getTypeType(paramType);
-        ResolvableType convertType = TypeConvertUtils.getConvertType(typeType, paramType);
-        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(convertType);
+        WrapType wrapType = WrapType.of(paramType);
+        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(wrapType.getTargetType(paramType));
 
         // ObjectProvider类型不用包装，直接返回
-        if (typeType == TypeConvertUtils.TYPE_OBJECT_PROVIDER) {
+        if (wrapType == WrapType.OBJECT_PROVIDER) {
             return beanProvider;
         }
 
@@ -80,7 +79,7 @@ public class BeanFunction {
             }
         };
 
-        return TypeConvertUtils.getWapperObject(typeType, objectSupplier);
+        return wrapType.wrap(objectSupplier);
     }
 
     /**
