@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.httpclient.proxy.logging.FontUtil;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
@@ -181,7 +182,15 @@ public class BeanFunction {
 
         return (T) Binder.get(env)
                 .bind(ConfigurationPropertyName.adapt(prefix, '.'), Bindable.of(getConvertType(type)))
-                .orElseThrow(() -> new BindException("     \n❌ An exception occurred when binding the configuration ['{0}'] to an object of type {1}. \n👉 1. Please check whether the configuration ['{0}'] exists? \n👉 2. Please check whether the binding type [{1}] is reasonable?", prefix, getConvertType(type)));
+                .orElseThrow(() -> {
+                    String tag = FontUtil.getBackRedStr(" CONFIG BIND EXCEPTION ");
+                    return new BindException(
+                            "     \n\t{2}\n\t❌ An exception occurred when binding the configuration ['{0}'] to an object of type {1}. \n\t👉 1. Please check whether the configuration ['{0}'] exists? \n\t👉 2. Please check whether the binding type [{1}] is reasonable?\n\t{2}",
+                            FontUtil.getWhiteStr(prefix),
+                            FontUtil.getWhiteUnderline(getConvertType(type).toString()),
+                            tag
+                    );
+                });
     }
 
     /**
