@@ -48,10 +48,9 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
         evaluationContext.addPropertyAccessor(DataBindingPropertyAccessor.forReadWriteAccess());
         evaluationContext.addPropertyAccessor(new ClassFieldAccessor());
         evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
-        evaluationContext.setTypeLocator(new StandardTypeLocator(ClassUtils.getDefaultClassLoader()));
         evaluationContext.setTypeConverter(new StandardTypeConverter(new ApplicationConversionService()));
 
-        evaluationContext.setTypeLocator(createStandardTypeLocator(paramWrapper));
+        evaluationContext.setTypeLocator(paramWrapper.getTypeLocator());
         evaluationContext.setVariables(paramWrapper.getVariables());
         evaluationContext.setRootObject(paramWrapper.getRootObject());
         return evaluationContext;
