@@ -241,10 +241,32 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         SpELConfiguration springElConfig = factoryConfig.getSpringEl();
 
+        // 设置类型限制模型和比较算法
+        factory.setTypeRestrictionModel(springElConfig.getTypeRestrictedModel());
+        factory.setTypeRestrictionCompare(springElConfig.getTypeRestrictedCompare());
+
         // 导入SpEL依赖包
         List<String> springElPackageImports = springElConfig.getImportPackages();
         if (ContainerUtils.isNotEmptyCollection(springElPackageImports)) {
             springElPackageImports.forEach(factory::importPackage);
+        }
+
+        // 导入类型别名配置
+        Map<String, Class<?>> typeAlias = springElConfig.getTypeAlias();
+        if (ContainerUtils.isNotEmptyMap(typeAlias)) {
+            typeAlias.forEach(factory::addTypeAlias);
+        }
+
+        // 设置类型白名单
+        List<Class<?>> typeWhiteList = springElConfig.getTypeWhiteList();
+        if (ContainerUtils.isNotEmptyCollection(typeWhiteList)) {
+            typeWhiteList.forEach(factory::addTypeWhiteList);
+        }
+
+        // 设置类型黑名单
+        List<Class<?>> typeBlackList = springElConfig.getTypeBlackList();
+        if (ContainerUtils.isNotEmptyCollection(typeBlackList)) {
+            typeBlackList.forEach(factory::addTypeBlackList);
         }
 
         // 注册SpELRoot变量

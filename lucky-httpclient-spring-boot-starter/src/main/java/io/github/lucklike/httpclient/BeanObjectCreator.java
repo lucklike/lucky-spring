@@ -51,10 +51,8 @@ public class BeanObjectCreator extends ReflectObjectCreator {
      * @return Class的实例对象
      */
     private <T> T createObjectByClass(Class<T> clazz) {
-        try {
-            return applicationContext.getBean(clazz);
-        } catch (BeansException e) {
-            return super.doCreateObject(clazz);
-        }
+        return applicationContext
+                .getBeanProvider(clazz)
+                .getIfUnique(() -> super.doCreateObject(clazz));
     }
 }

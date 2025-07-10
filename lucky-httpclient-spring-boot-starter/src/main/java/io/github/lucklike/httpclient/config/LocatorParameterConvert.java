@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
+import com.luckyframework.httpclient.proxy.context.ValueContext;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 
 /**
@@ -15,13 +16,13 @@ public abstract class LocatorParameterConvert implements ParameterConvert, Locat
     public static LocatorParameterConvert of(ParameterConvert parameterConvert, RType rType, Integer index, Class<? extends ParameterConvert> indexClass) {
         return new LocatorParameterConvert() {
             @Override
-            public boolean canConvert(Object value) {
-                return parameterConvert.canConvert(value);
+            public boolean canConvert(ValueContext context, Object value) {
+                return parameterConvert.canConvert(context, value);
             }
 
             @Override
-            public Object convert(Object value) {
-                return parameterConvert.convert(value);
+            public Object convert(ValueContext context,Object value) {
+                return parameterConvert.convert(context, value);
             }
 
             @Override

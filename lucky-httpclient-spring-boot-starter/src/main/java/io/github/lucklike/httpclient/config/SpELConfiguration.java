@@ -3,11 +3,16 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.spel.RestrictedTypeLocator;
 import io.github.lucklike.httpclient.annotation.SpELFunction;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.luckyframework.httpclient.proxy.spel.SpELConvert.DEFAULT_NEST_EXPRESSION_PREFIX;
@@ -37,6 +42,31 @@ public class SpELConfiguration {
      * 向SpEL运行时环境导入的包
      */
     private List<String> importPackages;
+
+    /**
+     * 类型别名
+     */
+    private Map<String, Class<?>> typeAlias = new LinkedHashMap<>();
+
+    /**
+     * 类型白名单
+     */
+    private List<Class<?>> typeWhiteList = new ArrayList<>();
+
+    /**
+     * 类型黑名单
+     */
+    private List<Class<?>> typeBlackList = new ArrayList<>();
+
+    /**
+     * 类型限制比较算法
+     */
+    private RestrictedTypeLocator.Compare typeRestrictedCompare = RestrictedTypeLocator.Compare.EQUALS;
+
+    /**
+     * 类型限制模型
+     */
+    private RestrictedTypeLocator.Model typeRestrictedModel = RestrictedTypeLocator.Model.BLACK_WHITE_LIST;
 
     /**
      * SpEL表达式Root对象参数（通过name引入）
@@ -252,4 +282,43 @@ public class SpELConfiguration {
         return importPackages;
     }
 
+    public Map<String, Class<?>> getTypeAlias() {
+        return typeAlias;
+    }
+
+    public void setTypeAlias(Map<String, Class<?>> typeAlias) {
+        this.typeAlias = typeAlias;
+    }
+
+    public List<Class<?>> getTypeWhiteList() {
+        return typeWhiteList;
+    }
+
+    public void setTypeWhiteList(List<Class<?>> typeWhiteList) {
+        this.typeWhiteList = typeWhiteList;
+    }
+
+    public List<Class<?>> getTypeBlackList() {
+        return typeBlackList;
+    }
+
+    public void setTypeBlackList(List<Class<?>> typeBlackList) {
+        this.typeBlackList = typeBlackList;
+    }
+
+    public RestrictedTypeLocator.Compare getTypeRestrictedCompare() {
+        return typeRestrictedCompare;
+    }
+
+    public void setTypeRestrictedCompare(RestrictedTypeLocator.Compare typeRestrictedCompare) {
+        this.typeRestrictedCompare = typeRestrictedCompare;
+    }
+
+    public RestrictedTypeLocator.Model getTypeRestrictedModel() {
+        return typeRestrictedModel;
+    }
+
+    public void setTypeRestrictedModel(RestrictedTypeLocator.Model typeRestrictedModel) {
+        this.typeRestrictedModel = typeRestrictedModel;
+    }
 }
