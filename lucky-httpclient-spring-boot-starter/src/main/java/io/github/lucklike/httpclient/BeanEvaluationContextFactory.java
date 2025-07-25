@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.httpclient.proxy.spel.LuckyHttpClientEvaluationContextFactory;
 import com.luckyframework.spel.EvaluationContextFactory;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
@@ -23,6 +24,7 @@ import org.springframework.expression.spel.support.StandardTypeConverter;
  */
 public class BeanEvaluationContextFactory implements EvaluationContextFactory {
 
+    private final EvaluationContextFactory delegate = new LuckyHttpClientEvaluationContextFactory();
     private final BeanFactory beanFactory;
 
     public BeanEvaluationContextFactory(BeanFactory beanFactory) {
@@ -31,7 +33,7 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
 
     @Override
     public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
-        StandardEvaluationContext evaluationContext = (StandardEvaluationContext) EvaluationContextFactory.DEFAULT_FACTORY.getEvaluationContext(paramWrapper);
+        StandardEvaluationContext evaluationContext = (StandardEvaluationContext) delegate.getEvaluationContext(paramWrapper);
         evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
         evaluationContext.addPropertyAccessor(new BeanFactoryAccessor());
         evaluationContext.addPropertyAccessor(new BeanExpressionContextAccessor());

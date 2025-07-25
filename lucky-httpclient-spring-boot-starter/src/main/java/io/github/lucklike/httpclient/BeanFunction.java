@@ -4,6 +4,7 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.logging.FontUtil;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
+import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
@@ -26,10 +27,12 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
+import static com.luckyframework.httpclient.proxy.spel.LuckyHttpClientEvaluationContextFactory.LUCKY_FUNCTION_NAME_SPACE;
 
 /**
  * 提供Bean相关操作的函数
  */
+@Namespace(LUCKY_FUNCTION_NAME_SPACE)
 public class BeanFunction {
 
     /**
