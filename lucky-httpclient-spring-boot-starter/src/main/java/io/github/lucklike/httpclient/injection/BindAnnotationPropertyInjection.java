@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.injection;
 
-import io.github.lucklike.httpclient.BeanFunction;
+import io.github.lucklike.httpclient.function.BeanFunction;
 import org.springframework.core.ResolvableType;
 
 import java.lang.reflect.Field;

@@ -35,6 +35,7 @@ import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
+import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
@@ -76,6 +77,8 @@ import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSou
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
+import io.github.lucklike.httpclient.function.BeanFunction;
+import io.github.lucklike.httpclient.function.ParameterInstanceFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,7 +207,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factory 工厂实例
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
-        factory.addSpringElFunctionClass(BeanFunction.class);
+        // 导入Spring容器函数
+        Map<String, Object> springFunctionMap = ClassStaticElement.create(BeanFunction.class).getAllStaticMethods();
+        factory.getGlobalSpELVar().addRootVariable(MethodSpaceConstant.SPRING_FUNCTION_SPACE, springFunctionMap);
+
+        // 添加parameterInstance扩展函数
+        factory.addSpringElFunctionClass(ParameterInstanceFunction.class);
     }
 
     /**
