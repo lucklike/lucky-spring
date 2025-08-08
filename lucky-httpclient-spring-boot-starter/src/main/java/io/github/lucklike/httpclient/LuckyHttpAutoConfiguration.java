@@ -99,6 +99,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -209,7 +210,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         // 导入Spring容器函数
         Map<String, Object> springFunctionMap = ClassStaticElement.create(BeanFunction.class).getAllStaticMethods();
-        factory.getGlobalSpELVar().addRootVariable(MethodSpaceConstant.SPRING_FUNCTION_SPACE, springFunctionMap);
+        factory.getGlobalSpELVar().addRootVariable(MethodSpaceConstant.SPRING_FUNCTION_SPACE, Collections.unmodifiableMap(springFunctionMap));
 
         // 添加parameterInstance扩展函数
         factory.addSpringElFunctionClass(ParameterInstanceFunction.class);
