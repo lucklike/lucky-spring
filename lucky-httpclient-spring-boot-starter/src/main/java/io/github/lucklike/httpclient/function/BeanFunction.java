@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.function;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.logging.FontUtil;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
+import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.injection.BindException;
@@ -16,9 +17,12 @@ import org.springframework.lang.NonNull;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
+import static com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant.SPRING_FUNCTION_SPACE;
+
 /**
  * 提供Bean相关操作的函数
  */
+@Namespace(SPRING_FUNCTION_SPACE)
 public class BeanFunction {
 
     /**
