@@ -11,9 +11,12 @@ import org.springframework.context.expression.BeanFactoryAccessor;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.context.expression.EnvironmentAccessor;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeConverter;
+
+import java.util.List;
 
 /**
  * {@link SpELRuntime} 对象工厂
@@ -34,10 +37,13 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
     @Override
     public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
         StandardEvaluationContext evaluationContext = (StandardEvaluationContext) delegate.getEvaluationContext(paramWrapper);
-        evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
-        evaluationContext.addPropertyAccessor(new BeanFactoryAccessor());
-        evaluationContext.addPropertyAccessor(new BeanExpressionContextAccessor());
-        evaluationContext.addPropertyAccessor(DataBindingPropertyAccessor.forReadWriteAccess());
+
+        List<PropertyAccessor> propertyAccessors = evaluationContext.getPropertyAccessors();
+
+        propertyAccessors.add(propertyAccessors.size() - 1, new EnvironmentAccessor());
+        propertyAccessors.add(propertyAccessors.size() - 1, new BeanFactoryAccessor());
+        propertyAccessors.add(propertyAccessors.size() - 1, new BeanExpressionContextAccessor());
+        propertyAccessors.add(propertyAccessors.size() - 1, DataBindingPropertyAccessor.forReadWriteAccess());
         evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
         evaluationContext.setTypeConverter(new StandardTypeConverter(new ApplicationConversionService()));
         return evaluationContext;
