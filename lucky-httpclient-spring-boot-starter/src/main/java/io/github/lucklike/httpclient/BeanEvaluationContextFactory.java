@@ -39,13 +39,18 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
         StandardEvaluationContext evaluationContext = (StandardEvaluationContext) delegate.getEvaluationContext(paramWrapper);
 
         List<PropertyAccessor> propertyAccessors = evaluationContext.getPropertyAccessors();
+        addPropertyAccessor(propertyAccessors, new EnvironmentAccessor());
+        addPropertyAccessor(propertyAccessors, new BeanFactoryAccessor());
+        addPropertyAccessor(propertyAccessors, new BeanExpressionContextAccessor());
+        addPropertyAccessor(propertyAccessors, DataBindingPropertyAccessor.forReadWriteAccess());
 
-        propertyAccessors.add(propertyAccessors.size() - 1, new EnvironmentAccessor());
-        propertyAccessors.add(propertyAccessors.size() - 1, new BeanFactoryAccessor());
-        propertyAccessors.add(propertyAccessors.size() - 1, new BeanExpressionContextAccessor());
-        propertyAccessors.add(propertyAccessors.size() - 1, DataBindingPropertyAccessor.forReadWriteAccess());
         evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
         evaluationContext.setTypeConverter(new StandardTypeConverter(new ApplicationConversionService()));
         return evaluationContext;
+    }
+
+
+    private void addPropertyAccessor(List<PropertyAccessor> propertyAccessors, PropertyAccessor propertyAccessor) {
+        propertyAccessors.add(propertyAccessors.size() - 1, propertyAccessor);
     }
 }
