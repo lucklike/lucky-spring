@@ -1,7 +1,7 @@
 package io.github.lucklike.httpclient.function;
 
 import com.luckyframework.common.ContainerUtils;
-import com.luckyframework.httpclient.proxy.logging.FontUtil;
+import com.luckyframework.common.FontUtil;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
 import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.reflect.ClassUtils;
