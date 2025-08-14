@@ -1,12 +1,8 @@
 package io.github.lucklike.httpclient;
 
-import com.luckyframework.spel.AnnotationAccessor;
-import com.luckyframework.spel.ClassFieldAccessor;
+import com.luckyframework.httpclient.proxy.spel.LuckyHttpClientEvaluationContextFactory;
 import com.luckyframework.spel.EvaluationContextFactory;
-import com.luckyframework.spel.LazyValueAccessor;
-import com.luckyframework.spel.NotExistReturnNullMapAccessor;
 import com.luckyframework.spel.ParamWrapper;
-import com.luckyframework.spel.PropertySourcesAccessor;
 import com.luckyframework.spel.SpELRuntime;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.convert.ApplicationConversionService;
@@ -15,11 +11,12 @@ import org.springframework.context.expression.BeanFactoryAccessor;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.context.expression.EnvironmentAccessor;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.spel.support.DataBindingPropertyAccessor;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.expression.spel.support.StandardTypeConverter;
-import org.springframework.expression.spel.support.StandardTypeLocator;
-import org.springframework.util.ClassUtils;
+
+import java.util.List;
 
 /**
  * {@link SpELRuntime} 对象工厂
@@ -30,6 +27,7 @@ import org.springframework.util.ClassUtils;
  */
 public class BeanEvaluationContextFactory implements EvaluationContextFactory {
 
+    private final EvaluationContextFactory delegate = new LuckyHttpClientEvaluationContextFactory();
     private final BeanFactory beanFactory;
 
     public BeanEvaluationContextFactory(BeanFactory beanFactory) {
@@ -38,21 +36,21 @@ public class BeanEvaluationContextFactory implements EvaluationContextFactory {
 
     @Override
     public EvaluationContext getEvaluationContext(ParamWrapper paramWrapper) {
-        StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-        evaluationContext.addPropertyAccessor(new LazyValueAccessor());
-        evaluationContext.addPropertyAccessor(new NotExistReturnNullMapAccessor());
-        evaluationContext.addPropertyAccessor(new EnvironmentAccessor());
-        evaluationContext.addPropertyAccessor(new BeanFactoryAccessor());
-        evaluationContext.addPropertyAccessor(new AnnotationAccessor());
-        evaluationContext.addPropertyAccessor(new BeanExpressionContextAccessor());
-        evaluationContext.addPropertyAccessor(DataBindingPropertyAccessor.forReadWriteAccess());
-        evaluationContext.addPropertyAccessor(new ClassFieldAccessor());
+        StandardEvaluationContext evaluationContext = (StandardEvaluationContext) delegate.getEvaluationContext(paramWrapper);
+
+        List<PropertyAccessor> propertyAccessors = evaluationContext.getPropertyAccessors();
+        addPropertyAccessor(propertyAccessors, new EnvironmentAccessor());
+        addPropertyAccessor(propertyAccessors, new BeanFactoryAccessor());
+        addPropertyAccessor(propertyAccessors, new BeanExpressionContextAccessor());
+        addPropertyAccessor(propertyAccessors, DataBindingPropertyAccessor.forReadWriteAccess());
+
         evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
         evaluationContext.setTypeConverter(new StandardTypeConverter(new ApplicationConversionService()));
-
-        evaluationContext.setTypeLocator(paramWrapper.getTypeLocator());
-        evaluationContext.setVariables(paramWrapper.getVariables());
-        evaluationContext.setRootObject(paramWrapper.getRootObject());
         return evaluationContext;
+    }
+
+
+    private void addPropertyAccessor(List<PropertyAccessor> propertyAccessors, PropertyAccessor propertyAccessor) {
+        propertyAccessors.add(propertyAccessors.size() - 1, propertyAccessor);
     }
 }

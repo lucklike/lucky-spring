@@ -28,9 +28,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git@github.com:lucklike/lucky-spring.git</connection>
-        <developerConnection>scm:git@github.com:lucklike/lucky-spring.git</developerConnection>
-        <url>git@github.com:lucklike/lucky-spring.git</url>
+        <connection>scm:git:https://github.com/lucklike/luckliy.git</connection>
+        <developerConnection>scm:git:https://github.com/lucklike/luckliy.git</developerConnection>
+        <url>https://github.com/lucklike/luckliy</url>
     </scm>
 
 
@@ -44,7 +44,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
-        <lucky-version>3.0.1</lucky-version>
+        <lucky-version>3.0.2</lucky-version>
         <spring-cloud-common>3.1.8</spring-cloud-common>
         <spring-cloud-nacos>0.2.12</spring-cloud-nacos>
     </properties>
@@ -168,7 +168,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>ossrh</id>
@@ -176,6 +176,12 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
