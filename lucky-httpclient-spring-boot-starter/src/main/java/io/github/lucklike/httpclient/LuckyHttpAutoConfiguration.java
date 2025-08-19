@@ -68,7 +68,7 @@ import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
-import io.github.lucklike.httpclient.config.TypeAlias;
+import io.github.lucklike.httpclient.config.TypeAbbreviation;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
@@ -205,14 +205,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /**
      * 简写类型注册
+     *
      * @param factoryConfig 配置实例
      */
     private void abbreviatedTypeRegister(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        for (TypeAlias typeAlias : factoryConfig.getSpringEl().getTypeAlias()) {
+        for (TypeAbbreviation typeAlias : factoryConfig.getSpringEl().getTypeAbbreviations()) {
             if (typeAlias.isAutoAddArrayType()) {
-                TypeUtils.addBaseAndArrayType(typeAlias.getAlias(), typeAlias.getType());
+                TypeUtils.addBaseAndArrayType(typeAlias.getAbbreviation(), typeAlias.getClazz());
             } else {
-                TypeUtils.addType(typeAlias.getAlias(), typeAlias.getType());
+                TypeUtils.addType(typeAlias.getAbbreviation(), typeAlias.getClazz());
             }
         }
     }
@@ -272,8 +273,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 导入类型别名配置
-        for (TypeAlias alias : springElConfig.getTypeAlias()) {
-            factory.addTypeAlias(alias.getAlias(), alias.getType());
+        Map<String, Class<?>> typeAlias = springElConfig.getTypeAlias();
+        if (ContainerUtils.isNotEmptyMap(typeAlias)) {
+            typeAlias.forEach(factory::addTypeAlias);
         }
 
         // 设置类型白名单

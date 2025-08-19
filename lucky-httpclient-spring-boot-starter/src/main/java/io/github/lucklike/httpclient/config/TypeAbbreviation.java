@@ -3,19 +3,19 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.StringUtils;
 
 /**
- * 类型别名
+ * 类型简写
  */
-public class TypeAlias {
+public class TypeAbbreviation {
 
     /**
-     * 别名
+     * 缩写
      */
-    private String alias;
+    private String abbreviation;
 
     /**
      * 类型
      */
-    private Class<?> type;
+    private Class<?> clazz;
 
     /**
      * 是否自动注册该类型的数组类型
@@ -28,17 +28,17 @@ public class TypeAlias {
      *
      * @return 类型别名
      */
-    public String getAlias() {
-        return StringUtils.hasText(alias) ? alias : type.getSimpleName();
+    public String getAbbreviation() {
+        return StringUtils.hasText(abbreviation) ? abbreviation : clazz.getSimpleName();
     }
 
     /**
      * 设置类型别名
      *
-     * @param alias 类型别名
+     * @param abbreviation 类型别名
      */
-    public void setAlias(String alias) {
-        this.alias = alias;
+    public void setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
     }
 
     /**
@@ -46,17 +46,17 @@ public class TypeAlias {
      *
      * @return 类型
      */
-    public Class<?> getType() {
-        return type;
+    public Class<?> getClazz() {
+        return clazz;
     }
 
     /**
      * 设置类型
      *
-     * @param type 类型
+     * @param clazz 类型
      */
-    public void setType(Class<?> type) {
-        this.type = type;
+    public void setClazz(Class<?> clazz) {
+        this.clazz = clazz;
     }
 
     /**

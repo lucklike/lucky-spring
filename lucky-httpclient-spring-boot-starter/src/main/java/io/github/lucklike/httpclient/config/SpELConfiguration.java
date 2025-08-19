@@ -8,9 +8,7 @@ import io.github.lucklike.httpclient.annotation.SpELFunction;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,8 +43,29 @@ public class SpELConfiguration {
 
     /**
      * 类型别名
+     * <pre>
+     *    eg:
+     *     添加配置：StrUtils -> com.luckyframework.common.StringUtils
+     *     -->
+     *     在SpEL表达式中可以这样写：
+     *     获取StringUtils的类型            --> #{T(StrUtils)}
+     *     执行StringUtils类中的静态方法     --> #{T(StrUtils).format('Hello {}, I'm {}', 'Lucy', 'Jack')}
+     * </pre>
      */
-    private List<TypeAlias> typeAlias = new ArrayList<>();
+    private Map<String, Class<?>> typeAlias;
+
+    /**
+     * 类型缩写配置
+     * <pre>
+     *    eg:
+     *     添加配置：com.luckyframework.common.StringUtils
+     *     -->
+     *     在SpEL表达式中可以这样写：
+     *     获取StringUtils的类型            --> #{StringUtils.class}
+     *     执行StringUtils类中的静态方法     --> #{StringUtils.format('Hello {}, I'm {}', 'Lucy', 'Jack')}
+     * </pre>
+     */
+    private List<TypeAbbreviation> typeAbbreviations = new ArrayList<>();
 
     /**
      * 类型白名单
@@ -282,43 +301,111 @@ public class SpELConfiguration {
         return importPackages;
     }
 
-    public List<TypeAlias> getTypeAlias() {
-        return typeAlias;
+    /**
+     * 获取类型缩写配置
+     *
+     * @return 类型缩写配置
+     */
+    public List<TypeAbbreviation> getTypeAbbreviations() {
+        return typeAbbreviations;
     }
 
-    public void setTypeAlias(List<TypeAlias> typeAlias) {
-        this.typeAlias = typeAlias;
+    /**
+     * 设置类型缩写配置
+     *
+     * @param typeAbbreviations 类型缩写配置
+     */
+    public void setTypeAbbreviations(List<TypeAbbreviation> typeAbbreviations) {
+        this.typeAbbreviations = typeAbbreviations;
     }
 
+    /**
+     * 获取类型白名单
+     *
+     * @return 类型白名单
+     */
     public List<Class<?>> getTypeWhiteList() {
         return typeWhiteList;
     }
 
+    /**
+     * 设置类型白名单
+     *
+     * @param typeWhiteList 类型白名单
+     */
     public void setTypeWhiteList(List<Class<?>> typeWhiteList) {
         this.typeWhiteList = typeWhiteList;
     }
 
+    /**
+     * 获取类型黑名单
+     *
+     * @return 类型黑名单
+     */
     public List<Class<?>> getTypeBlackList() {
         return typeBlackList;
     }
 
+    /**
+     * 设置类型黑名单
+     *
+     * @param typeBlackList 类型黑名单
+     */
     public void setTypeBlackList(List<Class<?>> typeBlackList) {
         this.typeBlackList = typeBlackList;
     }
 
+    /**
+     * 获取类型限制算法
+     *
+     * @return 类型限制算法
+     */
     public RestrictedTypeLocator.Compare getTypeRestrictedCompare() {
         return typeRestrictedCompare;
     }
 
+    /**
+     * 设置类型限制算法
+     *
+     * @param typeRestrictedCompare 类型限制算法
+     */
     public void setTypeRestrictedCompare(RestrictedTypeLocator.Compare typeRestrictedCompare) {
         this.typeRestrictedCompare = typeRestrictedCompare;
     }
 
+    /**
+     * 获取类型限制模型
+     *
+     * @return 类型限制模型
+     */
     public RestrictedTypeLocator.Model getTypeRestrictedModel() {
         return typeRestrictedModel;
     }
 
+    /**
+     * 设置类型限制模型
+     *
+     * @param typeRestrictedModel 类型限制模型
+     */
     public void setTypeRestrictedModel(RestrictedTypeLocator.Model typeRestrictedModel) {
         this.typeRestrictedModel = typeRestrictedModel;
+    }
+
+    /**
+     * 获取类型别名
+     *
+     * @return 类型别名
+     */
+    public Map<String, Class<?>> getTypeAlias() {
+        return typeAlias;
+    }
+
+    /**
+     * 设置类型别名
+     *
+     * @param typeAlias 类型别名
+     */
+    public void setTypeAlias(Map<String, Class<?>> typeAlias) {
+        this.typeAlias = typeAlias;
     }
 }
