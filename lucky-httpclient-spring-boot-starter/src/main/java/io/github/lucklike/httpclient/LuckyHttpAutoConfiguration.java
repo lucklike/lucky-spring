@@ -37,6 +37,7 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.spel.TypeUtils;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
@@ -67,6 +68,7 @@ import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
+import io.github.lucklike.httpclient.config.TypeAlias;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
@@ -182,6 +184,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @Role(ROLE_INFRASTRUCTURE)
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        abbreviatedTypeRegister(factoryConfig);
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredUniversalFunction(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -198,6 +201,20 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         pluginSetting(factory, factoryConfig);
         configApiSourceSetting();
         return factory;
+    }
+
+    /**
+     * 简写类型注册
+     * @param factoryConfig 配置实例
+     */
+    private void abbreviatedTypeRegister(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        for (TypeAlias typeAlias : factoryConfig.getSpringEl().getTypeAlias()) {
+            if (typeAlias.isAutoAddArrayType()) {
+                TypeUtils.addBaseAndArrayType(typeAlias.getAlias(), typeAlias.getType());
+            } else {
+                TypeUtils.addType(typeAlias.getAlias(), typeAlias.getType());
+            }
+        }
     }
 
     /**
@@ -255,9 +272,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 导入类型别名配置
-        Map<String, Class<?>> typeAlias = springElConfig.getTypeAlias();
-        if (ContainerUtils.isNotEmptyMap(typeAlias)) {
-            typeAlias.forEach(factory::addTypeAlias);
+        for (TypeAlias alias : springElConfig.getTypeAlias()) {
+            factory.addTypeAlias(alias.getAlias(), alias.getType());
         }
 
         // 设置类型白名单

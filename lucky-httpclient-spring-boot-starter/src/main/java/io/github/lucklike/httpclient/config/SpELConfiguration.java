@@ -46,7 +46,7 @@ public class SpELConfiguration {
     /**
      * 类型别名
      */
-    private Map<String, Class<?>> typeAlias = new LinkedHashMap<>();
+    private List<TypeAlias> typeAlias = new ArrayList<>();
 
     /**
      * 类型白名单
@@ -282,11 +282,11 @@ public class SpELConfiguration {
         return importPackages;
     }
 
-    public Map<String, Class<?>> getTypeAlias() {
+    public List<TypeAlias> getTypeAlias() {
         return typeAlias;
     }
 
-    public void setTypeAlias(Map<String, Class<?>> typeAlias) {
+    public void setTypeAlias(List<TypeAlias> typeAlias) {
         this.typeAlias = typeAlias;
     }
 
