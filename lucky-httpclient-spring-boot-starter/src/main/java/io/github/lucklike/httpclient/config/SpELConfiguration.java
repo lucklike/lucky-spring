@@ -55,19 +55,6 @@ public class SpELConfiguration {
     private Map<String, Class<?>> typeAlias;
 
     /**
-     * 类型缩写配置
-     * <pre>
-     *    eg:
-     *     添加配置：com.luckyframework.common.StringUtils
-     *     -->
-     *     在SpEL表达式中可以这样写：
-     *     获取StringUtils的类型            --> #{StringUtils.class}
-     *     执行StringUtils类中的静态方法     --> #{StringUtils.format('Hello {}, I'm {}', 'Lucy', 'Jack')}
-     * </pre>
-     */
-    private List<TypeAbbreviation> typeAbbreviations = new ArrayList<>();
-
-    /**
      * 类型白名单
      */
     private List<Class<?>> typeWhiteList = new ArrayList<>();
@@ -299,24 +286,6 @@ public class SpELConfiguration {
      */
     public List<String> getImportPackages() {
         return importPackages;
-    }
-
-    /**
-     * 获取类型缩写配置
-     *
-     * @return 类型缩写配置
-     */
-    public List<TypeAbbreviation> getTypeAbbreviations() {
-        return typeAbbreviations;
-    }
-
-    /**
-     * 设置类型缩写配置
-     *
-     * @param typeAbbreviations 类型缩写配置
-     */
-    public void setTypeAbbreviations(List<TypeAbbreviation> typeAbbreviations) {
-        this.typeAbbreviations = typeAbbreviations;
     }
 
     /**
