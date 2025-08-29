@@ -77,7 +77,6 @@ import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverte
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
-import io.github.lucklike.httpclient.function.ParameterInstanceFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,7 +206,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         factory.addSpringElFunctionClass(BeanFunction.class);
-        factory.addSpringElFunctionClass(ParameterInstanceFunction.class);
     }
 
     /**
