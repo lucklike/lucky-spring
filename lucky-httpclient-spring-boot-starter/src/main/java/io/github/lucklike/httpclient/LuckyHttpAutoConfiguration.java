@@ -37,6 +37,7 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
@@ -183,6 +184,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredUniversalFunction(factory);
+        registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
         factorySpELConvertSetting(factory, factoryConfig);
         factoryExpressionParamSetting(factory, factoryConfig);
@@ -199,6 +201,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         return factory;
     }
 
+
     /**
      * 注册通用函数
      *
@@ -206,6 +209,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         factory.addSpringElFunctionClass(BeanFunction.class);
+    }
+
+
+    /**
+     * 注册包装类型解析器
+     *
+     * @param factory 工厂实例
+     */
+    private void registeredPackTypeParser(HttpClientProxyObjectFactory factory) {
+        applicationContext.getBeanProvider(PackTypeParser.class).forEach(factory::addPackTypeParser);
     }
 
     /**

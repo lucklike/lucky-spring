@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.common.UnitUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
@@ -70,6 +71,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
         // 包扫描以及BeanDefinition注册
         AtomicInteger s = new AtomicInteger();
+        long start = System.currentTimeMillis();
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
             if (isLuckyHttpComponent(annotationMetadata)) {
@@ -95,7 +97,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             }
         });
 
-        log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered.", s.get());
+        log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
 
         printVersion();
         printLogo();
