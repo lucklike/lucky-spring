@@ -10,6 +10,7 @@ import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ZstdContentEncodingConvertor;
+import com.luckyframework.httpclient.core.executor.HttpClient5Executor;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
@@ -111,6 +112,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
@@ -926,7 +928,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     /********************** HttpExecutor *************************************/
 
     @Role(ROLE_INFRASTRUCTURE)
-    @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient"})
+    @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient", "org.apache.hc.client5.http.classic.HttpClient"})
     static class JdkHttpExecutorConfig {
 
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
@@ -961,4 +963,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     }
 
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"org.apache.hc.client5.http.classic.HttpClient"})
+    static class ApacheHttpV5ExecutorConfig {
+
+        @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
+        @Role(ROLE_INFRASTRUCTURE)
+        public HttpExecutor luckyApacheHttpExecutor() {
+            return new HttpClient5Executor();
+        }
+
+    }
 }

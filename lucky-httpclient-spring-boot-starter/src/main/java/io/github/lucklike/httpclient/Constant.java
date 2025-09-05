@@ -13,6 +13,7 @@ public class Constant {
     public static final String PROXY_FACTORY_CONFIG_BEAN_NAME = "__luckyHttpClientProxyObjectFactoryConfiguration__";
     public static final String DEFAULT_JDK_EXECUTOR_BEAN_NAME = "__luckyJdkHttpExecutor__";
     public static final String DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME = "__luckyApacheHttpExecutor__";
+    public static final String DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME = "__luckyApacheHttpV5Executor__";
     public static final String DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME = "__luckyOkHttpExecutor__";
 
 
