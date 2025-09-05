@@ -28,7 +28,7 @@ public enum HttpExecutorEnum {
      */
     HTTP_CLIENT(new HttpClientExecutorFactory()),
 
-    HTTP_CLIENT_5(new HttpClient5ExecutorFactory());
+    HTTP_CLIENT5(new HttpClient5ExecutorFactory());
 
     private final HttpExecutorFactory factory;
 
