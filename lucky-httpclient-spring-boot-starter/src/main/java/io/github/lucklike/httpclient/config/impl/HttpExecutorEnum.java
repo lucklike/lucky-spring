@@ -28,6 +28,9 @@ public enum HttpExecutorEnum {
      */
     HTTP_CLIENT(new HttpClientExecutorFactory()),
 
+    /**
+     * 基于Apache HttpClient5实现的执行器枚举配置
+     */
     HTTP_CLIENT5(new HttpClient5ExecutorFactory());
 
     private final HttpExecutorFactory factory;
