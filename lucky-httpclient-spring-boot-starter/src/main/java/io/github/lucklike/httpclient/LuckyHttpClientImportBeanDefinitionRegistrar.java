@@ -3,7 +3,7 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.httpclient.proxy.Version;
+import com.luckyframework.common.UnitUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.beans.Introspector;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.luckyframework.httpclient.proxy.Version.printLogo;
 import static com.luckyframework.httpclient.proxy.Version.printVersion;
@@ -66,9 +67,11 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             scannedClasses = new Class[]{ClassUtils.getClass(importingClassMetadata.getClassName())};
         }
         String[] finalScannedPackages = ScanUtils.getPackages(scannedClasses, scannedPackages);
-        log.info("Lucky-HttpClient Start scanning the package {}", Arrays.toString(finalScannedPackages));
+        log.info("lucky-httpclient start scanning the package {}", Arrays.toString(finalScannedPackages));
 
         // 包扫描以及BeanDefinition注册
+        AtomicInteger s = new AtomicInteger();
+        long start = System.currentTimeMillis();
         ScanUtils.resourceHandle(finalScannedPackages, r -> {
             AnnotationMetadata annotationMetadata = ScanUtils.resourceToAnnotationMetadata(r);
             if (isLuckyHttpComponent(annotationMetadata)) {
@@ -85,15 +88,16 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 // 获取Bean名称并注册
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("@HttpClientComponent '{}' is registered", beanClassName);
-                    }
                     registry.registerBeanDefinition(beanName, definition);
+                    log.debug("@HttpClientComponent '{}' is registered", beanClassName);
+                    s.getAndIncrement();
                 } else {
                     throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
                 }
             }
         });
+
+        log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
 
         printVersion();
         printLogo();

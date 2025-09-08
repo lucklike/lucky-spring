@@ -10,6 +10,7 @@ import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ZstdContentEncodingConvertor;
+import com.luckyframework.httpclient.core.executor.HttpClient5Executor;
 import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
@@ -37,6 +38,9 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
+import com.luckyframework.httpclient.proxy.typeparser.MonoMethodPackTypeParser;
+import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
@@ -77,7 +81,6 @@ import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverte
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
-import io.github.lucklike.httpclient.function.ParameterInstanceFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +114,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
@@ -184,6 +188,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredUniversalFunction(factory);
+        registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
         factorySpELConvertSetting(factory, factoryConfig);
         factoryExpressionParamSetting(factory, factoryConfig);
@@ -200,6 +205,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         return factory;
     }
 
+
     /**
      * 注册通用函数
      *
@@ -207,7 +213,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         factory.addSpringElFunctionClass(BeanFunction.class);
-        factory.addSpringElFunctionClass(ParameterInstanceFunction.class);
+    }
+
+
+    /**
+     * 注册包装类型解析器
+     *
+     * @param factory 工厂实例
+     */
+    private void registeredPackTypeParser(HttpClientProxyObjectFactory factory) {
+        applicationContext.getBeanProvider(PackTypeParser.class).forEach(factory::addPackTypeParser);
     }
 
     /**
@@ -754,9 +769,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void contentEncodingConvertorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
         // 注册Spring容器中的ContentEncodingConvertor
-        for (String autoConvertBeanName : applicationContext.getBeanNamesForType(ContentEncodingConvertor.class)) {
-            AbstractSaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
-        }
+        applicationContext.getBeanProvider(ContentEncodingConvertor.class)
+                .forEach(AbstractSaveResultResponseProcessor::addContentEncodingConvertor);
 
         ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
 
@@ -788,12 +802,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void pluginSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-
         // 注册Spring容器中的插件
-        String[] pluginBeanNames = applicationContext.getBeanNamesForType(ProxyPlugin.class);
-        for (String pluginBeanName : pluginBeanNames) {
-            factory.addPlugin(applicationContext.getBean(pluginBeanName, ProxyPlugin.class));
-        }
+        applicationContext.getBeanProvider(ProxyPlugin.class).forEach(factory::addPlugin);
 
         // 注册Spring容器中由@HttpPlugin注解声明的插件
         String[] annPluginBeanNames = applicationContext.getBeanNamesForAnnotation(HttpPlugin.class);
@@ -856,6 +866,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     //                              Conditional Beans
     //--------------------------------------------------------------------------------------------
 
+    /******************************** PackTypeParser *************************************/
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"reactor.core.publisher.Flux"})
+    static class ReactorPackTypeParserConfig {
+
+        @Bean
+        @Role(ROLE_INFRASTRUCTURE)
+        public PackTypeParser reactorFluxMethodPackTypeParser() {
+            return new FluxMethodPackTypeParser();
+        }
+
+        @Bean
+        @Role(ROLE_INFRASTRUCTURE)
+        public PackTypeParser reactorMonoMethodPackTypeParser() {
+            return new MonoMethodPackTypeParser();
+        }
+
+    }
+
     /********************** ContentEncodingConvertor *************************************/
 
 
@@ -915,7 +945,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     /********************** HttpExecutor *************************************/
 
     @Role(ROLE_INFRASTRUCTURE)
-    @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient"})
+    @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient", "org.apache.hc.client5.http.classic.HttpClient"})
     static class JdkHttpExecutorConfig {
 
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
@@ -950,4 +980,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     }
 
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"org.apache.hc.client5.http.classic.HttpClient"})
+    static class ApacheHttpV5ExecutorConfig {
+
+        @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
+        @Role(ROLE_INFRASTRUCTURE)
+        public HttpExecutor luckyApacheHttpExecutor() {
+            return new HttpClient5Executor();
+        }
+
+    }
 }
