@@ -38,6 +38,8 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
+import com.luckyframework.httpclient.proxy.typeparser.MonoMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
@@ -868,6 +870,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     //--------------------------------------------------------------------------------------------
     //                              Conditional Beans
     //--------------------------------------------------------------------------------------------
+
+    /******************************** PackTypeParser *************************************/
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"reactor.core.publisher.Flux"})
+    static class ReactorPackTypeParserConfig {
+
+        @Bean
+        @Role(ROLE_INFRASTRUCTURE)
+        public PackTypeParser reactorFluxMethodPackTypeParser() {
+            return new FluxMethodPackTypeParser();
+        }
+
+        @Bean
+        @Role(ROLE_INFRASTRUCTURE)
+        public PackTypeParser reactorMonoMethodPackTypeParser() {
+            return new MonoMethodPackTypeParser();
+        }
+
+    }
 
     /********************** ContentEncodingConvertor *************************************/
 
