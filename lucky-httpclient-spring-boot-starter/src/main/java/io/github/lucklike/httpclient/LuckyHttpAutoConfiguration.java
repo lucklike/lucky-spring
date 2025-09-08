@@ -769,9 +769,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void contentEncodingConvertorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
         // 注册Spring容器中的ContentEncodingConvertor
-        for (String autoConvertBeanName : applicationContext.getBeanNamesForType(ContentEncodingConvertor.class)) {
-            AbstractSaveResultResponseProcessor.addContentEncodingConvertor(applicationContext.getBean(autoConvertBeanName, ContentEncodingConvertor.class));
-        }
+        applicationContext.getBeanProvider(ContentEncodingConvertor.class)
+                .forEach(AbstractSaveResultResponseProcessor::addContentEncodingConvertor);
 
         ResponseConvertConfiguration responseConvertConfig = factoryConfig.getResponseConvert();
 
@@ -803,12 +802,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void pluginSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-
         // 注册Spring容器中的插件
-        String[] pluginBeanNames = applicationContext.getBeanNamesForType(ProxyPlugin.class);
-        for (String pluginBeanName : pluginBeanNames) {
-            factory.addPlugin(applicationContext.getBean(pluginBeanName, ProxyPlugin.class));
-        }
+        applicationContext.getBeanProvider(ProxyPlugin.class).forEach(factory::addPlugin);
 
         // 注册Spring容器中由@HttpPlugin注解声明的插件
         String[] annPluginBeanNames = applicationContext.getBeanNamesForAnnotation(HttpPlugin.class);
