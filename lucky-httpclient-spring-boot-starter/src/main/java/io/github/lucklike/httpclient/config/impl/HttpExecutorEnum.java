@@ -1,8 +1,11 @@
 package io.github.lucklike.httpclient.config.impl;
 
-import io.github.lucklike.httpclient.config.HttpExecutorFactory;
-
 import java.net.HttpURLConnection;
+
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 
 /**
  * HTTP执行器枚举
@@ -16,30 +19,30 @@ public enum HttpExecutorEnum {
     /**
      * 基于JDK{@link HttpURLConnection}实现的执行器枚举配置
      */
-    JDK(new JdkHttpExecutorFactory()),
+    JDK(DEFAULT_JDK_EXECUTOR_BEAN_NAME),
 
     /**
      * 基于Okhttp3实现的执行器枚举配置
      */
-    OKHTTP(new OkHttpExecutorFactory()),
+    OKHTTP(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME),
 
     /**
      * 基于Apache HttpClient实现的执行器枚举配置
      */
-    HTTP_CLIENT(new HttpClientExecutorFactory()),
+    HTTP_CLIENT(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME),
 
     /**
      * 基于Apache HttpClient5实现的执行器枚举配置
      */
-    HTTP_CLIENT5(new HttpClient5ExecutorFactory());
+    HTTP_CLIENT5(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME);
 
-    private final HttpExecutorFactory factory;
+    private final String httpExecutorBean;
 
-    HttpExecutorEnum(HttpExecutorFactory factory) {
-        this.factory = factory;
+    HttpExecutorEnum(String httpExecutorBean) {
+        this.httpExecutorBean = httpExecutorBean;
     }
 
-    public HttpExecutorFactory HttpExecutorFactory() {
-        return factory;
+    public String getHttpExecutorBean() {
+        return httpExecutorBean;
     }
 }
