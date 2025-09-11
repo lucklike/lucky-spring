@@ -89,7 +89,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -969,7 +968,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     /********************** HttpExecutor *************************************/
 
     @Role(ROLE_INFRASTRUCTURE)
-    @ConditionalOnMissingClass({"okhttp3.OkHttpClient", "org.apache.http.client.HttpClient", "org.apache.hc.client5.http.classic.HttpClient"})
     static class JdkHttpExecutorConfig {
 
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
