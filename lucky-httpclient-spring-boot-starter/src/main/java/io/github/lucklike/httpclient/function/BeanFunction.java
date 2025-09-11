@@ -4,7 +4,6 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.FontUtil;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
-import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
@@ -36,11 +35,6 @@ import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
  */
 @Namespace(SPRING_FUNCTION_SPACE)
 public class BeanFunction {
-
-    static {
-        //注册命名空间
-        MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
-    }
 
 
     /**

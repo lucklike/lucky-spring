@@ -9,6 +9,7 @@ import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -178,6 +179,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 参数转换器相关配置
      */
     private ParameterConvertConfig[] parameterConverts;
+
+    /**
+     * 函数空间
+     */
+    private List<String> functionSpaces;
+
+    /**
+     * 变量空间
+     */
+    private List<String> variableSpaces;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -415,6 +426,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.parameterConverts = parameterConverts;
     }
 
+    /**
+     * 设置函数空间
+     *
+     * @param functionSpaces 函数空间
+     */
+    public void setFunctionSpaces(List<String> functionSpaces) {
+        this.functionSpaces = functionSpaces;
+    }
+
+    /**
+     * 设置变量空间
+     *
+     * @param variableSpaces 变量空间
+     */
+    public void setVariableSpaces(List<String> variableSpaces) {
+        this.variableSpaces = variableSpaces;
+    }
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -633,5 +661,23 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public ParameterConvertConfig[] getParameterConverts() {
         return parameterConverts;
+    }
+
+    /**
+     * 获取函数空间
+     *
+     * @return 函数空间
+     */
+    public List<String> getFunctionSpaces() {
+        return functionSpaces;
+    }
+
+    /**
+     * 获取变量空间
+     *
+     * @return 变量空间
+     */
+    public List<String> getVariableSpaces() {
+        return variableSpaces;
     }
 }

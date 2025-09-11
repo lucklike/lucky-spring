@@ -36,8 +36,10 @@ import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
+import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
+import com.luckyframework.httpclient.proxy.spel.ValueSpaceConstant;
 import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.MonoMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
@@ -121,6 +123,7 @@ import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
+import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 /**
@@ -187,6 +190,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
+        registeredSpace(factoryConfig);
         registeredUniversalFunction(factory);
         registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -203,6 +207,25 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         pluginSetting(factory, factoryConfig);
         configApiSourceSetting();
         return factory;
+    }
+
+    /**
+     * 注册命名空间
+     *
+     * @param factoryConfig 工厂配置
+     */
+    private void registeredSpace(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
+
+        List<String> functionSpaces = factoryConfig.getFunctionSpaces();
+        if (ContainerUtils.isNotEmptyCollection(functionSpaces)) {
+            functionSpaces.forEach(MethodSpaceConstant::addExternalSpace);
+        }
+
+        List<String> variableSpaces = factoryConfig.getVariableSpaces();
+        if (ContainerUtils.isNotEmptyCollection(variableSpaces)) {
+            functionSpaces.forEach(ValueSpaceConstant::addExternalSpace);
+        }
     }
 
 
