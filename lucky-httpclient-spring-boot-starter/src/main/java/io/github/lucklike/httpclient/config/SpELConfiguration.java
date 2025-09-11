@@ -65,6 +65,12 @@ public class SpELConfiguration {
     private List<Class<?>> typeBlackList = new ArrayList<>();
 
     /**
+     * 默认的命名空间
+     */
+    private List<String> defaultNameSpaces;
+
+
+    /**
      * 类型限制比较算法
      */
     private RestrictedTypeLocator.Compare typeRestrictedCompare = RestrictedTypeLocator.Compare.EQUALS;
@@ -376,5 +382,23 @@ public class SpELConfiguration {
      */
     public void setTypeAlias(Map<String, Class<?>> typeAlias) {
         this.typeAlias = typeAlias;
+    }
+
+    /**
+     * 获取默认的命名空间
+     *
+     * @return 默认的命名空间
+     */
+    public List<String> getDefaultNameSpaces() {
+        return defaultNameSpaces;
+    }
+
+    /**
+     * 设置默认的命名空间
+     *
+     * @param defaultNameSpaces 默认的命名空间
+     */
+    public void setDefaultNameSpaces(List<String> defaultNameSpaces) {
+        this.defaultNameSpaces = defaultNameSpaces;
     }
 }

@@ -215,16 +215,17 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void registeredSpace(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 注册Spring函数命名空间
         MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
 
-        List<String> functionSpaces = factoryConfig.getFunctionSpaces();
-        if (ContainerUtils.isNotEmptyCollection(functionSpaces)) {
-            functionSpaces.forEach(MethodSpaceConstant::addExternalSpace);
-        }
-
-        List<String> variableSpaces = factoryConfig.getVariableSpaces();
-        if (ContainerUtils.isNotEmptyCollection(variableSpaces)) {
-            functionSpaces.forEach(ValueSpaceConstant::addExternalSpace);
+        // 注册配置中的命名空间
+        SpELConfiguration springEl = factoryConfig.getSpringEl();
+        List<String> defaultNameSpaces = springEl.getDefaultNameSpaces();
+        if (ContainerUtils.isNotEmptyCollection(defaultNameSpaces)) {
+            for (String nameSpace : defaultNameSpaces) {
+                MethodSpaceConstant.addExternalSpace(nameSpace);
+                ValueSpaceConstant.addExternalSpace(nameSpace);
+            }
         }
     }
 
