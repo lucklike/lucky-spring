@@ -36,7 +36,6 @@ import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
-import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
@@ -122,7 +121,6 @@ import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
-import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 /**
@@ -214,8 +212,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factory 工厂实例
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
-        // 注册函数空间
-        MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
         factory.addSpringElFunctionClass(BeanFunction.class);
     }
 
