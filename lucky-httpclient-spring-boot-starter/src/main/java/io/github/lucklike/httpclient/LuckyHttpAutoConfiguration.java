@@ -74,7 +74,6 @@ import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
@@ -418,25 +417,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
         }
 
-        // 导入用户配置的的Executor
-        MultipartThreadPoolParam multiPoolParam = factoryConfig.getAsyncThreadPool();
-        if (multiPoolParam != null) {
-            if (multiPoolParam.isLazy()) {
-                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(multiPoolParam));
+        // 导入用户配置的默认Executor
+        LazyThreadPoolParam defaultPoolParam = factoryConfig.getAsyncThreadPool();
+        if (defaultPoolParam != null) {
+            if (defaultPoolParam.isLazy()) {
+                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(defaultPoolParam));
             } else {
-                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(multiPoolParam));
+                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(defaultPoolParam));
             }
+        }
 
-            Map<String, LazyThreadPoolParam> alternativePoolParamMap = multiPoolParam.getAlternative();
-            if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
-                alternativePoolParamMap.forEach((name, poolParam) -> {
-                    if (poolParam.isLazy()) {
-                        factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
-                    } else {
-                        factory.addAlternativeAsyncExecutor(name, ThreadPoolFactory.createThreadPool(poolParam));
-                    }
-                });
-            }
+        // 导入用户配置的备选Executor
+        Map<String, LazyThreadPoolParam> alternativePoolParamMap = factoryConfig.getAlternativeThreadPool();
+        if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
+            alternativePoolParamMap.forEach((name, poolParam) -> {
+                if (poolParam.isLazy()) {
+                    factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
+                } else {
+                    factory.addAlternativeAsyncExecutor(name, ThreadPoolFactory.createThreadPool(poolParam));
+                }
+            });
         }
     }
 

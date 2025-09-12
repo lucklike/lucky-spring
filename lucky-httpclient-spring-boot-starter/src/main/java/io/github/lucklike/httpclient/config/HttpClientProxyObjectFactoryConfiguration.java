@@ -5,11 +5,12 @@ import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
-import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
+import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -131,7 +132,13 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 用于创建异步调用的线程池的参数
      */
     @NestedConfigurationProperty
-    private MultipartThreadPoolParam asyncThreadPool;
+    private LazyThreadPoolParam asyncThreadPool;
+
+    /**
+     * 备用线程池
+     */
+    @NestedConfigurationProperty
+    private Map<String, LazyThreadPoolParam> alternativeThreadPool = new ConcurrentHashMap<>();
 
     /**
      * 日志打印相关配置
@@ -184,12 +191,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 设置线程池参数
+     * 设置默认线程池参数
      *
      * @param asyncThreadPool 线程池参数
      */
-    public void setAsyncThreadPool(MultipartThreadPoolParam asyncThreadPool) {
+    public void setAsyncThreadPool(LazyThreadPoolParam asyncThreadPool) {
         this.asyncThreadPool = asyncThreadPool;
+    }
+
+    /**
+     * 设置备选线程池参数
+     *
+     * @param alternativeThreadPool 备选线程池参数
+     */
+    public void setAlternativeThreadPool(Map<String, LazyThreadPoolParam> alternativeThreadPool) {
+        this.alternativeThreadPool = alternativeThreadPool;
     }
 
     /**
@@ -424,8 +440,17 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return 线程池参数
      */
-    public MultipartThreadPoolParam getAsyncThreadPool() {
+    public LazyThreadPoolParam getAsyncThreadPool() {
         return asyncThreadPool;
+    }
+
+    /**
+     * 获取备选线程池参数
+     *
+     * @return 备选线程池参数
+     */
+    public Map<String, LazyThreadPoolParam> getAlternativeThreadPool() {
+        return alternativeThreadPool;
     }
 
     /**
