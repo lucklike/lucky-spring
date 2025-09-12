@@ -9,6 +9,13 @@ package io.github.lucklike.httpclient;
  */
 public class Constant {
 
+
+    /**
+     * Spring函数空间
+     */
+    public final static String SPRING_FUNCTION_SPACE = "__Fun::Spring::__";
+
+
     public static final String PROXY_FACTORY_BEAN_NAME = "__luckyHttpClientProxyFactory__";
     public static final String PROXY_FACTORY_CONFIG_BEAN_NAME = "__luckyHttpClientProxyObjectFactoryConfiguration__";
     public static final String DEFAULT_JDK_EXECUTOR_BEAN_NAME = "__luckyJdkHttpExecutor__";

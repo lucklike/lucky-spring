@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
-import static com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant.SPRING_FUNCTION_SPACE;
+import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 
 /**
  * 提供Bean相关操作的函数
