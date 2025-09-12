@@ -418,7 +418,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 导入用户配置的默认Executor
-        LazyThreadPoolParam defaultPoolParam = factoryConfig.getAsyncThreadPool();
+        LazyThreadPoolParam defaultPoolParam = factoryConfig.getDefaultThreadPool();
         if (defaultPoolParam != null) {
             if (defaultPoolParam.isLazy()) {
                 factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(defaultPoolParam));

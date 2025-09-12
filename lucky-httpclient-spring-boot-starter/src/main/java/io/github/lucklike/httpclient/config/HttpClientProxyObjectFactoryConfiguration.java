@@ -132,12 +132,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 用于创建异步调用的线程池的参数
      */
     @NestedConfigurationProperty
-    private LazyThreadPoolParam asyncThreadPool;
+    private LazyThreadPoolParam defaultThreadPool;
 
     /**
      * 备用线程池
      */
-    @NestedConfigurationProperty
     private Map<String, LazyThreadPoolParam> alternativeThreadPool = new ConcurrentHashMap<>();
 
     /**
@@ -193,10 +192,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置默认线程池参数
      *
-     * @param asyncThreadPool 线程池参数
+     * @param defaultThreadPool 默认线程池参数
      */
-    public void setAsyncThreadPool(LazyThreadPoolParam asyncThreadPool) {
-        this.asyncThreadPool = asyncThreadPool;
+    public void setDefaultThreadPool(LazyThreadPoolParam defaultThreadPool) {
+        this.defaultThreadPool = defaultThreadPool;
     }
 
     /**
@@ -436,12 +435,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 获取线程池参数
+     * 获取默认线程池参数
      *
-     * @return 线程池参数
+     * @return 默认线程池参数
      */
-    public LazyThreadPoolParam getAsyncThreadPool() {
-        return asyncThreadPool;
+    public LazyThreadPoolParam getDefaultThreadPool() {
+        return defaultThreadPool;
     }
 
     /**
