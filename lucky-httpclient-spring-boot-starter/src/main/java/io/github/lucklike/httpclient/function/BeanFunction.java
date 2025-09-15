@@ -2,12 +2,12 @@ package io.github.lucklike.httpclient.function;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.FontUtil;
+import com.luckyframework.httpclient.proxy.CommonFunctions;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
 import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
-import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
@@ -215,35 +215,12 @@ public class BeanFunction {
         if (ContainerUtils.isEmptyArray(type)) {
             return ResolvableType.forClass(LinkedHashMap.class);
         }
-
-        Object type0 = type[0];
-        if (type0 instanceof Class) {
-            return ResolvableType.forClass((Class<?>) type0);
-        }
-
-        if (type0 instanceof ResolvableType) {
-            return ((ResolvableType) type0);
-        }
-
-        throw new IllegalArgumentException("type of " + ClassUtils.getClassName(type0) + " is not supported.");
+        return CommonFunctions.toResolvableType(type[0]);
     }
 
     @NonNull
     @FunctionFilter
     private static Class<?> getConvertClass(Object[] type) {
-        if (ContainerUtils.isEmptyArray(type)) {
-            return String.class;
-        }
-
-        Object type0 = type[0];
-        if (type0 instanceof Class) {
-            return (Class<?>) type0;
-        }
-
-        if (type0 instanceof ResolvableType) {
-            return Objects.requireNonNull(((ResolvableType) type0).resolve());
-        }
-
-        throw new IllegalArgumentException("type of " + ClassUtils.getClassName(type0) + " is not supported.");
+        return Objects.requireNonNull(getConvertType(type).resolve());
     }
 }
