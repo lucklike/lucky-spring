@@ -17,6 +17,7 @@ import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
 import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
@@ -195,10 +196,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         asyncExecuteSetting(factory, factoryConfig);
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
-        timeoutSetting(factory, factoryConfig);
+        httpParamSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
-        parameterSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
         pluginSetting(factory, factoryConfig);
         configApiSourceSetting();
@@ -604,19 +604,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
-    /**
-     * 公共参数设置
-     *
-     * @param factory       工厂实例
-     * @param factoryConfig 工厂配置
-     */
-    public void parameterSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        factory.setHeaders(factoryConfig.getHeaderParams());
-        factory.setPathParameters(factoryConfig.getPathParams());
-        factory.setQueryParameters(factoryConfig.getQueryParams());
-        parameterConvertSetting(factoryConfig);
-    }
-
     @SuppressWarnings("unchecked")
     private void parameterConvertSetting(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
@@ -820,16 +807,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 超时时间设置
+     *
      *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void timeoutSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void httpParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 超时时间设置
         Integer connectionTimeout = factoryConfig.getConnectionTimeout();
         Integer readTimeout = factoryConfig.getReadTimeout();
         Integer writeTimeout = factoryConfig.getWriteTimeout();
-
         if (connectionTimeout != null) {
             factory.setConnectionTimeout(connectionTimeout);
         }
@@ -839,6 +826,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (writeTimeout != null) {
             factory.setWriteTimeout(writeTimeout);
         }
+
+        // HTTP 版本设置
+        Version httpVersion = factoryConfig.getHttpVersion();
+        factory.setHttpVersion(httpVersion);
+
+        // 请求参数设置
+        factory.setHeaders(factoryConfig.getHeaderParams());
+        factory.setPathParameters(factoryConfig.getPathParams());
+        factory.setQueryParameters(factoryConfig.getQueryParams());
+        parameterConvertSetting(factoryConfig);
     }
 
     @SuppressWarnings("unchecked")

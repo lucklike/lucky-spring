@@ -19,7 +19,7 @@ import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMA
 public class CommonDomainNameGetter implements DomainNameGetter {
 
     @Override
-    public String getDomainName(DomainNameContext context) throws Exception {
+    public String getDomainName(DomainNameContext context) {
         HttpClient httpClientAnn = context.toAnnotation(HttpClient.class);
 
         String url = context.parseExpression(httpClientAnn.url(), String.class);

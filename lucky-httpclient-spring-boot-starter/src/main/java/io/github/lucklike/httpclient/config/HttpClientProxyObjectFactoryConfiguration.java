@@ -1,11 +1,13 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
+import io.github.lucklike.httpclient.discovery.RetryableHttpClient;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
@@ -70,6 +72,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 写超时时间
      */
     private Integer writeTimeout;
+
+    /**
+     * HTTP版本
+     */
+    private Version httpVersion;
 
     /**
      * 公共请求头参数
@@ -156,6 +163,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private RedirectConfiguration redirect = new RedirectConfiguration();
+
+    /**
+     * 重试相关的配置，需要结合{@link RetryableHttpClient @RetryableHttpClient}注解一起使用
+     */
+    @NestedConfigurationProperty
+    private RetryConfiguration retry = new RetryConfiguration();
 
     /**
      * HTTP连接池相关配置
@@ -301,6 +314,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 设置 HTTP 版本
+     *
+     * @param httpVersion HTTP 版本
+     */
+    public void setHttpVersion(Version httpVersion) {
+        this.httpVersion = httpVersion;
+    }
+
+    /**
      * 设置公共的请求头参数
      * <pre>
      *     1.直接配置的k-v为全局公用的参数
@@ -383,6 +405,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setRedirect(RedirectConfiguration redirect) {
         this.redirect = redirect;
+    }
+
+    /**
+     * 设置重试相关的配置
+     *
+     * @param retry 重试相关的配置
+     */
+    public void setRetry(RetryConfiguration retry) {
+        this.retry = retry;
     }
 
     /**
@@ -543,6 +574,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 获取 HTTP 版本
+     *
+     * @return HTTP 版本
+     */
+    public Version getHttpVersion() {
+        return httpVersion;
+    }
+
+    /**
      * 获取公共的请求头参数
      *
      * @return 公共的请求头参数
@@ -612,6 +652,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public RedirectConfiguration getRedirect() {
         return redirect;
+    }
+
+    /**
+     * 获取重试相关的配置
+     *
+     * @return 重试相关的配置
+     */
+    public RetryConfiguration getRetry() {
+        return retry;
     }
 
     /**
