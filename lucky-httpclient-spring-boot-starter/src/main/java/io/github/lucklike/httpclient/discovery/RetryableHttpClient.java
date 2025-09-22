@@ -84,7 +84,7 @@ public @interface RetryableHttpClient {
      * 任务名称
      */
     @AliasFor(annotation = Retryable.class, attribute = "name")
-    String nameFormat() default "``@run(2):#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getNameFormat()}``";
+    String nameFormat() default "``@max(2):#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getNameFormat()}``";
 
     /**
      * 最大重试次数
@@ -184,6 +184,6 @@ public @interface RetryableHttpClient {
      * </pre>
      */
     @AliasFor(annotation = Retryable.class, attribute = "condition")
-    String condition() default "``@run(2):#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getCondition()}``";
+    String condition() default "``@max(2):#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getCondition()}``";
 
 }
