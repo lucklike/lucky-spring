@@ -81,6 +81,7 @@ import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverte
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
+import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +93,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
@@ -119,6 +121,7 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEA
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
@@ -183,6 +186,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      *
      * @param factoryConfig 配置实例
      */
+    @Primary
     @Role(ROLE_INFRASTRUCTURE)
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
@@ -213,6 +217,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void registeredSpace(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 注册Spring函数命名空间
         MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
+        // 注册简单HTTP执行器函数命名空间
+        MethodSpaceConstant.addExternalSpace(SIMPLE_HTTP_EXECUTOR);
 
         // 注册配置中的命名空间
         SpELConfiguration springEl = factoryConfig.getSpringEl();
@@ -233,6 +239,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         factory.addSpringElFunctionClass(BeanFunction.class);
+        factory.addSpringElFunctionClass(SimpleHttpExecutorFunction.class);
     }
 
 

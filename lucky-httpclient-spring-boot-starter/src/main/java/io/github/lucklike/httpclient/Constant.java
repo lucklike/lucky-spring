@@ -15,6 +15,11 @@ public class Constant {
      */
     public final static String SPRING_FUNCTION_SPACE = "__Fun::Spring::__";
 
+    /**
+     * 简单HTTP执行器
+     */
+    public final static String SIMPLE_HTTP_EXECUTOR = "__Fun::SimpleHttpExecutor::__";
+
 
     public static final String PROXY_FACTORY_BEAN_NAME = "__luckyHttpClientProxyFactory__";
     public static final String PROXY_FACTORY_CONFIG_BEAN_NAME = "__luckyHttpClientProxyObjectFactoryConfiguration__";
