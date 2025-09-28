@@ -78,6 +78,7 @@ import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
+import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
@@ -119,6 +120,7 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXEC
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
@@ -148,6 +150,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
         ApplicationContextUtils.setApplicationContext(applicationContext);
+    }
+
+    @Bean(INIT_BIND_PARAMETER_CONVERT)
+    @Role(ROLE_INFRASTRUCTURE)
+    public ParameterConvert initBindParameterConvert() {
+        return new InitBindParameterConvert();
     }
 
     /**

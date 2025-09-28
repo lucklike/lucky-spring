@@ -28,6 +28,8 @@ public class Constant {
     public static final String DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME = "__luckyApacheHttpV5Executor__";
     public static final String DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME = "__luckyOkHttpExecutor__";
 
+    public static final String INIT_BIND_PARAMETER_CONVERT = "__initBindParameterConvert__";
+
 
     public static final String DESTROY_METHOD = "shutdown";
     public static final String JDK_PROXY_METHOD = "getJdkProxyObject";

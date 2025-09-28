@@ -210,6 +210,17 @@ public class BeanFunction {
                 .orElseGet(() -> targetObject);
     }
 
+    /**
+     * 初始化绑定,如果target对象中的某个属性不为初始值时（引用类型的初始值为null， 基本类型的初始值参考JDK规范），拷贝时则忽略该属性
+     *
+     * @param targetObject 用于绑定配置的实体类对象
+     * @param prefix       配置
+     */
+    public static void initBind(Object targetObject, String prefix) {
+        Object configObj = env(prefix, targetObject.getClass());
+        CommonFunctions.initCopy(configObj, targetObject);
+    }
+
     @FunctionFilter
     private static ResolvableType getConvertType(Object[] type) {
         if (ContainerUtils.isEmptyArray(type)) {
