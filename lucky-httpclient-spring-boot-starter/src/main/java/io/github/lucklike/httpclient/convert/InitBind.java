@@ -26,4 +26,9 @@ public @interface InitBind {
      */
     Class<?>[] types() default {};
 
+    /**
+     * 是否允许配置不存在
+     */
+    boolean allowConfigNotExist() default true;
+
 }
