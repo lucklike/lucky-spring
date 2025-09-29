@@ -22,7 +22,8 @@ public @interface InitBind {
     String value();
 
     /**
-     * 指定生效的类型，该注解标注在类、方法上时必须配置
+     * 指定生效的类型<br/>
+     * <b>该注解标注在类、方法上时必须配置，被标注的类型必须是一个POJO类型</b>
      */
     Class<?>[] types() default {};
 
