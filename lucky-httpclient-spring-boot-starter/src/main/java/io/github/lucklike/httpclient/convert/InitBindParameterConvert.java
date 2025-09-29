@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.convert;
 
 import com.luckyframework.httpclient.proxy.context.ValueContext;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
+import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.injection.BindException;
 
@@ -15,6 +16,11 @@ public class InitBindParameterConvert implements ParameterConvert {
 
         //value为null时不进行转换
         if (value == null) {
+            return false;
+        }
+
+        // 参数、方法、类上均没有被@InitBind标注时不进行绑定
+        if (!context.isAnnotatedCheckParent(InitBind.class)) {
             return false;
         }
 
@@ -32,6 +38,10 @@ public class InitBindParameterConvert implements ParameterConvert {
         InitBind initBind = context.getMergedAnnotationCheckParent(InitBind.class);
         Class<?> valueType = context.getType().resolve();
         for (Class<?> type : initBind.types()) {
+            // 不对JDK中的类型提供支持
+            if (ClassUtils.isJdkType(type)) {
+                continue;
+            }
             if (type.isAssignableFrom(valueType)) {
                 return true;
             }
