@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.annotation;
 
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
-import io.github.lucklike.httpclient.injection.HttpReference;
 import io.github.lucklike.httpclient.injection.LuckyAutoInjectionBeanPostProcessor;
 import org.springframework.core.annotation.AliasFor;
 

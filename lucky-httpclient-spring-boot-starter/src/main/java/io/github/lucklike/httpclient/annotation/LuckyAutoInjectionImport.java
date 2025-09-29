@@ -1,8 +1,8 @@
 package io.github.lucklike.httpclient.annotation;
 
+import io.github.lucklike.httpclient.injection.Bind;
 import io.github.lucklike.httpclient.injection.HttpReference;
 import io.github.lucklike.httpclient.injection.LuckyAutoInjectionBeanPostProcessor;
-import io.github.lucklike.httpclient.injection.Bind;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
