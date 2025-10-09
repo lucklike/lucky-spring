@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
+import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -97,6 +98,10 @@ public class LoggerConfiguration {
      */
     private String respLogCondition;
 
+    /**
+     * 处理类
+     */
+    private Class<LoggerHandler> handlerClass;
 
     /**
      * 指定需要打印日志的包
@@ -367,5 +372,23 @@ public class LoggerConfiguration {
      */
     public boolean isEnableRespHeaderLog() {
         return enableRespHeaderLog;
+    }
+
+    /**
+     * 获取用于日志处理的处理类
+     *
+     * @return 用于日志处理的处理类
+     */
+    public Class<LoggerHandler> getHandlerClass() {
+        return handlerClass;
+    }
+
+    /**
+     * 设置用于日志处理的处理类
+     *
+     * @param handlerClass 用于日志处理的处理类
+     */
+    public void setHandlerClass(Class<LoggerHandler> handlerClass) {
+        this.handlerClass = handlerClass;
     }
 }

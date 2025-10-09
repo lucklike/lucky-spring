@@ -35,6 +35,7 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
@@ -509,6 +510,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         // 检查是否需要注册日志打印的拦截器
         LoggerConfiguration loggerConfig = factoryConfig.getLogger();
+
+        Class<LoggerHandler> logHandler = loggerConfig.getHandlerClass();
+        if (logHandler != null) {
+            factory.setLoggerHandler(ClassUtils.newObject(logHandler));
+        }
+
         Set<String> loggerPackages = loggerConfig.getPackages();
         if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
             // 注册负责日志打印的拦截器
@@ -822,8 +829,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     *
-     *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
