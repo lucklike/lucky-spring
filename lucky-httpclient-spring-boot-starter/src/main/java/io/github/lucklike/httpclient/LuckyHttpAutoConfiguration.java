@@ -56,6 +56,7 @@ import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.AutoConvertConfig;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
+import io.github.lucklike.httpclient.config.DefaultLoggerConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
@@ -76,7 +77,7 @@ import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
+import io.github.lucklike.httpclient.config.impl.SpecifiedInterfaceLoggerHandler;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
@@ -210,6 +211,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
         httpParamSetting(factory, factoryConfig);
+        loggerSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
@@ -217,6 +219,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         configApiSourceSetting();
         return factory;
     }
+
 
     /**
      * 注册命名空间
@@ -471,6 +474,47 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
+     * 日志处理器设置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void loggerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 检查是否需要注册日志打印的拦截器
+        LoggerConfiguration loggerConfig = factoryConfig.getLogger();
+
+        Class<LoggerHandler> logHandler = loggerConfig.getHandlerClass();
+        if (logHandler != null) {
+            factory.setLoggerHandler(ClassUtils.newObject(logHandler));
+        } else {
+            DefaultLoggerConfiguration defaultHandlerConfig = loggerConfig.getDefaultHandlerConfig();
+            Set<String> loggerPackages = defaultHandlerConfig.getPackages();
+            if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
+                SpecifiedInterfaceLoggerHandler loggerHandler = new SpecifiedInterfaceLoggerHandler();
+                loggerHandler.setPrintLogPackageSet(loggerPackages);
+                loggerHandler.setPrintRequestLog(defaultHandlerConfig.isEnableReqLog());
+                loggerHandler.setPrintResponseLog(defaultHandlerConfig.isEnableRespLog());
+                loggerHandler.setReqCondition(defaultHandlerConfig.getReqLogCondition());
+                loggerHandler.setRespCondition(defaultHandlerConfig.getRespLogCondition());
+                loggerHandler.setPrintRespHeader(defaultHandlerConfig.isEnableRespHeaderLog());
+                Set<String> allowPrintLogBodyMimeTypes = defaultHandlerConfig.getSetAllowMimeTypes();
+                if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                    loggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+                }
+                Set<String> addAllowPrintLogBodyMimeTypes = defaultHandlerConfig.getAddAllowMimeTypes();
+                if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
+                    loggerHandler.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
+                }
+                loggerHandler.setAllowPrintLogReqBodyMaxLength(defaultHandlerConfig.getReqBodyMaxLength());
+                loggerHandler.setAllowPrintLogRespBodyMaxLength(defaultHandlerConfig.getRespBodyMaxLength());
+                factory.setLoggerHandler(loggerHandler);
+            }
+        }
+
+
+    }
+
+    /**
      * 拦截器设置
      *
      * @param factory       工厂实例
@@ -506,40 +550,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
-        }
-
-        // 检查是否需要注册日志打印的拦截器
-        LoggerConfiguration loggerConfig = factoryConfig.getLogger();
-
-        Class<LoggerHandler> logHandler = loggerConfig.getHandlerClass();
-        if (logHandler != null) {
-            factory.setLoggerHandler(ClassUtils.newObject(logHandler));
-        }
-
-        Set<String> loggerPackages = loggerConfig.getPackages();
-        if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
-            // 注册负责日志打印的拦截器
-            factory.addInterceptor(SpecifiedInterfacePrintLogInterceptor.class, Scope.METHOD_CONTEXT, interceptor -> {
-                interceptor.setPrintLogPackageSet(loggerPackages);
-                interceptor.setPrintRequestLog(loggerConfig.isEnableReqLog());
-                interceptor.setPrintResponseLog(loggerConfig.isEnableRespLog());
-                interceptor.setReqCondition(loggerConfig.getReqLogCondition());
-                interceptor.setRespCondition(loggerConfig.getRespLogCondition());
-                interceptor.setPrintAnnotationInfo(loggerConfig.isEnableAnnotationLog());
-                interceptor.setPrintArgsInfo(loggerConfig.isEnableArgsLog());
-                interceptor.setForcePrintBody(loggerConfig.isForcePrintBody());
-                interceptor.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
-                Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
-                    interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
-                }
-                Set<String> addAllowPrintLogBodyMimeTypes = loggerConfig.getAddAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
-                    interceptor.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
-                }
-                interceptor.setAllowPrintLogBodyMaxLength(loggerConfig.getBodyMaxLength());
-            }, loggerConfig.getPriority());
-
         }
 
         InterceptorGenerateEntry[] interceptorGenerates = factoryConfig.getInterceptorGenerates();

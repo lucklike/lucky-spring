@@ -4,8 +4,7 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
-import com.luckyframework.httpclient.proxy.interceptor.InterceptorContext;
-import com.luckyframework.httpclient.proxy.interceptor.PrintLogInterceptor;
+import com.luckyframework.httpclient.proxy.logging.DefaultLoggerHandler;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -17,7 +16,7 @@ import java.util.Set;
  * @version 1.0.0
  * @date 2023/10/7 00:40
  */
-public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
+public class SpecifiedInterfaceLoggerHandler extends DefaultLoggerHandler {
 
     private Set<String> printLogPackageSet = new HashSet<>();
     private boolean printRequestLog = true;
@@ -36,18 +35,17 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
     }
 
     @Override
-    public void beforeExecute(Request request, InterceptorContext context) {
-        if (isPrintMethod(context.getContext()) && printRequestLog) {
-            super.beforeExecute(request, context);
+    public void recordRequestLog(MethodContext context, Request request) {
+        if (isPrintMethod(context) && printRequestLog) {
+            super.recordRequestLog(context, request);
         }
     }
 
     @Override
-    public Response afterExecute(Response response, InterceptorContext context) {
-        if (isPrintMethod(context.getContext()) && isPrintResponseLog) {
-            return super.afterExecute(response, context);
+    public void recordMetaResponseLog(MethodContext context, Response response) {
+        if (isPrintMethod(context) && isPrintResponseLog) {
+            super.recordMetaResponseLog(context, response);
         }
-        return response;
     }
 
     private boolean isPrintMethod(MethodContext context) {
@@ -61,10 +59,5 @@ public class SpecifiedInterfacePrintLogInterceptor extends PrintLogInterceptor {
             }
         }
         return false;
-    }
-
-    @Override
-    public String uniqueIdentification() {
-        return PrintLogInterceptor.class.getName();
     }
 }
