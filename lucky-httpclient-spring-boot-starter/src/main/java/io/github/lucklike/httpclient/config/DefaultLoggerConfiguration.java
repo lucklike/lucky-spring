@@ -1,7 +1,5 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,29 +21,10 @@ public class DefaultLoggerConfiguration {
     private boolean enableRespLog = true;
 
     /**
-     * 是否开启打印注解信息功能，默认关闭
-     */
-    private boolean enableAnnotationLog = false;
-
-    /**
-     * 是否开启打印参数信息功能，默认关闭
-     */
-    private boolean enableArgsLog = false;
-
-    /**
-     * 是否强制打印响应体信息
-     */
-    private boolean forcePrintBody = false;
-
-    /**
      * 是否打印响应头信息
      */
     private boolean enableRespHeaderLog = true;
 
-    /**
-     * 日志打印拦截器的优先级，默认{@value PriorityConstant#OVERALL_LOGGER_PRIORITY}
-     */
-    private Integer priority = PriorityConstant.OVERALL_LOGGER_PRIORITY;
 
     /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
@@ -232,48 +211,12 @@ public class DefaultLoggerConfiguration {
     }
 
     /**
-     * 设置是否开启打印注解信息功能
-     *
-     * @param enableAnnotationLog 是否开启打印注解信息功能
-     */
-    public void setEnableAnnotationLog(boolean enableAnnotationLog) {
-        this.enableAnnotationLog = enableAnnotationLog;
-    }
-
-    /**
-     * 设置是否开启打印参数信息功能
-     *
-     * @param enableArgsLog 是否开启打印参数信息功能
-     */
-    public void setEnableArgsLog(boolean enableArgsLog) {
-        this.enableArgsLog = enableArgsLog;
-    }
-
-    /**
-     * 设置日志打印拦截器的优先级
-     *
-     * @param priority 日志打印拦截器的优先级
-     */
-    public void setPriority(Integer priority) {
-        this.priority = priority;
-    }
-
-    /**
      * 设置是否打印响应头信息
      *
      * @param enableRespHeaderLog 是否打印响应头信息
      */
     public void setEnableRespHeaderLog(boolean enableRespHeaderLog) {
         this.enableRespHeaderLog = enableRespHeaderLog;
-    }
-
-    /**
-     * 设置是否强制打印响应体信息
-     *
-     * @param forcePrintBody 是否强制打印响应体信息
-     */
-    public void setForcePrintBody(boolean forcePrintBody) {
-        this.forcePrintBody = forcePrintBody;
     }
 
     /**
@@ -304,41 +247,21 @@ public class DefaultLoggerConfiguration {
     }
 
     /**
-     * 是否开启了打印注解信息的功能
-     *
-     * @return 是否开启了打印注解信息的功能
-     */
-    public boolean isEnableAnnotationLog() {
-        return enableAnnotationLog;
-    }
-
-    /**
-     * 是否开启了打印参数信息的功能
-     *
-     * @return 是否开启了打印参数信息的功能
-     */
-    public boolean isEnableArgsLog() {
-        return enableArgsLog;
-    }
-
-    /**
-     * 获取日志打印拦截器的优先级
-     *
-     * @return 日志打印拦截器的优先级
-     */
-    public Integer getPriority() {
-        return priority;
-    }
-
-    /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
      * (注： *&frasl;* : 表示所有类型)<br/>
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/*+json</li>
+     *
      * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
+     * <li>application/*+xml</li>
      * <li>text/xml</li>
+     *
+     * <li>application/x-protobuf</li>
+     *
+     * <li>application/x-java-serialized-object</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
      * </ui>
@@ -353,12 +276,18 @@ public class DefaultLoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/*+json</li>
+     *
      * <li>application/xml</li>
-     * <li>application/x-java-serialized-object</li>
+     * <li>application/*+xml</li>
      * <li>text/xml</li>
+     *
+     * <li>application/x-protobuf</li>
+     *
+     * <li>application/x-java-serialized-object</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
-     * </ui>
      * </ui>
      */
     public Set<String> getAddAllowMimeTypes() {
@@ -403,15 +332,6 @@ public class DefaultLoggerConfiguration {
     }
 
     /**
-     * 是否强制打印响应体信息
-     *
-     * @return 是否强制打印响应体信息
-     */
-    public boolean isForcePrintBody() {
-        return forcePrintBody;
-    }
-
-    /**
      * 是否打印响应头信息
      *
      * @return 是否打印响应头信息
@@ -419,7 +339,6 @@ public class DefaultLoggerConfiguration {
     public boolean isEnableRespHeaderLog() {
         return enableRespHeaderLog;
     }
-
 
 
 }
