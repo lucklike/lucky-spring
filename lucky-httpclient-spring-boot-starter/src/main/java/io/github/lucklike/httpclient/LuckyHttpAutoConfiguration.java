@@ -36,6 +36,7 @@ import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
@@ -56,7 +57,6 @@ import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.AutoConvertConfig;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
-import io.github.lucklike.httpclient.config.DefaultLoggerConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
@@ -480,43 +480,47 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void loggerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 检查是否需要注册日志打印的拦截器
+        // 获取日志处理相关的配置
         LoggerConfiguration loggerConfig = factoryConfig.getLogger();
 
-        // 功能未开启时直接结束
-        if (!loggerConfig.isEnable()) {
+
+        // 功能未开启或者为配置日志打印的包时直接结束
+        if (!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) {
             return;
         }
 
-        Class<LoggerHandler> logHandler = loggerConfig.getHandlerClass();
-        if (logHandler != null) {
-            factory.setLoggerHandler(ClassUtils.newObject(logHandler));
+        // 获取日志处理器实现类
+        LoggerHandler loggerHandler;
+        Class<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
+        if (logHandlerClass != null) {
+            loggerHandler = ClassUtils.newObject(logHandlerClass);
         } else {
-            DefaultLoggerConfiguration defaultHandlerConfig = loggerConfig.getDefaultHandlerConfig();
-            Set<String> loggerPackages = defaultHandlerConfig.getPackages();
-            if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
-                SpecifiedInterfaceLoggerHandler loggerHandler = new SpecifiedInterfaceLoggerHandler();
-                loggerHandler.setPrintLogPackageSet(loggerPackages);
-                loggerHandler.setPrintRequestLog(defaultHandlerConfig.isEnableReqLog());
-                loggerHandler.setPrintResponseLog(defaultHandlerConfig.isEnableRespLog());
-                loggerHandler.setReqCondition(defaultHandlerConfig.getReqLogCondition());
-                loggerHandler.setRespCondition(defaultHandlerConfig.getRespLogCondition());
-                loggerHandler.setPrintRespHeader(defaultHandlerConfig.isEnableRespHeaderLog());
-                Set<String> allowPrintLogBodyMimeTypes = defaultHandlerConfig.getSetAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
-                    loggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
-                }
-                Set<String> addAllowPrintLogBodyMimeTypes = defaultHandlerConfig.getAddAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
-                    loggerHandler.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
-                }
-                loggerHandler.setAllowPrintLogReqBodyMaxLength(defaultHandlerConfig.getReqBodyMaxLength());
-                loggerHandler.setAllowPrintLogRespBodyMaxLength(defaultHandlerConfig.getRespBodyMaxLength());
-                factory.setLoggerHandler(loggerHandler);
-            }
+            loggerHandler = loggerConfig.getType().getLoggerHandler();
         }
 
+        // PrintLogAnnotationContextLoggerHandler类型的日志处理器需要另外设置参数
+        if (loggerHandler instanceof PrintLogAnnotationContextLoggerHandler) {
+            PrintLogAnnotationContextLoggerHandler plaLoggerHandler = (PrintLogAnnotationContextLoggerHandler) loggerHandler;
+            plaLoggerHandler.setReqCondition(loggerConfig.getReqLogCondition());
+            plaLoggerHandler.setRespCondition(loggerConfig.getRespLogCondition());
+            plaLoggerHandler.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
+            Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
+            if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                plaLoggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+            }
+            Set<String> addAllowPrintLogBodyMimeTypes = loggerConfig.getAddAllowMimeTypes();
+            if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
+                plaLoggerHandler.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
+            }
+            plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
+            plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
+        }
 
+        SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);
+        specifiedInterfaceLoggerHandler.setPrintLogPackageSet(loggerConfig.getPackages());
+        specifiedInterfaceLoggerHandler.setPrintRequestLog(loggerConfig.isEnableReqLog());
+        specifiedInterfaceLoggerHandler.setPrintResponseLog(loggerConfig.isEnableRespLog());
+        factory.setLoggerHandler(specifiedInterfaceLoggerHandler);
     }
 
     /**
