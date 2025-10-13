@@ -483,6 +483,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         // 检查是否需要注册日志打印的拦截器
         LoggerConfiguration loggerConfig = factoryConfig.getLogger();
 
+        // 功能未开启时直接结束
+        if (!loggerConfig.isEnable()) {
+            return;
+        }
+
         Class<LoggerHandler> logHandler = loggerConfig.getHandlerClass();
         if (logHandler != null) {
             factory.setLoggerHandler(ClassUtils.newObject(logHandler));

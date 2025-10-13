@@ -9,6 +9,11 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 public class LoggerConfiguration {
 
     /**
+     * 是否启用日志处理功能
+     */
+    private boolean enable = true;
+
+    /**
      * 处理类
      */
     private Class<LoggerHandler> handlerClass;
@@ -55,5 +60,23 @@ public class LoggerConfiguration {
      */
     public void setDefaultHandlerConfig(DefaultLoggerConfiguration defaultHandlerConfig) {
         this.defaultHandlerConfig = defaultHandlerConfig;
+    }
+
+    /**
+     * 是否开启日志处理功能
+     *
+     * @return 是否开启日志处理功能
+     */
+    public boolean isEnable() {
+        return enable;
+    }
+
+    /**
+     * 设置是否开启日志处理功能
+     *
+     * @param enable 是否开启日志处理功能
+     */
+    public void setEnable(boolean enable) {
+        this.enable = enable;
     }
 }
