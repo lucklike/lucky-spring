@@ -93,6 +93,12 @@ public @interface RetryableHttpClient {
     String retryCount() default "#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getCount()}";
 
     /**
+     * 最大重试次数
+     */
+    @AliasFor(annotation = Retryable.class, attribute = "strict")
+    String strict() default "#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getStrict()}";
+
+    /**
      * 重试等待时长
      */
     @AliasFor(annotation = Retryable.class, attribute = "waitMillis")

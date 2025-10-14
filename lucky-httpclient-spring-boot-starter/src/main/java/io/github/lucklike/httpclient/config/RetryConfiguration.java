@@ -18,6 +18,15 @@ public class RetryConfiguration {
     private boolean enable = true;
 
     /**
+     * 是否开启严格模式
+     * <pre>
+     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
+     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
+     * </pre>
+     */
+    private boolean strict = false;
+
+    /**
      * 任务名称
      */
     private String nameFormat = "[#{T(Thread).currentThread().getName()}]<#{$unique_id$}>-#{$api$.name}";
@@ -194,5 +203,31 @@ public class RetryConfiguration {
      */
     public void setCondition(String condition) {
         this.condition = condition;
+    }
+
+    /**
+     * 是否开启严格模式
+     * <pre>
+     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
+     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
+     * </pre>
+     *
+     * @return 是否开启严格模式
+     */
+    public boolean isStrict() {
+        return strict;
+    }
+
+    /**
+     * 设置是否开启严格模式
+     * <pre>
+     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
+     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
+     * </pre>
+     *
+     * @param strict 是否开启严格模式
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
     }
 }
