@@ -17,6 +17,7 @@ import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
 import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
@@ -34,6 +35,8 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
@@ -74,13 +77,14 @@ import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.MultipartThreadPoolParam;
-import io.github.lucklike.httpclient.config.impl.SpecifiedInterfacePrintLogInterceptor;
+import io.github.lucklike.httpclient.config.impl.SpecifiedInterfaceLoggerHandler;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
+import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
+import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +96,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
@@ -117,8 +122,10 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXEC
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
+import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
@@ -145,6 +152,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
         ApplicationContextUtils.setApplicationContext(applicationContext);
+    }
+
+    @Bean(INIT_BIND_PARAMETER_CONVERT)
+    @Role(ROLE_INFRASTRUCTURE)
+    public ParameterConvert initBindParameterConvert() {
+        return new InitBindParameterConvert();
     }
 
     /**
@@ -183,6 +196,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      *
      * @param factoryConfig 配置实例
      */
+    @Primary
     @Role(ROLE_INFRASTRUCTURE)
     @Bean(name = PROXY_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
@@ -196,15 +210,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         asyncExecuteSetting(factory, factoryConfig);
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
-        timeoutSetting(factory, factoryConfig);
+        httpParamSetting(factory, factoryConfig);
+        loggerSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
-        parameterSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
         pluginSetting(factory, factoryConfig);
         configApiSourceSetting();
         return factory;
     }
+
 
     /**
      * 注册命名空间
@@ -214,6 +229,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void registeredSpace(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         // 注册Spring函数命名空间
         MethodSpaceConstant.addExternalSpace(SPRING_FUNCTION_SPACE);
+        // 注册简单HTTP执行器函数命名空间
+        MethodSpaceConstant.addExternalSpace(SIMPLE_HTTP_EXECUTOR);
 
         // 注册配置中的命名空间
         SpELConfiguration springEl = factoryConfig.getSpringEl();
@@ -234,6 +251,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void registeredUniversalFunction(HttpClientProxyObjectFactory factory) {
         factory.addSpringElFunctionClass(BeanFunction.class);
+        factory.addSpringElFunctionClass(SimpleHttpExecutorFunction.class);
     }
 
 
@@ -418,25 +436,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
         }
 
-        // 导入用户配置的的Executor
-        MultipartThreadPoolParam multiPoolParam = factoryConfig.getAsyncThreadPool();
-        if (multiPoolParam != null) {
-            if (multiPoolParam.isLazy()) {
-                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(multiPoolParam));
+        // 导入用户配置的默认Executor
+        LazyThreadPoolParam defaultPoolParam = factoryConfig.getDefaultThreadPool();
+        if (defaultPoolParam != null) {
+            if (defaultPoolParam.isLazy()) {
+                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(defaultPoolParam));
             } else {
-                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(multiPoolParam));
+                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(defaultPoolParam));
             }
+        }
 
-            Map<String, LazyThreadPoolParam> alternativePoolParamMap = multiPoolParam.getAlternative();
-            if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
-                alternativePoolParamMap.forEach((name, poolParam) -> {
-                    if (poolParam.isLazy()) {
-                        factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
-                    } else {
-                        factory.addAlternativeAsyncExecutor(name, ThreadPoolFactory.createThreadPool(poolParam));
-                    }
-                });
-            }
+        // 导入用户配置的备选Executor
+        Map<String, LazyThreadPoolParam> alternativePoolParamMap = factoryConfig.getAlternativeThreadPool();
+        if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
+            alternativePoolParamMap.forEach((name, poolParam) -> {
+                if (poolParam.isLazy()) {
+                    factory.addAlternativeAsyncExecutor(name, () -> ThreadPoolFactory.createThreadPool(poolParam));
+                } else {
+                    factory.addAlternativeAsyncExecutor(name, ThreadPoolFactory.createThreadPool(poolParam));
+                }
+            });
         }
     }
 
@@ -452,6 +471,56 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (generate != null) {
             factory.setExceptionHandle(generate.getType(), generate.getBeanName(), generate.getScope(), (Consumer<HttpExceptionHandle>) ClassUtils.newObject(generate.getConsumerClass()));
         }
+    }
+
+    /**
+     * 日志处理器设置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void loggerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 获取日志处理相关的配置
+        LoggerConfiguration loggerConfig = factoryConfig.getLogger();
+
+
+        // 功能未开启或者为配置日志打印的包时直接结束
+        if (!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) {
+            return;
+        }
+
+        // 获取日志处理器实现类
+        LoggerHandler loggerHandler;
+        Class<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
+        if (logHandlerClass != null) {
+            loggerHandler = ClassUtils.newObject(logHandlerClass);
+        } else {
+            loggerHandler = loggerConfig.getType().getLoggerHandler();
+        }
+
+        // PrintLogAnnotationContextLoggerHandler类型的日志处理器需要另外设置参数
+        if (loggerHandler instanceof PrintLogAnnotationContextLoggerHandler) {
+            PrintLogAnnotationContextLoggerHandler plaLoggerHandler = (PrintLogAnnotationContextLoggerHandler) loggerHandler;
+            plaLoggerHandler.setReqCondition(loggerConfig.getReqLogCondition());
+            plaLoggerHandler.setRespCondition(loggerConfig.getRespLogCondition());
+            plaLoggerHandler.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
+            Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
+            if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
+                plaLoggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
+            }
+            Set<String> addAllowPrintLogBodyMimeTypes = loggerConfig.getAddAllowMimeTypes();
+            if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
+                plaLoggerHandler.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
+            }
+            plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
+            plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
+        }
+
+        SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);
+        specifiedInterfaceLoggerHandler.setPrintLogPackageSet(loggerConfig.getPackages());
+        specifiedInterfaceLoggerHandler.setPrintRequestLog(loggerConfig.isEnableReqLog());
+        specifiedInterfaceLoggerHandler.setPrintResponseLog(loggerConfig.isEnableRespLog());
+        factory.setLoggerHandler(specifiedInterfaceLoggerHandler);
     }
 
     /**
@@ -490,34 +559,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
-        }
-
-        // 检查是否需要注册日志打印的拦截器
-        LoggerConfiguration loggerConfig = factoryConfig.getLogger();
-        Set<String> loggerPackages = loggerConfig.getPackages();
-        if (ContainerUtils.isNotEmptyCollection(loggerPackages)) {
-            // 注册负责日志打印的拦截器
-            factory.addInterceptor(SpecifiedInterfacePrintLogInterceptor.class, Scope.METHOD_CONTEXT, interceptor -> {
-                interceptor.setPrintLogPackageSet(loggerPackages);
-                interceptor.setPrintRequestLog(loggerConfig.isEnableReqLog());
-                interceptor.setPrintResponseLog(loggerConfig.isEnableRespLog());
-                interceptor.setReqCondition(loggerConfig.getReqLogCondition());
-                interceptor.setRespCondition(loggerConfig.getRespLogCondition());
-                interceptor.setPrintAnnotationInfo(loggerConfig.isEnableAnnotationLog());
-                interceptor.setPrintArgsInfo(loggerConfig.isEnableArgsLog());
-                interceptor.setForcePrintBody(loggerConfig.isForcePrintBody());
-                interceptor.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
-                Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
-                    interceptor.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
-                }
-                Set<String> addAllowPrintLogBodyMimeTypes = loggerConfig.getAddAllowMimeTypes();
-                if (ContainerUtils.isNotEmptyCollection(addAllowPrintLogBodyMimeTypes)) {
-                    interceptor.addAllowPrintLogBodyMimeTypes(addAllowPrintLogBodyMimeTypes);
-                }
-                interceptor.setAllowPrintLogBodyMaxLength(loggerConfig.getBodyMaxLength());
-            }, loggerConfig.getPriority());
-
         }
 
         InterceptorGenerateEntry[] interceptorGenerates = factoryConfig.getInterceptorGenerates();
@@ -602,19 +643,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 factory.setSslSocketFactory(SSLUtils.createSSLContext(sslConfig.getGlobalProtocol(), keyStoreInfo, trustStoreInfo).getSslContext().getSocketFactory());
             }
         }
-    }
-
-    /**
-     * 公共参数设置
-     *
-     * @param factory       工厂实例
-     * @param factoryConfig 工厂配置
-     */
-    public void parameterSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        factory.setHeaders(factoryConfig.getHeaderParams());
-        factory.setPathParameters(factoryConfig.getPathParams());
-        factory.setQueryParameters(factoryConfig.getQueryParams());
-        parameterConvertSetting(factoryConfig);
     }
 
     @SuppressWarnings("unchecked")
@@ -820,16 +848,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
-     * 超时时间设置
-     *
      * @param factory       工厂实例
      * @param factoryConfig 工厂配置
      */
-    private void timeoutSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void httpParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 超时时间设置
         Integer connectionTimeout = factoryConfig.getConnectionTimeout();
         Integer readTimeout = factoryConfig.getReadTimeout();
         Integer writeTimeout = factoryConfig.getWriteTimeout();
-
         if (connectionTimeout != null) {
             factory.setConnectionTimeout(connectionTimeout);
         }
@@ -839,6 +865,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (writeTimeout != null) {
             factory.setWriteTimeout(writeTimeout);
         }
+
+        // HTTP 版本设置
+        Version httpVersion = factoryConfig.getHttpVersion();
+        factory.setHttpVersion(httpVersion);
+
+        // 请求参数设置
+        factory.setHeaders(factoryConfig.getHeaderParams());
+        factory.setPathParameters(factoryConfig.getPathParams());
+        factory.setQueryParameters(factoryConfig.getQueryParams());
+        parameterConvertSetting(factoryConfig);
     }
 
     @SuppressWarnings("unchecked")

@@ -1,8 +1,8 @@
 package io.github.lucklike.httpclient.annotation;
 
+import io.github.lucklike.httpclient.LuckyAutoInjectionAutoConfiguration;
 import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
 import io.github.lucklike.httpclient.discovery.ServerDiscoveryAutoConfiguration;
-import io.github.lucklike.httpclient.LuckyAutoInjectionAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;

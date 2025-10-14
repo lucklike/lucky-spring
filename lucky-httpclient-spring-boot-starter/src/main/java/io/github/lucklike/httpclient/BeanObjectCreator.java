@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.httpclient.proxy.creator.ReflectObjectCreator;
 import com.luckyframework.reflect.ClassUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;

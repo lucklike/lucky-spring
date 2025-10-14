@@ -15,6 +15,11 @@ public class Constant {
      */
     public final static String SPRING_FUNCTION_SPACE = "__Fun::Spring::__";
 
+    /**
+     * 简单HTTP执行器
+     */
+    public final static String SIMPLE_HTTP_EXECUTOR = "__Fun::SimpleHttpExecutor::__";
+
 
     public static final String PROXY_FACTORY_BEAN_NAME = "__luckyHttpClientProxyFactory__";
     public static final String PROXY_FACTORY_CONFIG_BEAN_NAME = "__luckyHttpClientProxyObjectFactoryConfiguration__";
@@ -22,6 +27,8 @@ public class Constant {
     public static final String DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME = "__luckyApacheHttpExecutor__";
     public static final String DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME = "__luckyApacheHttpV5Executor__";
     public static final String DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME = "__luckyOkHttpExecutor__";
+
+    public static final String INIT_BIND_PARAMETER_CONVERT = "__initBindParameterConvert__";
 
 
     public static final String DESTROY_METHOD = "shutdown";
