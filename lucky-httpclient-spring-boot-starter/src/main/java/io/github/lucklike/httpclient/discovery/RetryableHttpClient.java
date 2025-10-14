@@ -96,7 +96,7 @@ public @interface RetryableHttpClient {
      * 最大重试次数
      */
     @AliasFor(annotation = Retryable.class, attribute = "strict")
-    String strict() default "#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().getStrict()}";
+    String strict() default "#{@__luckyHttpClientProxyObjectFactoryConfiguration__.getRetry().isStrict()}";
 
     /**
      * 重试等待时长
