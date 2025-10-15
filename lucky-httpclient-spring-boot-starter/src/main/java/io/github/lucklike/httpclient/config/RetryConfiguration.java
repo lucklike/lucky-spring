@@ -1,21 +1,18 @@
 package io.github.lucklike.httpclient.config;
 
-import io.github.lucklike.httpclient.discovery.RetryableHttpClient;
-
 /**
- * 重试相关的配置，需要结合{@link RetryableHttpClient @RetryableHttpClient}注解一起使用
+ * 重试相关的配置
  *
  * @author fukang
  * @version 1.0.0
  * @date 2025/9/17 01:04
- * @see RetryableHttpClient
  */
 public class RetryConfiguration {
 
     /**
      * 是否开启重试功能
      */
-    private boolean enable = true;
+    private boolean enable = false;
 
     /**
      * 是否开启严格模式
@@ -24,12 +21,12 @@ public class RetryConfiguration {
      *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
      * </pre>
      */
-    private boolean strict = false;
+    private boolean strictModel = false;
 
     /**
      * 任务名称
      */
-    private String nameFormat = "[#{T(Thread).currentThread().getName()}]<#{$unique_id$}>-#{$api$.name}";
+    private String taskNameFormat = "[#{T(Thread).currentThread().getName()}][#{$unique_id$}][#{$api$.name}]";
 
     /**
      * 最大重试次数，默认 3 次
@@ -59,7 +56,32 @@ public class RetryConfiguration {
     /**
      * 重试表达式，当该表达式返回true时才有可能进行重试
      */
-    private String condition = "";
+    private String condition;
+
+    /**
+     * 重试函数，指定一个函数让该函数来觉得是否需要重试
+     */
+    private String conditionFunc;
+
+    /**
+     * 指定正常状态的状态码，响应的状态码在此范围内时，则不需要重试
+     */
+    private int[] normalStatus = {};
+
+    /**
+     * 指定异常状态的状态码，响应的状态码在此范围内时，则需要重试
+     */
+    private int[] exceptionStatus = {};
+
+    /**
+     * 指定需要重试的异常，出现这类异常时则需要进行重试
+     */
+    private Class<? extends Throwable>[] exceptionClasses;
+
+    /**
+     * 指定需要排除的异常类型，出现这类异常时不需要进行重试
+     */
+    private Class<? extends Throwable>[] excludeClasses;
 
     /**
      * 是否开启重试功能
@@ -80,21 +102,47 @@ public class RetryConfiguration {
     }
 
     /**
+     * 是否开启严格模式
+     * <pre>
+     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
+     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
+     * </pre>
+     *
+     * @return 是否开启严格模式
+     */
+    public boolean isStrictModel() {
+        return strictModel;
+    }
+
+    /**
+     * 设置是否开启严格模式
+     * <pre>
+     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
+     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
+     * </pre>
+     *
+     * @param strict 是否开启严格模式
+     */
+    public void setStrictModel(boolean strict) {
+        this.strictModel = strict;
+    }
+
+    /**
      * 获取任务名称
      *
      * @return 任务名称
      */
-    public String getNameFormat() {
-        return nameFormat;
+    public String getTaskNameFormat() {
+        return taskNameFormat;
     }
 
     /**
      * 设置任务名称，支持 SpEL 表达式
      *
-     * @param nameFormat 任务名称
+     * @param taskNameFormat 任务名称
      */
-    public void setNameFormat(String nameFormat) {
-        this.nameFormat = nameFormat;
+    public void setTaskNameFormat(String taskNameFormat) {
+        this.taskNameFormat = taskNameFormat;
     }
 
     /**
@@ -205,29 +253,94 @@ public class RetryConfiguration {
         this.condition = condition;
     }
 
+
     /**
-     * 是否开启严格模式
-     * <pre>
-     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
-     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
-     * </pre>
+     * 获取重试函数，指定一个函数让该函数来觉得是否需要重试
      *
-     * @return 是否开启严格模式
+     * @return 重试函数
      */
-    public boolean isStrict() {
-        return strict;
+    public String getConditionFunc() {
+        return conditionFunc;
     }
 
     /**
-     * 设置是否开启严格模式
-     * <pre>
-     *  严格模式下：重试流程结束后，不管有没有发生异常都会抛出RetryFailureException异常
-     *  非严格模式下：重试流程结束后，如果没有发生异常时则直接返回最后一次调用的结果
-     * </pre>
+     * 定一个函数让该函数来觉得是否需要重试
      *
-     * @param strict 是否开启严格模式
+     * @param conditionFunc 重试函数，指定一个函数让该函数来觉得是否需要重试
      */
-    public void setStrict(boolean strict) {
-        this.strict = strict;
+    public void setConditionFunc(String conditionFunc) {
+        this.conditionFunc = conditionFunc;
+    }
+
+    /**
+     * 获取正常状态的状态码，响应的状态码在此范围内时，则不需要重试
+     *
+     * @return 正常状态的状态码
+     */
+    public int[] getNormalStatus() {
+        return normalStatus;
+    }
+
+    /**
+     * 指定正常状态的状态码，响应的状态码在此范围内时，则不需要重试
+     *
+     * @param normalStatus 正常状态的状态码
+     */
+    public void setNormalStatus(int[] normalStatus) {
+        this.normalStatus = normalStatus;
+    }
+
+    /**
+     * 获取异常状态的状态码，响应的状态码在此范围内时，则需要重试
+     *
+     * @return 异常状态的状态码
+     */
+    public int[] getExceptionStatus() {
+        return exceptionStatus;
+    }
+
+    /**
+     * 指定异常状态的状态码，响应的状态码在此范围内时，则需要重试
+     *
+     * @param exceptionStatus 异常状态的状态码
+     */
+    public void setExceptionStatus(int[] exceptionStatus) {
+        this.exceptionStatus = exceptionStatus;
+    }
+
+    /**
+     * 获取需要重试的异常，出现这类异常时则需要进行重试
+     *
+     * @return 需要重试的异常列表
+     */
+    public Class<? extends Throwable>[] getExceptionClasses() {
+        return exceptionClasses;
+    }
+
+    /**
+     * 指定需要重试的异常，出现这类异常时则需要进行重试
+     *
+     * @param exceptionClasses 需要重试的异常列表
+     */
+    public void setExceptionClasses(Class<? extends Throwable>[] exceptionClasses) {
+        this.exceptionClasses = exceptionClasses;
+    }
+
+    /**
+     * 获取排除的异常类型，出现这类异常时不需要进行重试
+     *
+     * @return 需要排除的异常列表
+     */
+    public Class<? extends Throwable>[] getExcludeClasses() {
+        return excludeClasses;
+    }
+
+    /**
+     * 指定需要排除的异常类型，出现这类异常时不需要进行重试
+     *
+     * @param excludeClasses 需要排除的异常列表
+     */
+    public void setExcludeClasses(Class<? extends Throwable>[] excludeClasses) {
+        this.excludeClasses = excludeClasses;
     }
 }

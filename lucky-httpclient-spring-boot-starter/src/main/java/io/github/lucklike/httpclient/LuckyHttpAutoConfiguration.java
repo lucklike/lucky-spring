@@ -39,6 +39,9 @@ import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import com.luckyframework.httpclient.proxy.retry.RetryActuator;
+import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
+import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
@@ -51,6 +54,8 @@ import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
 import com.luckyframework.reflect.ClassUtils;
+import com.luckyframework.retry.BackoffWaitBeforeRetry;
+import com.luckyframework.retry.TaskResult;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
@@ -71,6 +76,7 @@ import io.github.lucklike.httpclient.config.ParameterConvertConfig;
 import io.github.lucklike.httpclient.config.RType;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
 import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
+import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
@@ -212,6 +218,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         exceptionHandlerSetting(factory, factoryConfig);
         httpParamSetting(factory, factoryConfig);
         loggerSetting(factory, factoryConfig);
+        retryActuatorSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
@@ -521,6 +528,73 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         specifiedInterfaceLoggerHandler.setPrintRequestLog(loggerConfig.isEnableReqLog());
         specifiedInterfaceLoggerHandler.setPrintResponseLog(loggerConfig.isEnableRespLog());
         factory.setLoggerHandler(specifiedInterfaceLoggerHandler);
+    }
+
+    /**
+     * 重试执行器设置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void retryActuatorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        RetryConfiguration retryConfig = factoryConfig.getRetry();
+        if (!retryConfig.isEnable() || retryConfig.getCount() < 0) {
+            return;
+        }
+
+        // 基于配置的重试决策者实现类
+        class ConfigurationRetryDeciderContext extends RetryDeciderContext<Response> {
+
+            private final String condition;
+            private final String conditionFunc;
+            private final int[] normalStatus;
+            private final int[] exceptionStatus;
+            private final Class<? extends Throwable>[] exceptionClasses;
+            private final Class<? extends Throwable>[] excludeClasses;
+
+            public ConfigurationRetryDeciderContext(RetryConfiguration retryConfig) {
+                this.condition = retryConfig.getCondition();
+                this.conditionFunc = retryConfig.getConditionFunc();
+                this.normalStatus = retryConfig.getNormalStatus();
+                this.exceptionStatus = retryConfig.getExceptionStatus();
+                this.exceptionClasses = retryConfig.getExceptionClasses();
+                this.excludeClasses = retryConfig.getExcludeClasses();
+            }
+
+            @Override
+            protected boolean doNeedRetry(TaskResult<Response> taskResult) {
+                return retryExpressionCheck(taskResult, condition, conditionFunc)
+                        || exceptionCheck(taskResult, exceptionClasses, excludeClasses)
+                        || httpStatusCheck(taskResult, normalStatus, exceptionStatus);
+
+            }
+        }
+
+        // 基于配置的重试等待器
+        class ConfigurationBackoffWaitingBeforeRetryContext  extends RunBeforeRetryContext<Object> {
+
+            private final BackoffWaitBeforeRetry backoffWaitBeforeRetry;
+
+            public ConfigurationBackoffWaitingBeforeRetryContext(RetryConfiguration retryConfig) {
+                this.backoffWaitBeforeRetry = new BackoffWaitBeforeRetry(retryConfig.getWaitMillis(), retryConfig.getMultiplier(), retryConfig.getMaxWaitMillis(), retryConfig.getMinWaitMillis());
+            }
+
+            @Override
+            protected void doBeforeRetry(TaskResult<Object> taskResult) {
+                backoffWaitBeforeRetry.beforeRetry(taskResult);
+            }
+        }
+
+        RetryActuator retryActuator = new RetryActuator(
+                retryConfig.getTaskNameFormat(),
+                retryConfig.getCount(),
+                c -> new ConfigurationBackoffWaitingBeforeRetryContext(retryConfig),
+                c -> new ConfigurationRetryDeciderContext(retryConfig),
+                retryConfig.isStrictModel(),
+                null
+        );
+
+        factory.setRetryActuator(retryActuator);
     }
 
     /**

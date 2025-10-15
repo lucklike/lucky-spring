@@ -7,7 +7,6 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import io.github.lucklike.httpclient.discovery.RetryableHttpClient;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
@@ -165,7 +164,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private RedirectConfiguration redirect = new RedirectConfiguration();
 
     /**
-     * 重试相关的配置，需要结合{@link RetryableHttpClient @RetryableHttpClient}注解一起使用
+     * 重试相关的配置
      */
     @NestedConfigurationProperty
     private RetryConfiguration retry = new RetryConfiguration();
