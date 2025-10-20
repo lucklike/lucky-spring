@@ -521,6 +521,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
             plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
             plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
+
+            plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
+            plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
         }
 
         SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);
