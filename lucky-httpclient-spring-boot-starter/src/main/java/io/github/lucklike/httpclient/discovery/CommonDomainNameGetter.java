@@ -2,11 +2,14 @@ package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.annotations.DomainNameMeta;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import com.luckyframework.httpclient.proxy.url.DomainNameGetter;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.discovery.cloud.SpringCloudDomainNameGetter;
 
+import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.executeFuncMethod;
+import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.findUrlMethod;
 import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME;
 
 /**
@@ -25,10 +28,17 @@ public class CommonDomainNameGetter implements DomainNameGetter {
         String url = context.parseExpression(httpClientAnn.url(), String.class);
         String serviceName = context.parseExpression(httpClientAnn.service(), String.class);
         String path = context.parseExpression(httpClientAnn.path(), String.class);
+        String fun = context.parseExpression(httpClientAnn.fun(), String.class);
 
         // 存在url配置时优先使用url配置
         if (StringUtils.hasText(url)) {
             return StringUtils.joinUrlPath(url, path);
+        }
+
+        // 存在url函数时
+        if (StringUtils.hasText(fun)) {
+            MethodContext mc = context.getContext();
+            return executeFuncMethod(mc, findUrlMethod(mc, fun));
         }
 
         // url和service均为配置时返回空字符串

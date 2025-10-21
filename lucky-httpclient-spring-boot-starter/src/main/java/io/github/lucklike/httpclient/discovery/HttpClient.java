@@ -39,6 +39,7 @@ public @interface HttpClient {
     /**
      * 同url
      */
+    @AliasFor("url")
     String value() default "";
 
     /**
@@ -47,6 +48,11 @@ public @interface HttpClient {
      */
     @AliasFor("value")
     String url() default "";
+
+    /**
+     * 指定用于获取URL的函数
+     */
+    String fun() default "";
 
     /**
      * 支持SpEL表达式
