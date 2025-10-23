@@ -1,5 +1,20 @@
 package io.github.lucklike.httpclient.config;
 
+import sun.net.ConnectionResetException;
+
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLProtocolException;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.PortUnreachableException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.net.UnknownServiceException;
+import java.util.concurrent.TimeoutException;
+
 /**
  * 重试相关的配置
  *
@@ -56,7 +71,7 @@ public class RetryConfiguration {
     /**
      * 重试表达式，当该表达式返回true时才有可能进行重试
      */
-    private String condition;
+    private String condition = "#{($status$ >= 500 and $status$ < 600) or {408, 429}.contains($status$)}";
 
     /**
      * 重试函数，指定一个函数让该函数来觉得是否需要重试
@@ -76,7 +91,21 @@ public class RetryConfiguration {
     /**
      * 指定需要重试的异常，出现这类异常时则需要进行重试
      */
-    private Class<? extends Throwable>[] exceptionClasses;
+    private Class<? extends Throwable>[] exceptionClasses = new Class[]{
+            ConnectException.class,
+            UnknownHostException.class,
+            NoRouteToHostException.class,
+            SocketException.class,
+            SocketTimeoutException.class,
+            ConnectionResetException.class,
+            PortUnreachableException.class,
+            UnknownServiceException.class,
+            SSLHandshakeException.class,
+            SSLProtocolException.class,
+            SSLPeerUnverifiedException.class,
+            InterruptedIOException.class,
+            TimeoutException.class
+    };
 
     /**
      * 指定需要排除的异常类型，出现这类异常时不需要进行重试
