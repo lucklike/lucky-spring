@@ -110,7 +110,7 @@ public class RetryConfiguration {
     /**
      * 指定需要排除的异常类型，出现这类异常时不需要进行重试
      */
-    private Class<? extends Throwable>[] excludeClasses;
+    private Class<? extends Throwable>[] excludeClasses = new Class[0];
 
     /**
      * 是否开启重试功能
