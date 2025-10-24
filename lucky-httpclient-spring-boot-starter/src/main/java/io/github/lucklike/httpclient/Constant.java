@@ -27,6 +27,8 @@ public class Constant {
     public static final String DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME = "__luckyApacheHttpExecutor__";
     public static final String DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME = "__luckyApacheHttpV5Executor__";
     public static final String DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME = "__luckyOkHttpExecutor__";
+    public static final String DEFAULT_VALIDATION_PLUGIN_BEAN_NAME = "__validationPlugin__";
+
 
     public static final String INIT_BIND_PARAMETER_CONVERT = "__initBindParameterConvert__";
 

@@ -25,6 +25,7 @@ import com.luckyframework.httpclient.core.ssl.SSLException;
 import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
+import com.luckyframework.httpclient.generalapi.plugin.ValidationPlugin;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
@@ -92,9 +93,11 @@ import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
+import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -110,6 +113,7 @@ import org.springframework.core.type.AnnotationMetadata;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -127,6 +131,7 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTO
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_VALIDATION_PLUGIN_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
@@ -574,7 +579,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 基于配置的重试等待器
-        class ConfigurationBackoffWaitingBeforeRetryContext  extends RunBeforeRetryContext<Object> {
+        class ConfigurationBackoffWaitingBeforeRetryContext extends RunBeforeRetryContext<Object> {
 
             private final BackoffWaitBeforeRetry backoffWaitBeforeRetry;
 
@@ -1117,5 +1122,22 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                     poolConfig.getKeepAliveTimeUnit()
             );
         }
+    }
+
+    /********************** Validation *************************************/
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"javax.validation.Validator"})
+    static class ValidationAutoConfig {
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(DEFAULT_VALIDATION_PLUGIN_BEAN_NAME)
+        public ValidationPlugin validationPlugin(@Autowired(required = false) Validator validator) {
+            if (validator == null) {
+                return new ValidationPluginProvider(new ValidationPlugin());
+            }
+            return new ValidationPluginProvider(new ValidationPlugin(validator));
+        }
+
     }
 }
