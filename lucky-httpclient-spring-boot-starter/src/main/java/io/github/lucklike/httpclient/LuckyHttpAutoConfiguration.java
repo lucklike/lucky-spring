@@ -572,11 +572,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             @Override
             protected boolean doNeedRetry(TaskResult<Response> taskResult) {
                 boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses);
-                if (isRetryEx && taskResult.hasException()) {
+                if (isRetryEx) {
+                    return true;
+                }
+                if (taskResult.hasException()) {
                     return false;
                 }
                 return retryExpressionCheck(taskResult, condition, conditionFunc)
-                        || isRetryEx
                         || httpStatusCheck(taskResult, normalStatus, exceptionStatus);
 
             }
