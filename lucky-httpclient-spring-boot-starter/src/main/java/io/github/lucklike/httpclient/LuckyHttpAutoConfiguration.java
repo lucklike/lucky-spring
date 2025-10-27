@@ -40,6 +40,7 @@ import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import com.luckyframework.httpclient.proxy.retry.ExCheckModel;
 import com.luckyframework.httpclient.proxy.retry.RetryActuator;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
@@ -559,6 +560,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             private final int[] exceptionStatus;
             private final Class<? extends Throwable>[] exceptionClasses;
             private final Class<? extends Throwable>[] excludeClasses;
+            private final ExCheckModel exCheckModel;
 
             public ConfigurationRetryDeciderContext(RetryConfiguration retryConfig) {
                 this.condition = retryConfig.getCondition();
@@ -567,11 +569,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 this.exceptionStatus = retryConfig.getExceptionStatus();
                 this.exceptionClasses = retryConfig.getExceptionClasses();
                 this.excludeClasses = retryConfig.getExcludeClasses();
+                this.exCheckModel = retryConfig.getExCheckModel();
             }
 
             @Override
             protected boolean doNeedRetry(TaskResult<Response> taskResult) {
-                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses);
+                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses, exCheckModel);
                 if (isRetryEx) {
                     return true;
                 }
