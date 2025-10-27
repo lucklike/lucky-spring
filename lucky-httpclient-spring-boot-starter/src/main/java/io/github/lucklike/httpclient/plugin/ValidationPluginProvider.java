@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.plugin;
 
 import com.luckyframework.httpclient.generalapi.plugin.Validated;
 import com.luckyframework.httpclient.generalapi.plugin.ValidationPlugin;
-import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.plugin.ExecuteMeta;
 import com.luckyframework.httpclient.proxy.plugin.ProxyDecorator;
 
@@ -33,7 +32,6 @@ public class ValidationPluginProvider extends ValidationPlugin {
 
     @Override
     public boolean match(ExecuteMeta meta) {
-        MethodMetaContext context = meta.getMetaContext();
-        return context.isAnnotatedCheckParent(Validated.class);
+        return meta.getMetaContext().isAnnotatedCheckParent(Validated.class) && validationPlugin.match(meta);
     }
 }
