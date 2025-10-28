@@ -40,7 +40,7 @@ import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import com.luckyframework.httpclient.proxy.retry.ExCheckModel;
+import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import com.luckyframework.httpclient.proxy.retry.RetryActuator;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
@@ -560,7 +560,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             private final int[] exceptionStatus;
             private final Class<? extends Throwable>[] exceptionClasses;
             private final Class<? extends Throwable>[] excludeClasses;
-            private final ExCheckModel exCheckModel;
+            private final ExceptionModel exCheckModel;
+            private final ExceptionModel exExcludeModel;
 
             public ConfigurationRetryDeciderContext(RetryConfiguration retryConfig) {
                 this.condition = retryConfig.getCondition();
@@ -570,11 +571,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 this.exceptionClasses = retryConfig.getExceptionClasses();
                 this.excludeClasses = retryConfig.getExcludeClasses();
                 this.exCheckModel = retryConfig.getExCheckModel();
+                this.exExcludeModel = retryConfig.getExExcludeModel();
             }
 
             @Override
             protected boolean doNeedRetry(TaskResult<Response> taskResult) {
-                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses, exCheckModel);
+                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses, exCheckModel, exExcludeModel);
                 if (isRetryEx) {
                     return true;
                 }

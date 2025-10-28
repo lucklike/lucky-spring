@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.httpclient.proxy.retry.ExCheckModel;
+import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import sun.net.ConnectionResetException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -117,7 +117,13 @@ public class RetryConfiguration {
     /**
      * 异常校验模型
      */
-    private ExCheckModel exCheckModel = ExCheckModel.CHECK_ROOT_CAUSE;
+    private ExceptionModel exCheckModel = ExceptionModel.CHECK_ROOT_CAUSE;
+
+    /**
+     * 异常排除模型
+     */
+    private ExceptionModel exExcludeModel = ExceptionModel.CHECK_ALL_STACK;
+
 
     /**
      * 是否开启重试功能
@@ -385,7 +391,7 @@ public class RetryConfiguration {
      *
      * @return 异常校验模型
      */
-    public ExCheckModel getExCheckModel() {
+    public ExceptionModel getExCheckModel() {
         return exCheckModel;
     }
 
@@ -394,7 +400,25 @@ public class RetryConfiguration {
      *
      * @param exCheckModel 异常校验模型
      */
-    public void setExCheckModel(ExCheckModel exCheckModel) {
+    public void setExCheckModel(ExceptionModel exCheckModel) {
         this.exCheckModel = exCheckModel;
+    }
+
+    /**
+     * 获取异常排除模型
+     *
+     * @return 异常排除模型
+     */
+    public ExceptionModel getExExcludeModel() {
+        return exExcludeModel;
+    }
+
+    /**
+     * 设置异常排除模型
+     *
+     * @param exExcludeModel 异常排除模型
+     */
+    public void setExExcludeModel(ExceptionModel exExcludeModel) {
+        this.exExcludeModel = exExcludeModel;
     }
 }
