@@ -52,7 +52,7 @@ public @interface HttpClient {
     /**
      * 指定用于获取URL的函数
      */
-    String fun() default "";
+    String func() default "";
 
     /**
      * 支持SpEL表达式

@@ -28,7 +28,7 @@ public class CommonDomainNameGetter implements DomainNameGetter {
         String url = context.parseExpression(httpClientAnn.url(), String.class);
         String serviceName = context.parseExpression(httpClientAnn.service(), String.class);
         String path = context.parseExpression(httpClientAnn.path(), String.class);
-        String fun = context.parseExpression(httpClientAnn.fun(), String.class);
+        String fun = context.parseExpression(httpClientAnn.func(), String.class);
 
         // 存在url配置时优先使用url配置
         if (StringUtils.hasText(url)) {
