@@ -1,9 +1,9 @@
 package io.github.lucklike.httpclient.hook;
 
+import com.luckyframework.httpclient.proxy.spel.VarType;
 import com.luckyframework.httpclient.proxy.spel.hook.Hook;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.ValueStore;
-import com.luckyframework.httpclient.proxy.spel.hook.callback.VarType;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
