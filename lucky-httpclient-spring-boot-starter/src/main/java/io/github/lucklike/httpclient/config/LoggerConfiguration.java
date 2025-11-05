@@ -52,18 +52,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     private Set<String> setAllowMimeTypes;
@@ -74,18 +86,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     private Set<String> addAllowMimeTypes;
@@ -241,18 +265,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      *
      * @param setAllowMimeTypes 打印响应体内容的MimeType集合
@@ -267,18 +303,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      *
      * @param addAllowMimeTypes 追加的打印响应体内容的MimeType集合
@@ -339,18 +387,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     public Set<String> getSetAllowMimeTypes() {
@@ -363,18 +423,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     public Set<String> getAddAllowMimeTypes() {
