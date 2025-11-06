@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.convert;
 
+import com.luckyframework.httpclient.proxy.SpELVariableNote;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -17,7 +19,8 @@ import java.lang.annotation.Target;
 public @interface InitBind {
 
     /**
-     * 需要绑定的配置前缀
+     * 需要绑定的配置前缀,支持 SpEL 表达式
+     * @see SpELVariableNote
      */
     String value();
 

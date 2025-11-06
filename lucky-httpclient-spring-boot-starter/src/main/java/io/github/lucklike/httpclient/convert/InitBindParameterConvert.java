@@ -53,7 +53,8 @@ public class InitBindParameterConvert implements ParameterConvert {
     public Object convert(ValueContext context, Object value) {
         InitBind initBind = context.getMergedAnnotationCheckParent(InitBind.class);
         try {
-            BeanFunction.initBind(value, initBind.value());
+            String propertyName = context.parseExpression(initBind.value());
+            BeanFunction.initBind(value, propertyName);
             return value;
         } catch (BindException e) {
             if (initBind.allowConfigNotExist()) {
