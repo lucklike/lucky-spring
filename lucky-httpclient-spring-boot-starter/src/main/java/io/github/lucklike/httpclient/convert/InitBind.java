@@ -19,10 +19,12 @@ import java.lang.annotation.Target;
 public @interface InitBind {
 
     /**
-     * 需要绑定的配置前缀,支持 SpEL 表达式
+     * 需要绑定的配置前缀集合，支持配置多个前缀，如果配置多个则会按照配置的顺序进行绑定
+     * 支持 SpEL 表达式
+     *
      * @see SpELVariableNote
      */
-    String value();
+    String[] value();
 
     /**
      * 指定生效的类型<br/>
