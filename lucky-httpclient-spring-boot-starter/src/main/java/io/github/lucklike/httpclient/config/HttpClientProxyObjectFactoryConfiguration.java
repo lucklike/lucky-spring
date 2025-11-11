@@ -2,16 +2,11 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.meta.Version;
-import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
-import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
-import java.net.HttpURLConnection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -22,35 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HttpClientProxyObjectFactoryConfiguration {
 
-    /**
-     * 指定使用的HTTP执行器Bean的名称
-     */
-    private String httpExecutorBean;
 
     /**
      * 对象创建器工厂
      */
     private ObjectCreatorFactory objectCreatorFactory;
-
-    /**
-     * Http请求执行器工厂
-     */
-    private HttpExecutorFactory httpExecutorFactory;
-
-    /**
-     * 使用执行器枚举来指定执行器
-     */
-    private HttpExecutorEnum httpExecutor;
-
-    /**
-     * HTTP请求的异步模型
-     */
-    private Model asyncModel;
-
-    /**
-     * 默认异步执行器的最大并发数，小于0时表示不限制并发数
-     */
-    private int defaultExecutorConcurrency = -1;
 
     /**
      * 拦截器生成器数组
@@ -123,6 +94,19 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
+     * Http执行器相关额配置
+     */
+    @NestedConfigurationProperty
+    private HttpExecutorConfiguration httpExecutor = new HttpExecutorConfiguration();
+
+    /**
+     * HTTP线程池配置
+     */
+    @NestedConfigurationProperty
+    private HttpAsyncThreadPoolConfiguration asyncThreadPool = new HttpAsyncThreadPoolConfiguration();
+
+
+    /**
      * SSL协议相关配置
      */
     @NestedConfigurationProperty
@@ -133,17 +117,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
-
-    /**
-     * 用于创建异步调用的线程池的参数
-     */
-    @NestedConfigurationProperty
-    private LazyThreadPoolParam defaultThreadPool;
-
-    /**
-     * 备用线程池
-     */
-    private Map<String, LazyThreadPoolParam> alternativeThreadPool = new ConcurrentHashMap<>();
 
     /**
      * 日志打印相关配置
@@ -168,12 +141,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private RetryConfiguration retry = new RetryConfiguration();
-
-    /**
-     * HTTP连接池相关配置
-     */
-    @NestedConfigurationProperty
-    private HttpConnectionPoolConfiguration httpConnectionPool = new HttpConnectionPoolConfiguration();
 
     /**
      * Cookie管理器相关配置
@@ -202,24 +169,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 设置默认线程池参数
-     *
-     * @param defaultThreadPool 默认线程池参数
-     */
-    public void setDefaultThreadPool(LazyThreadPoolParam defaultThreadPool) {
-        this.defaultThreadPool = defaultThreadPool;
-    }
-
-    /**
-     * 设置备选线程池参数
-     *
-     * @param alternativeThreadPool 备选线程池参数
-     */
-    public void setAlternativeThreadPool(Map<String, LazyThreadPoolParam> alternativeThreadPool) {
-        this.alternativeThreadPool = alternativeThreadPool;
-    }
-
-    /**
      * 设置{@link ObjectCreatorFactory 对象创建器工厂}
      *
      * @param objectCreatorFactory 对象创建器工厂
@@ -229,42 +178,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置{@link HttpExecutorFactory HTTP执行器工厂}
+     * Http执行器相关的设置
      *
-     * @param httpExecutorFactory HTTP执行器工厂
+     * @param httpExecutor Http执行器配置
      */
-    public void setHttpExecutorFactory(HttpExecutorFactory httpExecutorFactory) {
-        this.httpExecutorFactory = httpExecutorFactory;
-    }
-
-    /**
-     * 使用执行器枚举来指定执行器<br/>
-     * {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
-     * {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp3实现的执行器。<br/>
-     * {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
-     *
-     * @param httpExecutor 执行器枚举
-     */
-    public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
+    public void setHttpExecutor(HttpExecutorConfiguration httpExecutor) {
         this.httpExecutor = httpExecutor;
     }
 
     /**
-     * 设置HTTP异步模型
+     * 设置HTTP异步线程池相关的参数
      *
-     * @param asyncModel 异步模型
+     * @param asyncThreadPool HTTP异步线程池相关的参数
      */
-    public void setAsyncModel(Model asyncModel) {
-        this.asyncModel = asyncModel;
-    }
-
-    /**
-     * 设置默认异步执行器的最大并发数，小于0表示不限制并发数
-     *
-     * @param defaultExecutorConcurrency 默认异步执行器的最大并发数
-     */
-    public void setDefaultExecutorConcurrency(int defaultExecutorConcurrency) {
-        this.defaultExecutorConcurrency = defaultExecutorConcurrency;
+    public void setAsyncThreadPool(HttpAsyncThreadPoolConfiguration asyncThreadPool) {
+        this.asyncThreadPool = asyncThreadPool;
     }
 
     /**
@@ -370,14 +298,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.ssl = ssl;
     }
 
-    /**
-     * 设置使用HTTP执行器的SpringBean的名称
-     *
-     * @param httpExecutorBean HTTP执行器的SpringBean的名称
-     */
-    public void setHttpExecutorBean(String httpExecutorBean) {
-        this.httpExecutorBean = httpExecutorBean;
-    }
 
     /**
      * 设置日志相关的配置
@@ -413,15 +333,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setRetry(RetryConfiguration retry) {
         this.retry = retry;
-    }
-
-    /**
-     * 设置HTTP连接池相关的配置
-     *
-     * @param httpConnectionPool HTTP连接池相关的配置
-     */
-    public void setHttpConnectionPool(HttpConnectionPoolConfiguration httpConnectionPool) {
-        this.httpConnectionPool = httpConnectionPool;
     }
 
     /**
@@ -465,24 +376,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 获取默认线程池参数
-     *
-     * @return 默认线程池参数
-     */
-    public LazyThreadPoolParam getDefaultThreadPool() {
-        return defaultThreadPool;
-    }
-
-    /**
-     * 获取备选线程池参数
-     *
-     * @return 备选线程池参数
-     */
-    public Map<String, LazyThreadPoolParam> getAlternativeThreadPool() {
-        return alternativeThreadPool;
-    }
-
-    /**
      * 获取{@link ObjectCreatorFactory 对象创建器工厂}
      *
      * @return 对象创建器工厂
@@ -492,39 +385,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取{@link HttpExecutorFactory HTTP请求执行器工厂}
+     * 获取HTTP执行器相关的配置
      *
-     * @return HTTP请求执行器工厂
+     * @return HTTP执行器相关的配置
      */
-    public HttpExecutorFactory getHttpExecutorFactory() {
-        return httpExecutorFactory;
-    }
-
-    /**
-     * 获取执行器对应的执行器枚举
-     *
-     * @return 执行器枚举
-     */
-    public HttpExecutorEnum getHttpExecutor() {
+    public HttpExecutorConfiguration getHttpExecutor() {
         return httpExecutor;
     }
 
     /**
-     * 获取HTTP异步模型
+     * 获取HTTP异步线程池相关的参数
      *
-     * @return 异步模型
+     * @return HTTP异步线程池相关的参数
      */
-    public Model getAsyncModel() {
-        return asyncModel;
-    }
-
-    /**
-     * 获取默认异步执行器的最大并发数
-     *
-     * @return 默认异步执行器的最大并发数
-     */
-    public int getDefaultExecutorConcurrency() {
-        return defaultExecutorConcurrency;
+    public HttpAsyncThreadPoolConfiguration getAsyncThreadPool() {
+        return asyncThreadPool;
     }
 
     /**
@@ -618,15 +493,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * HTTP执行器的SpringBean的名称
-     *
-     * @return HTTP执行器的SpringBean的名称
-     */
-    public String getHttpExecutorBean() {
-        return httpExecutorBean;
-    }
-
-    /**
      * 获取日志相关的配置
      *
      * @return 日志相关的配置
@@ -662,14 +528,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
         return retry;
     }
 
-    /**
-     * 获取HTTP连接池相关的配置
-     *
-     * @return HTTP连接池相关的配置
-     */
-    public HttpConnectionPoolConfiguration getHttpConnectionPool() {
-        return httpConnectionPool;
-    }
 
     /**
      * 获取Cookie管理器相关配置

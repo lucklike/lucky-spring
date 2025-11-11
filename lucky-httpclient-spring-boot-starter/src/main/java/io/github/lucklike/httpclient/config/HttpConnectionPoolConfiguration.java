@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 public class HttpConnectionPoolConfiguration {
 
     /**
-     * 连接池最大连接数，默认：5
+     * 连接池最大连接数，默认：10
      */
     private Integer maxIdleConnections = 10;
 
