@@ -320,7 +320,7 @@ public class HttpExecutorConfiguration {
         /**
          * 执行器类型
          */
-        private ExecutorType type = ExecutorType.JDK;
+        private ExecutorType executor = ExecutorType.JDK;
 
         /**
          * JDK执行器配置
@@ -363,17 +363,17 @@ public class HttpExecutorConfiguration {
          *
          * @return 执行器类型
          */
-        public ExecutorType getType() {
-            return type;
+        public ExecutorType getExecutor() {
+            return executor;
         }
 
         /**
          * 设置执行器类型
          *
-         * @param type 执行器类型
+         * @param executor 执行器类型
          */
-        public void setType(ExecutorType type) {
-            this.type = type;
+        public void setExecutor(ExecutorType executor) {
+            this.executor = executor;
         }
 
         /**
@@ -432,7 +432,7 @@ public class HttpExecutorConfiguration {
         }
 
         public HttpExecutor createExecutor() {
-            switch (type) {
+            switch (executor) {
                 case OKHTTP:
                     return createOkHttpExecutor(okHttp);
                 case HTTP_CLIENT:
