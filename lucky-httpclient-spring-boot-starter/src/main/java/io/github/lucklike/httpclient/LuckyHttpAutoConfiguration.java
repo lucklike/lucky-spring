@@ -10,14 +10,9 @@ import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ZstdContentEncodingConvertor;
-import com.luckyframework.httpclient.core.executor.HttpClient5Executor;
-import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
-import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
-import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
 import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
@@ -67,7 +62,6 @@ import io.github.lucklike.httpclient.config.CookieManageConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpAsyncThreadPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorConfiguration;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
@@ -975,24 +969,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void httpParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 超时时间设置
-        Integer connectionTimeout = factoryConfig.getConnectionTimeout();
-        Integer readTimeout = factoryConfig.getReadTimeout();
-        Integer writeTimeout = factoryConfig.getWriteTimeout();
-        if (connectionTimeout != null) {
-            factory.setConnectionTimeout(connectionTimeout);
-        }
-        if (readTimeout != null) {
-            factory.setReadTimeout(readTimeout);
-        }
-        if (writeTimeout != null) {
-            factory.setWriteTimeout(writeTimeout);
-        }
-
-        // HTTP 版本设置
-        Version httpVersion = factoryConfig.getHttpVersion();
-        factory.setHttpVersion(httpVersion);
-
         // 请求参数设置
         factory.setHeaders(factoryConfig.getHeaderParams());
         factory.setPathParameters(factoryConfig.getPathParams());
@@ -1106,8 +1082,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Order(4)
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
-        public HttpExecutor luckyJdkHttpExecutor() {
-            return new JdkHttpExecutor();
+        public HttpExecutor luckyJdkHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal().getJdk());
         }
 
     }
@@ -1120,12 +1096,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyOkHttp3Executor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpExecutor().getGlobal().getConnectionPool();
-            return new OkHttpExecutor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal().getOkHttp());
         }
 
     }
@@ -1138,12 +1109,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpExecutor().getGlobal().getConnectionPool();
-            return new HttpClient5Executor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor().getGlobal().getHttpClient());
         }
 
     }
@@ -1156,12 +1122,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpExecutor().getGlobal().getConnectionPool();
-            return new HttpClientExecutor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor().getGlobal().getHttpClient());
         }
     }
 

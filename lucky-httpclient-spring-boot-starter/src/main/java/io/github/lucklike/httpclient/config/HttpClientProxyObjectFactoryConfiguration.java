@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -27,26 +26,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 拦截器生成器数组
      */
     private InterceptorGenerateEntry[] interceptorGenerates;
-
-    /**
-     * 连接超时时间
-     */
-    private Integer connectionTimeout;
-
-    /**
-     * 读超时时间
-     */
-    private Integer readTimeout;
-
-    /**
-     * 写超时时间
-     */
-    private Integer writeTimeout;
-
-    /**
-     * HTTP版本
-     */
-    private Version httpVersion;
 
     /**
      * 公共请求头参数
@@ -211,42 +190,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setInterceptorGenerates(InterceptorGenerateEntry[] interceptorGenerates) {
         this.interceptorGenerates = interceptorGenerates;
-    }
-
-    /**
-     * 设置连接超时时间
-     *
-     * @param connectionTimeout 连接超时时间
-     */
-    public void setConnectionTimeout(Integer connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
-    }
-
-    /**
-     * 设置读超时时间
-     *
-     * @param readTimeout 读超时时间
-     */
-    public void setReadTimeout(Integer readTimeout) {
-        this.readTimeout = readTimeout;
-    }
-
-    /**
-     * 设置写超时时间
-     *
-     * @param writeTimeout 写超时时间
-     */
-    public void setWriteTimeout(Integer writeTimeout) {
-        this.writeTimeout = writeTimeout;
-    }
-
-    /**
-     * 设置 HTTP 版本
-     *
-     * @param httpVersion HTTP 版本
-     */
-    public void setHttpVersion(Version httpVersion) {
-        this.httpVersion = httpVersion;
     }
 
     /**
@@ -418,42 +361,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
         return exceptionHandleGenerate;
-    }
-
-    /**
-     * 获取链接超时时间
-     *
-     * @return 链接超时时间
-     */
-    public Integer getConnectionTimeout() {
-        return connectionTimeout;
-    }
-
-    /**
-     * 获取读超时时间
-     *
-     * @return 读超时时间
-     */
-    public Integer getReadTimeout() {
-        return readTimeout;
-    }
-
-    /**
-     * 获取写超时时间
-     *
-     * @return 写超时时间
-     */
-    public Integer getWriteTimeout() {
-        return writeTimeout;
-    }
-
-    /**
-     * 获取 HTTP 版本
-     *
-     * @return HTTP 版本
-     */
-    public Version getHttpVersion() {
-        return httpVersion;
     }
 
     /**

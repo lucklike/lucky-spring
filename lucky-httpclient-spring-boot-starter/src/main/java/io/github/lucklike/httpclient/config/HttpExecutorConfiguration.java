@@ -5,11 +5,25 @@ import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
 import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
+import com.luckyframework.httpclient.core.meta.Version;
 import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.net.HttpURLConnection;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_CALL_TIMEOUT;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_CONNECTION_REQUEST_TIMEOUT;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_CONNECTION_TIMEOUT;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_KEEP_ALIVE_DURATION;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_IDLE_CONNECTIONS;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_PER_ROUTE;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_TOTAL;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_READ_TIMEOUT;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_RESPONSE_TIMEOUT;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_VALIDATE_AFTER_INACTIVITY;
+import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_WRITE_TIMEOUT;
 
 /**
  * Http执行器相关的配置
@@ -34,6 +48,75 @@ public class HttpExecutorConfiguration {
      */
     public GlobalConfiguration getGlobal() {
         return global;
+    }
+
+    /**
+     * 创建一个JDK执行器
+     *
+     * @param jdk JDK执行器配置
+     * @return JDK执行器
+     */
+    public static HttpExecutor createJdkHttpExecutor(JdkSpecialConfiguration jdk) {
+        return new JdkHttpExecutor(jdk.getConnectionTimeout(), jdk.getReadTimeout());
+    }
+
+    /**
+     * 创建一个OkHttp执行器
+     *
+     * @param okHttp OkHttp执行器配置
+     * @return OkHttp执行器
+     */
+    public static HttpExecutor createOkHttpExecutor(OkHttpSpecialConfiguration okHttp) {
+        return new OkHttpExecutor(
+                okHttp.getConnectTimeout(),
+                okHttp.getReadTimeout(),
+                okHttp.getWriteTimeout(),
+                okHttp.getCallTimeout(),
+                okHttp.getMaxIdleConnections(),
+                okHttp.getKeepAliveDuration(),
+                okHttp.getKeepAliveTimeUnit(),
+                okHttp.getHttpVersion()
+        );
+    }
+
+    /**
+     * 创建一个HttpClient执行器
+     *
+     * @param httpClient HttpClient执行器配置
+     * @return HttpClient执行器
+     */
+    public static HttpExecutor createHttpClientExecutor(HttpClientSpecialConfiguration httpClient) {
+        return new HttpClientExecutor(
+                httpClient.getConnectionRequestTimeout(),
+                httpClient.getConnectTimeout(),
+                httpClient.getResponseTimeout(),
+                httpClient.getValidateAfterInactivity(),
+                httpClient.getMaxTotal(),
+                httpClient.getMaxPerRoute(),
+                httpClient.getKeepAliveDuration(),
+                httpClient.getKeepAliveTimeUnit(),
+                httpClient.getHttpVersion()
+        );
+    }
+
+    /**
+     * 创建一个HttpClient5执行器
+     *
+     * @param httpClient HttpClient5执行器配置
+     * @return HttpClient5执行器
+     */
+    public static HttpExecutor createHttpClient5Executor(HttpClientSpecialConfiguration httpClient) {
+        return new HttpClient5Executor(
+                httpClient.getConnectionRequestTimeout(),
+                httpClient.getConnectTimeout(),
+                httpClient.getResponseTimeout(),
+                httpClient.getValidateAfterInactivity(),
+                httpClient.getMaxTotal(),
+                httpClient.getMaxPerRoute(),
+                httpClient.getKeepAliveDuration(),
+                httpClient.getKeepAliveTimeUnit(),
+                httpClient.getHttpVersion()
+        );
     }
 
     /**
@@ -84,10 +167,22 @@ public class HttpExecutorConfiguration {
         private HttpExecutorEnum executor;
 
         /**
-         * HTTP连接池相关配置
+         * JDK执行器配置
          */
         @NestedConfigurationProperty
-        private HttpConnectionPoolConfiguration connectionPool = new HttpConnectionPoolConfiguration();
+        private JdkSpecialConfiguration jdk = new JdkSpecialConfiguration();
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private HttpClientSpecialConfiguration httpClient = new HttpClientSpecialConfiguration();
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
 
 
         //------------------------------------------------------------------------------------------------
@@ -125,16 +220,32 @@ public class HttpExecutorConfiguration {
             this.executorBean = executorBean;
         }
 
-
         /**
-         * 设置HTTP连接池相关的配置
+         * 设置JDK执行器特有的参数
          *
-         * @param httpConnectionPool HTTP连接池相关的配置
+         * @param jdk JDK执行器特有的参数
          */
-        public void seConnectionPool(HttpConnectionPoolConfiguration httpConnectionPool) {
-            this.connectionPool = httpConnectionPool;
+        public void setJdk(JdkSpecialConfiguration jdk) {
+            this.jdk = jdk;
         }
 
+        /**
+         * 设置HttpClient特有的参数
+         *
+         * @param httpClient HttpClient特有的参数
+         */
+        public void setHttpClient(HttpClientSpecialConfiguration httpClient) {
+            this.httpClient = httpClient;
+        }
+
+        /**
+         * 设置OkHttp特有的参数
+         *
+         * @param okHttp OkHttp特有的参数
+         */
+        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
+            this.okHttp = okHttp;
+        }
 
         //------------------------------------------------------------------------------------------------
         //                                Getter methods
@@ -168,16 +279,32 @@ public class HttpExecutorConfiguration {
             return executorBean;
         }
 
-
         /**
-         * 获取HTTP连接池相关的配置
+         * 获取JDK执行器特有的参数
          *
-         * @return HTTP连接池相关的配置
+         * @return JDK执行器特有的参数
          */
-        public HttpConnectionPoolConfiguration getConnectionPool() {
-            return connectionPool;
+        public JdkSpecialConfiguration getJdk() {
+            return jdk;
         }
 
+        /**
+         * 获取HttpClient特有的参数
+         *
+         * @return HttpClient特有的参数
+         */
+        public HttpClientSpecialConfiguration getHttpClient() {
+            return httpClient;
+        }
+
+        /**
+         * 获取OkHttp特有的参数
+         *
+         * @return OkHttp特有的参数
+         */
+        public OkHttpSpecialConfiguration getOkHttp() {
+            return okHttp;
+        }
     }
 
     /**
@@ -189,14 +316,29 @@ public class HttpExecutorConfiguration {
          * 是否延时加载，默认：true
          */
         private boolean lazy = true;
+
         /**
          * 执行器类型
          */
         private ExecutorType type = ExecutorType.JDK;
+
         /**
-         * 连接池配置
+         * JDK执行器配置
          */
-        private HttpConnectionPoolConfiguration connectionPool = new HttpConnectionPoolConfiguration();
+        @NestedConfigurationProperty
+        private JdkSpecialConfiguration jdk = new JdkSpecialConfiguration();
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private HttpClientSpecialConfiguration httpClient = new HttpClientSpecialConfiguration();
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
 
         /**
          * 是否延迟加载
@@ -235,33 +377,70 @@ public class HttpExecutorConfiguration {
         }
 
         /**
-         * 获取连接池信息
+         * 获取JDK执行器特有的参数
          *
-         * @return 连接池信息
+         * @return JDK执行器特有的参数
          */
-        public HttpConnectionPoolConfiguration getConnectionPool() {
-            return connectionPool;
+        public JdkSpecialConfiguration getJdk() {
+            return jdk;
         }
 
         /**
-         * 设置连接池信息
+         * 获取HttpClient特有的参数
          *
-         * @param connectionPool 连接池信息
+         * @return HttpClient特有的参数
          */
-        public void setConnectionPool(HttpConnectionPoolConfiguration connectionPool) {
-            this.connectionPool = connectionPool;
+        public HttpClientSpecialConfiguration getHttpClient() {
+            return httpClient;
+        }
+
+
+        /**
+         * 设置JDK执行器特有的参数
+         *
+         * @param jdk JDK执行器特有的参数
+         */
+        public void setJdk(JdkSpecialConfiguration jdk) {
+            this.jdk = jdk;
+        }
+
+        /**
+         * 设置HttpClient特有的参数
+         *
+         * @param httpClient HttpClient特有的参数
+         */
+        public void setHttpClient(HttpClientSpecialConfiguration httpClient) {
+            this.httpClient = httpClient;
+        }
+
+        /**
+         * 设置OkHttp特有的参数
+         *
+         * @param okHttp OkHttp特有的参数
+         */
+        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
+            this.okHttp = okHttp;
+        }
+
+        /**
+         * 获取OkHttp特有的参数
+         *
+         * @return OkHttp特有的参数
+         */
+        public OkHttpSpecialConfiguration getOkHttp() {
+            return okHttp;
         }
 
         public HttpExecutor createExecutor() {
             switch (type) {
                 case OKHTTP:
-                    return new OkHttpExecutor(connectionPool.getMaxIdleConnections(), connectionPool.getKeepAliveDuration(), connectionPool.getKeepAliveTimeUnit());
+                    return createOkHttpExecutor(okHttp);
                 case HTTP_CLIENT:
-                    return new HttpClientExecutor(connectionPool.getMaxIdleConnections(), connectionPool.getKeepAliveDuration(), connectionPool.getKeepAliveTimeUnit());
+                    return createHttpClientExecutor(httpClient);
                 case HTTP_CLIENT5:
-                    return new HttpClient5Executor(connectionPool.getMaxIdleConnections(), connectionPool.getKeepAliveDuration(), connectionPool.getKeepAliveTimeUnit());
+                    return createHttpClient5Executor(httpClient);
                 default:
-                    return new JdkHttpExecutor();
+                    return createJdkHttpExecutor(jdk);
             }
         }
     }
@@ -289,5 +468,461 @@ public class HttpExecutorConfiguration {
          * 基于Apache HttpClient5实现的执行器枚举配置
          */
         HTTP_CLIENT5;
+    }
+
+    /**
+     * JDK执行器的特殊配置
+     */
+    public static class JdkSpecialConfiguration {
+        /**
+         * 连接建立超时时间，单位：ms
+         */
+        private Integer connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+
+        /**
+         * 数据读取超时时间，单位：ms
+         */
+        private Integer readTimeout = DEFAULT_READ_TIMEOUT;
+
+        /**
+         * 获取连接建立超时时间，单位：ms
+         *
+         * @return 连接建立超时时间
+         */
+        public Integer getConnectionTimeout() {
+            return connectionTimeout;
+        }
+
+        /**
+         * 设置连接建立超时时间，单位：ms
+         *
+         * @param connectionTimeout 连接建立超时时间
+         */
+        public void setConnectionTimeout(Integer connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+        }
+
+        /**
+         * 获取数据读取超时时间，单位：ms
+         *
+         * @return 数据读取超时时间
+         */
+        public Integer getReadTimeout() {
+            return readTimeout;
+        }
+
+        /**
+         * 设置数据读取超时时间，单位：ms
+         *
+         * @param readTimeout 数据读取超时时间
+         */
+        public void setReadTimeout(Integer readTimeout) {
+            this.readTimeout = readTimeout;
+        }
+    }
+
+    /**
+     * HttpClient执行器的特殊配置
+     */
+    public static class HttpClientSpecialConfiguration {
+
+        /**
+         * 连接获取超时时间，单位：ms
+         */
+        private Integer connectionRequestTimeout = DEFAULT_CONNECTION_REQUEST_TIMEOUT;
+
+        /**
+         * 连接建立超时时间，单位：ms
+         */
+        private Integer connectTimeout = DEFAULT_CONNECTION_TIMEOUT;
+
+        /**
+         * 数据读取超时时间，单位：ms
+         */
+        private Integer responseTimeout = DEFAULT_RESPONSE_TIMEOUT;
+
+        /**
+         * 连接验证间隔，单位：ms
+         */
+        private Integer validateAfterInactivity = DEFAULT_VALIDATE_AFTER_INACTIVITY;
+
+        /**
+         * 最大总连接数
+         */
+        private Integer maxTotal = DEFAULT_MAX_TOTAL;
+
+        /**
+         * 单个路由最大的连接数
+         */
+        private Integer maxPerRoute = DEFAULT_MAX_PER_ROUTE;
+
+        /**
+         * 保持存活时间
+         */
+        private Integer keepAliveDuration = DEFAULT_KEEP_ALIVE_DURATION;
+
+        /**
+         * 保持存活时间的时间单位，默认:min
+         */
+        private TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
+
+        /**
+         * 使用的HTTP版本
+         */
+        private Version httpVersion = Version.NON;
+
+
+        /**
+         * 获取连接获取超时时间，单位：ms
+         *
+         * @return 连接获取超时时间
+         */
+        public Integer getConnectionRequestTimeout() {
+            return connectionRequestTimeout;
+        }
+
+        /**
+         * 设置连接获取超时时间，单位：ms
+         *
+         * @param connectionRequestTimeout 连接获取超时时间
+         */
+        public void setConnectionRequestTimeout(Integer connectionRequestTimeout) {
+            this.connectionRequestTimeout = connectionRequestTimeout;
+        }
+
+        /**
+         * 获取连接建立超时时间，单位：ms
+         *
+         * @return 连接建立超时时间
+         */
+        public Integer getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        /**
+         * 设置连接建立超时时间，单位：ms
+         *
+         * @param connectTimeout 连接建立超时时间
+         */
+        public void setConnectTimeout(Integer connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        /**
+         * 获取数据读取超时时间，单位：ms
+         *
+         * @return 数据读取超时时间
+         */
+        public Integer getResponseTimeout() {
+            return responseTimeout;
+        }
+
+        /**
+         * 设置数据读取超时时间，单位：ms
+         *
+         * @param responseTimeout 数据读取超时时间
+         */
+        public void setResponseTimeout(Integer responseTimeout) {
+            this.responseTimeout = responseTimeout;
+        }
+
+        /**
+         * 获取连接验证间隔，单位：ms
+         *
+         * @return 连接验证间隔
+         */
+        public Integer getValidateAfterInactivity() {
+            return validateAfterInactivity;
+        }
+
+        /**
+         * 设置连接验证间隔，单位：ms
+         *
+         * @param validateAfterInactivity 连接验证间隔
+         */
+        public void setValidateAfterInactivity(Integer validateAfterInactivity) {
+            this.validateAfterInactivity = validateAfterInactivity;
+        }
+
+        /**
+         * 获取最大总连接数
+         *
+         * @return 最大总连接数
+         */
+        public Integer getMaxTotal() {
+            return maxTotal;
+        }
+
+        /**
+         * 设置最大总连接数
+         *
+         * @param maxTotal 最大总连接数
+         */
+        public void setMaxTotal(Integer maxTotal) {
+            this.maxTotal = maxTotal;
+        }
+
+        /**
+         * 获取单个路由最大的连接数
+         *
+         * @return 单个路由最大的连接数
+         */
+        public Integer getMaxPerRoute() {
+            return maxPerRoute;
+        }
+
+        /**
+         * 设置单个路由最大的连接数
+         *
+         * @param maxPerRoute 单个路由最大的连接数
+         */
+        public void setMaxPerRoute(Integer maxPerRoute) {
+            this.maxPerRoute = maxPerRoute;
+        }
+
+        /**
+         * 获取保持存活时间
+         *
+         * @return 保持存活时间
+         */
+        public Integer getKeepAliveDuration() {
+            return keepAliveDuration;
+        }
+
+        /**
+         * 设置保持存活时间
+         *
+         * @param keepAliveDuration 保持存活时间
+         */
+        public void setKeepAliveDuration(Integer keepAliveDuration) {
+            this.keepAliveDuration = keepAliveDuration;
+        }
+
+        /**
+         * 获取保持存活时间的时间单位，默认：min
+         *
+         * @return 保持存活时间的时间单位
+         */
+        public TimeUnit getKeepAliveTimeUnit() {
+            return keepAliveTimeUnit;
+        }
+
+        /**
+         * 设置保持存活时间的时间单位，默认：min
+         *
+         * @param keepAliveTimeUnit 保持存活时间的时间单位
+         */
+        public void setKeepAliveTimeUnit(TimeUnit keepAliveTimeUnit) {
+            this.keepAliveTimeUnit = keepAliveTimeUnit;
+        }
+
+        /**
+         * 获取使用的HTTP版本
+         *
+         * @return 使用的HTTP版本
+         */
+        public Version getHttpVersion() {
+            return httpVersion;
+        }
+
+        /**
+         * 设置使用的HTTP版本
+         *
+         * @param httpVersion 使用的HTTP版本
+         */
+        public void setHttpVersion(Version httpVersion) {
+            this.httpVersion = httpVersion;
+        }
+    }
+
+    /**
+     * OkHttp执行器的特殊配置
+     */
+    public static class OkHttpSpecialConfiguration {
+
+        /**
+         * 连接建立超时时间，单位：ms
+         */
+        private Integer connectTimeout = DEFAULT_CONNECTION_TIMEOUT;
+
+        /**
+         * 数据读取超时时间，单位：ms
+         */
+        private Integer readTimeout = DEFAULT_READ_TIMEOUT;
+
+        /**
+         * 数据写入超时时间，单位：ms
+         */
+        private Integer writeTimeout = DEFAULT_WRITE_TIMEOUT;
+
+        /**
+         * 整体调用超时时间，单位：ms
+         */
+        private Integer callTimeout = DEFAULT_CALL_TIMEOUT;
+
+        /**
+         * 最大空闲连接数
+         */
+        private Integer maxIdleConnections = DEFAULT_MAX_IDLE_CONNECTIONS;
+
+        /**
+         * 保持存活时间
+         */
+        private Integer keepAliveDuration = DEFAULT_KEEP_ALIVE_DURATION;
+
+        /**
+         * 保持存活时间的时间单位，默认：min
+         */
+        private TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
+
+        /**
+         * 使用的HTTP版本
+         */
+        private Version httpVersion = Version.NON;
+
+
+        /**
+         * 获取连接建立超时时间
+         *
+         * @return 连接建立超时时间
+         */
+        public Integer getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        /**
+         * 设置连接建立超时时间
+         *
+         * @param connectTimeout 连接建立超时时间
+         */
+        public void setConnectTimeout(Integer connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        /**
+         * 获取数据读取超时时间
+         *
+         * @return 数据读取超时时间
+         */
+        public Integer getReadTimeout() {
+            return readTimeout;
+        }
+
+        /**
+         * 设置数据读取超时时间
+         *
+         * @param readTimeout 数据读取超时时间
+         */
+        public void setReadTimeout(Integer readTimeout) {
+            this.readTimeout = readTimeout;
+        }
+
+        /**
+         * 获取数据写入超时时间
+         *
+         * @return 数据写入超时时间
+         */
+        public Integer getWriteTimeout() {
+            return writeTimeout;
+        }
+
+        /**
+         * 设置数据写入超时时间
+         *
+         * @param writeTimeout 数据写入超时时间
+         */
+        public void setWriteTimeout(Integer writeTimeout) {
+            this.writeTimeout = writeTimeout;
+        }
+
+        /**
+         * 获取整体调用超时时间
+         *
+         * @return 整体调用超时时间
+         */
+        public Integer getCallTimeout() {
+            return callTimeout;
+        }
+
+        /**
+         * 设置整体调用超时时间
+         *
+         * @param callTimeout 整体调用超时时间
+         */
+        public void setCallTimeout(Integer callTimeout) {
+            this.callTimeout = callTimeout;
+        }
+
+        /**
+         * 获取最大空闲连接数
+         *
+         * @return 最大空闲连接数
+         */
+        public Integer getMaxIdleConnections() {
+            return maxIdleConnections;
+        }
+
+        /**
+         * 设置最大空闲连接数
+         *
+         * @param maxIdleConnections 最大空闲连接数
+         */
+        public void setMaxIdleConnections(Integer maxIdleConnections) {
+            this.maxIdleConnections = maxIdleConnections;
+        }
+
+        /**
+         * 获取保持存活时间
+         *
+         * @return 保持存活时间
+         */
+        public Integer getKeepAliveDuration() {
+            return keepAliveDuration;
+        }
+
+        /**
+         * 设置保持存活时间
+         *
+         * @param keepAliveDuration 保持存活时间
+         */
+        public void setKeepAliveDuration(Integer keepAliveDuration) {
+            this.keepAliveDuration = keepAliveDuration;
+        }
+
+        /**
+         * 获取保持存活时间的时间单位
+         *
+         * @return 保持存活时间的时间单位
+         */
+        public TimeUnit getKeepAliveTimeUnit() {
+            return keepAliveTimeUnit;
+        }
+
+        /**
+         * 设置保持存活时间的时间单位
+         *
+         * @param keepAliveTimeUnit 保持存活时间的时间单位
+         */
+        public void setKeepAliveTimeUnit(TimeUnit keepAliveTimeUnit) {
+            this.keepAliveTimeUnit = keepAliveTimeUnit;
+        }
+
+        /**
+         * 获取使用的HTTP版本
+         *
+         * @return 使用的HTTP版本
+         */
+        public Version getHttpVersion() {
+            return httpVersion;
+        }
+
+        /**
+         * 设置使用的HTTP版本
+         *
+         * @param httpVersion 使用的HTTP版本
+         */
+        public void setHttpVersion(Version httpVersion) {
+            this.httpVersion = httpVersion;
+        }
     }
 }
