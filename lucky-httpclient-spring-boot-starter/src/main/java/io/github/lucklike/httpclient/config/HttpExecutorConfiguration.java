@@ -57,7 +57,7 @@ public class HttpExecutorConfiguration {
      * @return JDK执行器
      */
     public static HttpExecutor createJdkHttpExecutor(JdkSpecialConfiguration jdk) {
-        return new JdkHttpExecutor(jdk.getConnectionTimeout(), jdk.getReadTimeout());
+        return new JdkHttpExecutor(jdk.getConnectTimeout(), jdk.getReadTimeout());
     }
 
     /**
@@ -477,7 +477,7 @@ public class HttpExecutorConfiguration {
         /**
          * 连接建立超时时间，单位：ms
          */
-        private Integer connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+        private Integer connectTimeout = DEFAULT_CONNECTION_TIMEOUT;
 
         /**
          * 数据读取超时时间，单位：ms
@@ -489,17 +489,17 @@ public class HttpExecutorConfiguration {
          *
          * @return 连接建立超时时间
          */
-        public Integer getConnectionTimeout() {
-            return connectionTimeout;
+        public Integer getConnectTimeout() {
+            return connectTimeout;
         }
 
         /**
          * 设置连接建立超时时间，单位：ms
          *
-         * @param connectionTimeout 连接建立超时时间
+         * @param connectTimeout 连接建立超时时间
          */
-        public void setConnectionTimeout(Integer connectionTimeout) {
-            this.connectionTimeout = connectionTimeout;
+        public void setConnectTimeout(Integer connectTimeout) {
+            this.connectTimeout = connectTimeout;
         }
 
         /**
