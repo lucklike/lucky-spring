@@ -1083,7 +1083,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyJdkHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal().getJdk());
+            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -1096,7 +1096,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyOkHttp3Executor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal().getOkHttp());
+            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -1109,7 +1109,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor().getGlobal().getHttpClient());
+            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -1122,7 +1122,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor().getGlobal().getHttpClient());
+            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
     }
 

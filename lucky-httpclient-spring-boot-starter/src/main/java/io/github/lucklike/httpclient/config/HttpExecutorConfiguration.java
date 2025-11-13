@@ -21,7 +21,6 @@ import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_I
 import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_PER_ROUTE;
 import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_MAX_TOTAL;
 import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_READ_TIMEOUT;
-import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_RESPONSE_TIMEOUT;
 import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_VALIDATE_AFTER_INACTIVITY;
 import static com.luckyframework.httpclient.core.executor.Constant.DEFAULT_WRITE_TIMEOUT;
 
@@ -53,23 +52,24 @@ public class HttpExecutorConfiguration {
     /**
      * 创建一个JDK执行器
      *
-     * @param jdk JDK执行器配置
-     * @return JDK执行器
+     * @param commonConfiguration 公共执行器配置
+     * @return 公共执行器
      */
-    public static HttpExecutor createJdkHttpExecutor(JdkSpecialConfiguration jdk) {
-        return new JdkHttpExecutor(jdk.getConnectTimeout(), jdk.getReadTimeout());
+    public static HttpExecutor createJdkHttpExecutor(CommonConfiguration commonConfiguration) {
+        return new JdkHttpExecutor(commonConfiguration.getConnectTimeout(), commonConfiguration.getReadTimeout());
     }
 
     /**
      * 创建一个OkHttp执行器
      *
-     * @param okHttp OkHttp执行器配置
+     * @param commonConfiguration 公共执行器配置
      * @return OkHttp执行器
      */
-    public static HttpExecutor createOkHttpExecutor(OkHttpSpecialConfiguration okHttp) {
+    public static HttpExecutor createOkHttpExecutor(CommonConfiguration commonConfiguration) {
+        OkHttpSpecialConfiguration okHttp = commonConfiguration.getOkHttp();
         return new OkHttpExecutor(
-                okHttp.getConnectTimeout(),
-                okHttp.getReadTimeout(),
+                commonConfiguration.getConnectTimeout(),
+                commonConfiguration.getReadTimeout(),
                 okHttp.getWriteTimeout(),
                 okHttp.getCallTimeout(),
                 okHttp.getMaxIdleConnections(),
@@ -82,14 +82,15 @@ public class HttpExecutorConfiguration {
     /**
      * 创建一个HttpClient执行器
      *
-     * @param httpClient HttpClient执行器配置
+     * @param commonConfiguration 公共执行器配置
      * @return HttpClient执行器
      */
-    public static HttpExecutor createHttpClientExecutor(HttpClientSpecialConfiguration httpClient) {
+    public static HttpExecutor createHttpClientExecutor(CommonConfiguration commonConfiguration) {
+        HttpClientSpecialConfiguration httpClient = commonConfiguration.getHttpClient();
         return new HttpClientExecutor(
                 httpClient.getConnectionRequestTimeout(),
-                httpClient.getConnectTimeout(),
-                httpClient.getResponseTimeout(),
+                commonConfiguration.getConnectTimeout(),
+                commonConfiguration.getReadTimeout(),
                 httpClient.getValidateAfterInactivity(),
                 httpClient.getMaxTotal(),
                 httpClient.getMaxPerRoute(),
@@ -102,14 +103,15 @@ public class HttpExecutorConfiguration {
     /**
      * 创建一个HttpClient5执行器
      *
-     * @param httpClient HttpClient5执行器配置
+     * @param commonConfiguration 公共执行器配置
      * @return HttpClient5执行器
      */
-    public static HttpExecutor createHttpClient5Executor(HttpClientSpecialConfiguration httpClient) {
+    public static HttpExecutor createHttpClient5Executor(CommonConfiguration commonConfiguration) {
+        HttpClientSpecialConfiguration httpClient = commonConfiguration.getHttpClient();
         return new HttpClient5Executor(
                 httpClient.getConnectionRequestTimeout(),
-                httpClient.getConnectTimeout(),
-                httpClient.getResponseTimeout(),
+                commonConfiguration.getConnectTimeout(),
+                commonConfiguration.getReadTimeout(),
                 httpClient.getValidateAfterInactivity(),
                 httpClient.getMaxTotal(),
                 httpClient.getMaxPerRoute(),
@@ -149,7 +151,7 @@ public class HttpExecutorConfiguration {
     /**
      * 全局通用的HTTP执行器配置
      */
-    public static class GlobalConfiguration {
+    public static class GlobalConfiguration extends CommonConfiguration {
 
         /**
          * 指定使用的HTTP执行器Bean的名称
@@ -165,24 +167,6 @@ public class HttpExecutorConfiguration {
          * 使用执行器枚举来指定执行器
          */
         private HttpExecutorEnum executor;
-
-        /**
-         * JDK执行器配置
-         */
-        @NestedConfigurationProperty
-        private JdkSpecialConfiguration jdk = new JdkSpecialConfiguration();
-
-        /**
-         * HttpClient执行器配置
-         */
-        @NestedConfigurationProperty
-        private HttpClientSpecialConfiguration httpClient = new HttpClientSpecialConfiguration();
-
-        /**
-         * HttpClient执行器配置
-         */
-        @NestedConfigurationProperty
-        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
 
 
         //------------------------------------------------------------------------------------------------
@@ -220,32 +204,6 @@ public class HttpExecutorConfiguration {
             this.executorBean = executorBean;
         }
 
-        /**
-         * 设置JDK执行器特有的参数
-         *
-         * @param jdk JDK执行器特有的参数
-         */
-        public void setJdk(JdkSpecialConfiguration jdk) {
-            this.jdk = jdk;
-        }
-
-        /**
-         * 设置HttpClient特有的参数
-         *
-         * @param httpClient HttpClient特有的参数
-         */
-        public void setHttpClient(HttpClientSpecialConfiguration httpClient) {
-            this.httpClient = httpClient;
-        }
-
-        /**
-         * 设置OkHttp特有的参数
-         *
-         * @param okHttp OkHttp特有的参数
-         */
-        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
-            this.okHttp = okHttp;
-        }
 
         //------------------------------------------------------------------------------------------------
         //                                Getter methods
@@ -279,38 +237,13 @@ public class HttpExecutorConfiguration {
             return executorBean;
         }
 
-        /**
-         * 获取JDK执行器特有的参数
-         *
-         * @return JDK执行器特有的参数
-         */
-        public JdkSpecialConfiguration getJdk() {
-            return jdk;
-        }
 
-        /**
-         * 获取HttpClient特有的参数
-         *
-         * @return HttpClient特有的参数
-         */
-        public HttpClientSpecialConfiguration getHttpClient() {
-            return httpClient;
-        }
-
-        /**
-         * 获取OkHttp特有的参数
-         *
-         * @return OkHttp特有的参数
-         */
-        public OkHttpSpecialConfiguration getOkHttp() {
-            return okHttp;
-        }
     }
 
     /**
      * 备用的HTTP执行器配置
      */
-    public static class AlternativeConfiguration {
+    public static class AlternativeConfiguration extends CommonConfiguration {
 
         /**
          * 是否延时加载，默认：true
@@ -321,24 +254,6 @@ public class HttpExecutorConfiguration {
          * 执行器类型
          */
         private ExecutorType executor = ExecutorType.JDK;
-
-        /**
-         * JDK执行器配置
-         */
-        @NestedConfigurationProperty
-        private JdkSpecialConfiguration jdk = new JdkSpecialConfiguration();
-
-        /**
-         * HttpClient执行器配置
-         */
-        @NestedConfigurationProperty
-        private HttpClientSpecialConfiguration httpClient = new HttpClientSpecialConfiguration();
-
-        /**
-         * HttpClient执行器配置
-         */
-        @NestedConfigurationProperty
-        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
 
         /**
          * 是否延迟加载
@@ -376,104 +291,25 @@ public class HttpExecutorConfiguration {
             this.executor = executor;
         }
 
-        /**
-         * 获取JDK执行器特有的参数
-         *
-         * @return JDK执行器特有的参数
-         */
-        public JdkSpecialConfiguration getJdk() {
-            return jdk;
-        }
-
-        /**
-         * 获取HttpClient特有的参数
-         *
-         * @return HttpClient特有的参数
-         */
-        public HttpClientSpecialConfiguration getHttpClient() {
-            return httpClient;
-        }
-
-
-        /**
-         * 设置JDK执行器特有的参数
-         *
-         * @param jdk JDK执行器特有的参数
-         */
-        public void setJdk(JdkSpecialConfiguration jdk) {
-            this.jdk = jdk;
-        }
-
-        /**
-         * 设置HttpClient特有的参数
-         *
-         * @param httpClient HttpClient特有的参数
-         */
-        public void setHttpClient(HttpClientSpecialConfiguration httpClient) {
-            this.httpClient = httpClient;
-        }
-
-        /**
-         * 设置OkHttp特有的参数
-         *
-         * @param okHttp OkHttp特有的参数
-         */
-        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
-            this.okHttp = okHttp;
-        }
-
-        /**
-         * 获取OkHttp特有的参数
-         *
-         * @return OkHttp特有的参数
-         */
-        public OkHttpSpecialConfiguration getOkHttp() {
-            return okHttp;
-        }
-
         public HttpExecutor createExecutor() {
             switch (executor) {
                 case OKHTTP:
-                    return createOkHttpExecutor(okHttp);
+                    return createOkHttpExecutor(this);
                 case HTTP_CLIENT:
-                    return createHttpClientExecutor(httpClient);
+                    return createHttpClientExecutor(this);
                 case HTTP_CLIENT5:
-                    return createHttpClient5Executor(httpClient);
+                    return createHttpClient5Executor(this);
                 default:
-                    return createJdkHttpExecutor(jdk);
+                    return createJdkHttpExecutor(this);
             }
         }
     }
 
     /**
-     * 执行器类型
+     * 公共配置
      */
-    public enum ExecutorType {
-        /**
-         * 基于JDK{@link HttpURLConnection}实现的执行器枚举配置
-         */
-        JDK,
+    public static class CommonConfiguration {
 
-        /**
-         * 基于Okhttp3实现的执行器枚举配置
-         */
-        OKHTTP,
-
-        /**
-         * 基于Apache HttpClient实现的执行器枚举配置
-         */
-        HTTP_CLIENT,
-
-        /**
-         * 基于Apache HttpClient5实现的执行器枚举配置
-         */
-        HTTP_CLIENT5;
-    }
-
-    /**
-     * JDK执行器的特殊配置
-     */
-    public static class JdkSpecialConfiguration {
         /**
          * 连接建立超时时间，单位：ms
          */
@@ -483,6 +319,7 @@ public class HttpExecutorConfiguration {
          * 数据读取超时时间，单位：ms
          */
         private Integer readTimeout = DEFAULT_READ_TIMEOUT;
+
 
         /**
          * 获取连接建立超时时间，单位：ms
@@ -519,6 +356,81 @@ public class HttpExecutorConfiguration {
         public void setReadTimeout(Integer readTimeout) {
             this.readTimeout = readTimeout;
         }
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private HttpClientSpecialConfiguration httpClient = new HttpClientSpecialConfiguration();
+
+        /**
+         * HttpClient执行器配置
+         */
+        @NestedConfigurationProperty
+        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
+
+        /**
+         * 设置HttpClient特有的参数
+         *
+         * @param httpClient HttpClient特有的参数
+         */
+        public void setHttpClient(HttpClientSpecialConfiguration httpClient) {
+            this.httpClient = httpClient;
+        }
+
+        /**
+         * 设置OkHttp特有的参数
+         *
+         * @param okHttp OkHttp特有的参数
+         */
+        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
+            this.okHttp = okHttp;
+        }
+
+        /**
+         * 获取HttpClient特有的参数
+         *
+         * @return HttpClient特有的参数
+         */
+        public HttpClientSpecialConfiguration getHttpClient() {
+            return httpClient;
+        }
+
+        /**
+         * 获取OkHttp特有的参数
+         *
+         * @return OkHttp特有的参数
+         */
+        public OkHttpSpecialConfiguration getOkHttp() {
+            return okHttp;
+        }
+
+
+    }
+
+    /**
+     * 执行器类型
+     */
+    public enum ExecutorType {
+        /**
+         * 基于JDK{@link HttpURLConnection}实现的执行器枚举配置
+         */
+        JDK,
+
+        /**
+         * 基于Okhttp3实现的执行器枚举配置
+         */
+        OKHTTP,
+
+        /**
+         * 基于Apache HttpClient实现的执行器枚举配置
+         */
+        HTTP_CLIENT,
+
+        /**
+         * 基于Apache HttpClient5实现的执行器枚举配置
+         */
+        HTTP_CLIENT5;
     }
 
     /**
@@ -530,16 +442,6 @@ public class HttpExecutorConfiguration {
          * 连接获取超时时间，单位：ms
          */
         private Integer connectionRequestTimeout = DEFAULT_CONNECTION_REQUEST_TIMEOUT;
-
-        /**
-         * 连接建立超时时间，单位：ms
-         */
-        private Integer connectTimeout = DEFAULT_CONNECTION_TIMEOUT;
-
-        /**
-         * 数据读取超时时间，单位：ms
-         */
-        private Integer responseTimeout = DEFAULT_RESPONSE_TIMEOUT;
 
         /**
          * 连接验证间隔，单位：ms
@@ -588,42 +490,6 @@ public class HttpExecutorConfiguration {
          */
         public void setConnectionRequestTimeout(Integer connectionRequestTimeout) {
             this.connectionRequestTimeout = connectionRequestTimeout;
-        }
-
-        /**
-         * 获取连接建立超时时间，单位：ms
-         *
-         * @return 连接建立超时时间
-         */
-        public Integer getConnectTimeout() {
-            return connectTimeout;
-        }
-
-        /**
-         * 设置连接建立超时时间，单位：ms
-         *
-         * @param connectTimeout 连接建立超时时间
-         */
-        public void setConnectTimeout(Integer connectTimeout) {
-            this.connectTimeout = connectTimeout;
-        }
-
-        /**
-         * 获取数据读取超时时间，单位：ms
-         *
-         * @return 数据读取超时时间
-         */
-        public Integer getResponseTimeout() {
-            return responseTimeout;
-        }
-
-        /**
-         * 设置数据读取超时时间，单位：ms
-         *
-         * @param responseTimeout 数据读取超时时间
-         */
-        public void setResponseTimeout(Integer responseTimeout) {
-            this.responseTimeout = responseTimeout;
         }
 
         /**
@@ -741,16 +607,6 @@ public class HttpExecutorConfiguration {
     public static class OkHttpSpecialConfiguration {
 
         /**
-         * 连接建立超时时间，单位：ms
-         */
-        private Integer connectTimeout = DEFAULT_CONNECTION_TIMEOUT;
-
-        /**
-         * 数据读取超时时间，单位：ms
-         */
-        private Integer readTimeout = DEFAULT_READ_TIMEOUT;
-
-        /**
          * 数据写入超时时间，单位：ms
          */
         private Integer writeTimeout = DEFAULT_WRITE_TIMEOUT;
@@ -779,43 +635,6 @@ public class HttpExecutorConfiguration {
          * 使用的HTTP版本
          */
         private Version httpVersion = Version.NON;
-
-
-        /**
-         * 获取连接建立超时时间
-         *
-         * @return 连接建立超时时间
-         */
-        public Integer getConnectTimeout() {
-            return connectTimeout;
-        }
-
-        /**
-         * 设置连接建立超时时间
-         *
-         * @param connectTimeout 连接建立超时时间
-         */
-        public void setConnectTimeout(Integer connectTimeout) {
-            this.connectTimeout = connectTimeout;
-        }
-
-        /**
-         * 获取数据读取超时时间
-         *
-         * @return 数据读取超时时间
-         */
-        public Integer getReadTimeout() {
-            return readTimeout;
-        }
-
-        /**
-         * 设置数据读取超时时间
-         *
-         * @param readTimeout 数据读取超时时间
-         */
-        public void setReadTimeout(Integer readTimeout) {
-            this.readTimeout = readTimeout;
-        }
 
         /**
          * 获取数据写入超时时间
