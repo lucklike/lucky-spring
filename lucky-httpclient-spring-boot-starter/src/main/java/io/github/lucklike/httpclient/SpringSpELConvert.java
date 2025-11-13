@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 
 /**
@@ -52,7 +53,9 @@ public class SpringSpELConvert extends SpELConvert {
         super.paramWrapperPostProcess(paramWrapper);
         String expression = paramWrapper.getExpression();
         if (isSingleEnvExpression(expression)) {
-            expression = getSpELRuntime().getValueForType(paramWrapper);
+            ResolvableType sourceResult = paramWrapper.getExpectedResultType();
+            expression = getSpELRuntime().getValueForType(paramWrapper.setExpectedResultType(String.class));
+            paramWrapper.setExpectedResultType(sourceResult);
         }
         paramWrapper.setExpression(environment.resolveRequiredPlaceholders(expression));
     }
