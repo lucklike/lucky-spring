@@ -3,7 +3,6 @@ package io.github.lucklike.httpclient.config;
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import io.github.lucklike.httpclient.config.httpexecutor.HttpExecutorConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.Map;
@@ -77,13 +76,13 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * Http执行器相关额配置
      */
     @NestedConfigurationProperty
-    private HttpExecutorConfiguration httpExecutor;
+    private HttpExecutorConfiguration httpExecutor = new HttpExecutorConfiguration();
 
     /**
      * HTTP线程池配置
      */
     @NestedConfigurationProperty
-    private HttpAsyncThreadPoolConfiguration asyncThreadPool;
+    private HttpAsyncThreadPoolConfiguration asyncThreadPool = new HttpAsyncThreadPoolConfiguration();
 
 
     /**
