@@ -2,14 +2,13 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.async.Model;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.Map;
 
 /**
  * HTTP异步线程池配置
  */
-public class HttpAsyncThreadPoolConfiguration {
+public class HttpAsyncThreadPoolConfiguration extends LazyThreadPoolParam {
 
     /**
      * HTTP请求的异步模型
@@ -20,12 +19,6 @@ public class HttpAsyncThreadPoolConfiguration {
      * 默认异步执行器的最大并发数，小于0时表示不限制并发数
      */
     private int defaultExecutorConcurrency = -1;
-
-    /**
-     * 用于创建异步调用的线程池的参数
-     */
-    @NestedConfigurationProperty
-    private LazyThreadPoolParam global;
 
     /**
      * 备用线程池
@@ -57,15 +50,6 @@ public class HttpAsyncThreadPoolConfiguration {
 
 
     /**
-     * 设置通用线程池参数
-     *
-     * @param global 通用线程池参数
-     */
-    public void setGlobal(LazyThreadPoolParam global) {
-        this.global = global;
-    }
-
-    /**
      * 设置备选线程池参数
      *
      * @param alternative 备选线程池参数
@@ -94,15 +78,6 @@ public class HttpAsyncThreadPoolConfiguration {
      */
     public int getDefaultExecutorConcurrency() {
         return defaultExecutorConcurrency;
-    }
-
-    /**
-     * 获取通用线程池参数
-     *
-     * @return 通用线程池参数
-     */
-    public LazyThreadPoolParam getGlobal() {
-        return global;
     }
 
     /**

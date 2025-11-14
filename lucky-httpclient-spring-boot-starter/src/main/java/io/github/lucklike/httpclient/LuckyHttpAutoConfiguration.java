@@ -62,7 +62,6 @@ import io.github.lucklike.httpclient.config.CookieManageConfiguration;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpAsyncThreadPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.HttpExecutorConfiguration;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
 import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
 import io.github.lucklike.httpclient.config.Locator;
@@ -79,6 +78,8 @@ import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
+import io.github.lucklike.httpclient.config.httpexecutor.AlternativeConfiguration;
+import io.github.lucklike.httpclient.config.httpexecutor.HttpExecutorConfiguration;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfaceLoggerHandler;
@@ -393,20 +394,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void httpExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
-        HttpExecutorConfiguration httpExecutorConfig = factoryConfig.getHttpExecutor();
-
-        // 全局Http执行器设置
-        HttpExecutorConfiguration.GlobalConfiguration globalConfig = httpExecutorConfig.getGlobal();
-        if (globalConfig.getExecutorFactory() != null) {
-            factory.setHttpExecutor(globalConfig.getExecutorFactory().getHttpExecutor());
-        } else if (StringUtils.hasText(globalConfig.getExecutorBean())) {
-            factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutorBean(), HttpExecutor.class));
-        } else if (factoryConfig.getHttpExecutor() != null) {
-            factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutor().getHttpExecutorBean(), HttpExecutor.class));
-        } else {
-            factory.setHttpExecutor(applicationContext.getBeanProvider(HttpExecutor.class).stream().findFirst().get());
-        }
-
         // 导入Spring容器中配置的HttpExecutor
         String[] executorBeanNames = applicationContext.getBeanNamesForType(HttpExecutor.class);
         if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
@@ -415,8 +402,26 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
         }
 
+
+        HttpExecutorConfiguration httpExecutorConfig = factoryConfig.getHttpExecutor();
+        if (httpExecutorConfig == null) {
+            return;
+        }
+
+        // 全局Http执行器设置
+        if (httpExecutorConfig.getExecutorFactory() != null) {
+            factory.setHttpExecutor(httpExecutorConfig.getExecutorFactory().getHttpExecutor());
+        } else if (StringUtils.hasText(httpExecutorConfig.getExecutorBean())) {
+            factory.setHttpExecutor(applicationContext.getBean(httpExecutorConfig.getExecutorBean(), HttpExecutor.class));
+        } else if (factoryConfig.getHttpExecutor() != null) {
+            factory.setHttpExecutor(applicationContext.getBean(httpExecutorConfig.getExecutor().getHttpExecutorBean(), HttpExecutor.class));
+        } else {
+            factory.setHttpExecutor(applicationContext.getBeanProvider(HttpExecutor.class).stream().findFirst().get());
+        }
+
+
         // 导入备用Http执行器设置
-        Map<String, HttpExecutorConfiguration.AlternativeConfiguration> alternativeConfig = httpExecutorConfig.getAlternative();
+        Map<String, AlternativeConfiguration> alternativeConfig = httpExecutorConfig.getAlternative();
         if (ContainerUtils.isNotEmptyMap(alternativeConfig)) {
             alternativeConfig.forEach((k, v) -> {
                 if (v.isLazy()) {
@@ -452,9 +457,19 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        // 导入Spring容器中配置的Executor
+        String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
+        if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
+            for (String executorBeanName : executorBeanNames) {
+                factory.addAlternativeAsyncExecutor(executorBeanName, () -> applicationContext.getBean(Executor.class));
+            }
+        }
 
         // 获取异步线程池相关的配置
         HttpAsyncThreadPoolConfiguration asyncThreadPoolConfig = factoryConfig.getAsyncThreadPool();
+        if (asyncThreadPoolConfig == null) {
+            return;
+        }
 
         // 设置异步模型
         Model asyncModel = asyncThreadPoolConfig.getAsyncModel();
@@ -465,22 +480,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         // 设置默认执行器的并发数
         factory.setDefaultExecutorConcurrency(asyncThreadPoolConfig.getDefaultExecutorConcurrency());
 
-        // 导入Spring容器中配置的Executor
-        String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
-        if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
-            for (String executorBeanName : executorBeanNames) {
-                factory.addAlternativeAsyncExecutor(executorBeanName, () -> applicationContext.getBean(Executor.class));
-            }
-        }
-
         // 导入用户配置的默认Executor
-        LazyThreadPoolParam defaultPoolParam = asyncThreadPoolConfig.getGlobal();
-        if (defaultPoolParam != null) {
-            if (defaultPoolParam.isLazy()) {
-                factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(defaultPoolParam));
-            } else {
-                factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(defaultPoolParam));
-            }
+        if (asyncThreadPoolConfig.isLazy()) {
+            factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(asyncThreadPoolConfig));
+        } else {
+            factory.setAsyncExecutor(ThreadPoolFactory.createThreadPool(asyncThreadPoolConfig));
         }
 
         // 导入用户配置的备选Executor
@@ -1083,7 +1087,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyJdkHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
+            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor());
         }
 
     }
@@ -1096,7 +1100,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyOkHttp3Executor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
+            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor());
         }
 
     }
@@ -1109,7 +1113,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor().getGlobal());
+            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor());
         }
 
     }
@@ -1122,7 +1126,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor().getGlobal());
+            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor());
         }
     }
 
