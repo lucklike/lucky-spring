@@ -454,7 +454,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
         // 获取异步线程池相关的配置
-        HttpAsyncThreadPoolConfiguration asyncThreadPoolConfig = factoryConfig.getAsyncThreadPool();
+        HttpAsyncThreadPoolConfiguration asyncThreadPoolConfig = factoryConfig.getThreadPool();
 
         // 设置异步模型
         Model asyncModel = asyncThreadPoolConfig.getAsyncModel();

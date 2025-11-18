@@ -82,7 +82,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * HTTP线程池配置
      */
     @NestedConfigurationProperty
-    private HttpAsyncThreadPoolConfiguration asyncThreadPool = new HttpAsyncThreadPoolConfiguration();
+    private HttpAsyncThreadPoolConfiguration threadPool = new HttpAsyncThreadPoolConfiguration();
 
 
     /**
@@ -168,10 +168,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 设置HTTP异步线程池相关的参数
      *
-     * @param asyncThreadPool HTTP异步线程池相关的参数
+     * @param threadPool HTTP异步线程池相关的参数
      */
-    public void setAsyncThreadPool(HttpAsyncThreadPoolConfiguration asyncThreadPool) {
-        this.asyncThreadPool = asyncThreadPool;
+    public void setThreadPool(HttpAsyncThreadPoolConfiguration threadPool) {
+        this.threadPool = threadPool;
     }
 
     /**
@@ -341,8 +341,8 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *
      * @return HTTP异步线程池相关的参数
      */
-    public HttpAsyncThreadPoolConfiguration getAsyncThreadPool() {
-        return asyncThreadPool;
+    public HttpAsyncThreadPoolConfiguration getThreadPool() {
+        return threadPool;
     }
 
     /**
