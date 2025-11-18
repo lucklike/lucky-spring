@@ -66,7 +66,7 @@ public class HttpExecutorConfiguration {
      * @return OkHttp执行器
      */
     public static HttpExecutor createOkHttpExecutor(CommonConfiguration commonConfiguration) {
-        OkHttpSpecialConfiguration okHttp = commonConfiguration.getOkHttp();
+        OkHttpSpecialConfiguration okHttp = commonConfiguration.getOkhttp();
         return new OkHttpExecutor(
                 commonConfiguration.getConnectTimeout(),
                 commonConfiguration.getReadTimeout(),
@@ -367,7 +367,7 @@ public class HttpExecutorConfiguration {
          * HttpClient执行器配置
          */
         @NestedConfigurationProperty
-        private OkHttpSpecialConfiguration okHttp = new OkHttpSpecialConfiguration();
+        private OkHttpSpecialConfiguration okhttp = new OkHttpSpecialConfiguration();
 
         /**
          * 设置HttpClient特有的参数
@@ -381,10 +381,10 @@ public class HttpExecutorConfiguration {
         /**
          * 设置OkHttp特有的参数
          *
-         * @param okHttp OkHttp特有的参数
+         * @param okhttp OkHttp特有的参数
          */
-        public void setOkHttp(OkHttpSpecialConfiguration okHttp) {
-            this.okHttp = okHttp;
+        public void setOkhttp(OkHttpSpecialConfiguration okhttp) {
+            this.okhttp = okhttp;
         }
 
         /**
@@ -401,8 +401,8 @@ public class HttpExecutorConfiguration {
          *
          * @return OkHttp特有的参数
          */
-        public OkHttpSpecialConfiguration getOkHttp() {
-            return okHttp;
+        public OkHttpSpecialConfiguration getOkhttp() {
+            return okhttp;
         }
 
 
