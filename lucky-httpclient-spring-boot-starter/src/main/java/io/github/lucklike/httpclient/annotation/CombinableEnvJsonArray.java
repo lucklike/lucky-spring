@@ -53,5 +53,5 @@ public @interface CombinableEnvJsonArray {
     /**
      * 数组前缀
      */
-    String prefix() default "\\$";
+    String prefix() default "$";
 }

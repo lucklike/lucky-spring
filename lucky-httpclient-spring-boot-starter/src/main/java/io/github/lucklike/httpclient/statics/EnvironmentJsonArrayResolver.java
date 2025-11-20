@@ -19,11 +19,8 @@ public class EnvironmentJsonArrayResolver implements StaticParamResolver {
     @Override
     public List<ParamInfo> parser(StaticParamAnnContext context) {
         CombinableEnvJsonArray envArrayAnn = context.toAnnotation(CombinableEnvJsonArray.class);
-        String arrayKey = getPrefix(envArrayAnn.prefix());
-
-        String envKey = envArrayAnn.value();
-        envKey = context.parseExpression(envKey, String.class);
-
+        String arrayKey = envArrayAnn.prefix();
+        String envKey = context.parseExpression(envArrayAnn.value(), String.class);
         try {
             // 从环境变量提取参数
             List<Object> envValue = BeanFunction.env(envKey, typeOf(List.class, envArrayAnn.elementClass()));
@@ -40,11 +37,5 @@ public class EnvironmentJsonArrayResolver implements StaticParamResolver {
             }
             throw e;
         }
-
-
-    }
-
-    private String getPrefix(String prefix) {
-        return prefix.startsWith("\\") ? prefix.substring(1) : prefix;
     }
 }
