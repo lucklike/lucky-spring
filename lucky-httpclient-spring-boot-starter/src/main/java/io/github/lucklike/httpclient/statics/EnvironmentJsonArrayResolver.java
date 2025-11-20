@@ -4,38 +4,43 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.statics.StaticParamAnnContext;
 import com.luckyframework.httpclient.proxy.statics.StaticParamResolver;
-import com.luckyframework.serializable.SerializationTypeToken;
-import io.github.lucklike.httpclient.annotation.EnvJsonArray;
+import io.github.lucklike.httpclient.annotation.CombinableEnvJsonArray;
 import io.github.lucklike.httpclient.function.BeanFunction;
+import io.github.lucklike.httpclient.injection.BindException;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
+
+import static com.luckyframework.httpclient.proxy.CommonFunctions.typeOf;
 
 public class EnvironmentJsonArrayResolver implements StaticParamResolver {
 
 
     @Override
     public List<ParamInfo> parser(StaticParamAnnContext context) {
-        EnvJsonArray envArrayAnn = context.toAnnotation(EnvJsonArray.class);
+        CombinableEnvJsonArray envArrayAnn = context.toAnnotation(CombinableEnvJsonArray.class);
         String arrayKey = getPrefix(envArrayAnn.prefix());
 
         String envKey = envArrayAnn.value();
         envKey = context.parseExpression(envKey, String.class);
 
-        // 从环境变量提取参数
-        List<Object> envValue = BeanFunction.env(envKey, new SerializationTypeToken<List<Object>>() {});
+        try {
+            // 从环境变量提取参数
+            List<Object> envValue = BeanFunction.env(envKey, typeOf(List.class, envArrayAnn.elementClass()));
 
-        // 空对象直接返回空集合
-        if (ContainerUtils.isEmptyCollection(envValue)) {
-            return Collections.emptyList();
+            // 空对象直接返回空集合
+            if (ContainerUtils.isEmptyCollection(envValue)) {
+                return Collections.emptyList();
+            }
+
+            return Collections.singletonList(new ParamInfo(arrayKey, Collections.singletonList(new ParamInfo(arrayKey, envValue))));
+        } catch (BindException e) {
+            if (envArrayAnn.allowConfigNotExist()) {
+                return Collections.emptyList();
+            }
+            throw e;
         }
 
-        // 将Map转成List<ParamInfo>
-        List<ParamInfo> paramInfos = new ArrayList<>(envValue.size());
-//        envValue.forEach((k, v) -> paramInfos.add(new ParamInfo(k, v)));
-        return Collections.singletonList(new ParamInfo("envJson", paramInfos));
 
     }
 
