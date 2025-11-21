@@ -3,8 +3,7 @@ package io.github.lucklike.httpclient.annotation;
 import com.luckyframework.httpclient.proxy.annotations.CombineJson;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.StaticParam;
-import com.luckyframework.httpclient.proxy.creator.Scope;
-import com.luckyframework.httpclient.proxy.setter.JsonArrayBodyFactoryParameterSetter;
+import com.luckyframework.httpclient.proxy.setter.MapParameterSetter;
 import com.luckyframework.reflect.Combination;
 import io.github.lucklike.httpclient.statics.EnvironmentJsonArrayResolver;
 
@@ -28,7 +27,7 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 @StaticParam(
-        setter = @ObjectGenerate(clazz = JsonArrayBodyFactoryParameterSetter.class, scope = Scope.METHOD),
+        setter = @ObjectGenerate(MapParameterSetter.class),
         resolver = @ObjectGenerate(EnvironmentJsonArrayResolver.class)
 )
 @Combination(StaticParam.class)

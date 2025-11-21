@@ -9,7 +9,9 @@ import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.injection.BindException;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.luckyframework.httpclient.proxy.CommonFunctions.typeOf;
 
@@ -30,7 +32,11 @@ public class EnvironmentJsonArrayResolver implements StaticParamResolver {
                 return Collections.emptyList();
             }
 
-            return Collections.singletonList(new ParamInfo(arrayKey, Collections.singletonList(new ParamInfo(arrayKey, envValue))));
+            // 统一封装成Map
+            Map<String, Object> rootMap = new LinkedHashMap<>();
+            rootMap.put(arrayKey, envValue);
+
+            return Collections.singletonList(new ParamInfo(arrayKey, rootMap));
         } catch (BindException e) {
             if (envArrayAnn.allowConfigNotExist()) {
                 return Collections.emptyList();

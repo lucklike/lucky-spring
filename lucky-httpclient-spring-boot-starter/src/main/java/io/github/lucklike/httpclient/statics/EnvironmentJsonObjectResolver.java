@@ -8,7 +8,6 @@ import io.github.lucklike.httpclient.annotation.CombinableEnvJson;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.injection.BindException;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,11 +37,7 @@ public class EnvironmentJsonObjectResolver implements StaticParamResolver {
             if (ContainerUtils.isEmptyMap(envValue)) {
                 return Collections.emptyList();
             }
-
-            // 将Map转成List<ParamInfo>
-            List<ParamInfo> paramInfos = new ArrayList<>(envValue.size());
-            envValue.forEach((k, v) -> paramInfos.add(new ParamInfo(k, v)));
-            return Collections.singletonList(new ParamInfo("envJson", paramInfos));
+            return Collections.singletonList(new ParamInfo("", envValue));
         } catch (BindException e) {
             if (combinableEnvJsonAnn.allowConfigNotExist()) {
                 return Collections.emptyList();
