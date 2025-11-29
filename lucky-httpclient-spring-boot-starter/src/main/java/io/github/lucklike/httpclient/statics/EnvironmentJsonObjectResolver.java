@@ -1,18 +1,16 @@
 package io.github.lucklike.httpclient.statics;
 
-import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.FlatBean;
 import com.luckyframework.httpclient.proxy.paraminfo.ParamInfo;
 import com.luckyframework.httpclient.proxy.statics.StaticParamAnnContext;
 import com.luckyframework.httpclient.proxy.statics.StaticParamResolver;
-import io.github.lucklike.httpclient.annotation.CombinableEnvJson;
+import io.github.lucklike.httpclient.annotation.EnvironmentJson;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.injection.BindException;
+import org.springframework.core.ResolvableType;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-
-import static com.luckyframework.httpclient.proxy.CommonFunctions.typeOf;
 
 
 /**
@@ -27,19 +25,13 @@ public class EnvironmentJsonObjectResolver implements StaticParamResolver {
 
     @Override
     public List<ParamInfo> parser(StaticParamAnnContext context) {
-        CombinableEnvJson combinableEnvJsonAnn = context.toAnnotation(CombinableEnvJson.class);
-        String envKey = context.parseExpression(combinableEnvJsonAnn.value(), String.class);
+        EnvironmentJson envAnn = context.toAnnotation(EnvironmentJson.class);
+        String envKey = context.parseExpression(envAnn.value(), String.class);
+        ResolvableType type = context.parseExpression(envAnn.type(), ResolvableType.class);
         try {
-            // 从环境变量提取参数
-            LinkedHashMap<String, Object> envValue = BeanFunction.env(envKey, typeOf(LinkedHashMap.class, String.class, Object.class));
-
-            // 空对象直接返回空集合
-            if (ContainerUtils.isEmptyMap(envValue)) {
-                return Collections.emptyList();
-            }
-            return Collections.singletonList(new ParamInfo("", envValue));
+            return Collections.singletonList(new ParamInfo("", FlatBean.of(BeanFunction.env(envKey, type))));
         } catch (BindException e) {
-            if (combinableEnvJsonAnn.allowConfigNotExist()) {
+            if (envAnn.allowConfigNotExist()) {
                 return Collections.emptyList();
             }
             throw e;

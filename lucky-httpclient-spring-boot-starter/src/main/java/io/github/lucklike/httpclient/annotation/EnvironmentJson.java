@@ -1,11 +1,11 @@
 package io.github.lucklike.httpclient.annotation;
 
-import com.luckyframework.httpclient.proxy.annotations.CombineJson;
+import com.luckyframework.httpclient.proxy.annotations.JsonParam;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.StaticParam;
-import com.luckyframework.httpclient.proxy.setter.MapParameterSetter;
+import com.luckyframework.httpclient.proxy.setter.FlatBeanParameterSetter;
 import com.luckyframework.reflect.Combination;
-import io.github.lucklike.httpclient.statics.EnvironmentJsonArrayResolver;
+import io.github.lucklike.httpclient.statics.EnvironmentJsonObjectResolver;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -14,25 +14,35 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
  * 从环境变量中提取JSON对象请求体的解析器
  *
  * @author fukang
  * @version 1.0.0
  * @date 2025/11/19 18:30
- * @see CombineJson
+ * @see JsonParam
  */
 @Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
 @StaticParam(
-        setter = @ObjectGenerate(MapParameterSetter.class),
-        resolver = @ObjectGenerate(EnvironmentJsonArrayResolver.class)
+        setter = @ObjectGenerate(FlatBeanParameterSetter.class),
+        resolver = @ObjectGenerate(EnvironmentJsonObjectResolver.class)
 )
 @Combination(StaticParam.class)
-public @interface CombinableEnvJsonArray {
+public @interface EnvironmentJson {
 
+    /**
+     * 数组类型
+     */
+    String ARRAY = "#{typeOf(T(java.util.List), T(java.util.LinkedHashMap))}";
+
+    /**
+     * Map 类型
+     */
+    String MAP = "#{typeOf(T(java.util.LinkedHashMap), T(String), T(Object))}";
 
     /**
      * 指定环境变量key
@@ -40,17 +50,13 @@ public @interface CombinableEnvJsonArray {
     String value();
 
     /**
-     * 元素类型
+     * 绑定到的具体类型，默认为{@link java.util.LinkedHashMap}
      */
-    Class<?> elementClass();
+    String type() default MAP;
 
     /**
      * 是否允许配置不存在
      */
     boolean allowConfigNotExist() default true;
 
-    /**
-     * 数组前缀
-     */
-    String prefix() default "$";
 }
