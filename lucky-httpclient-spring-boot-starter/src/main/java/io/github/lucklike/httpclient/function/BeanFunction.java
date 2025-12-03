@@ -113,6 +113,7 @@ public class BeanFunction {
      * @param beanName Bean名称
      * @return 是否存在相应的Bean实例
      */
+    @FunctionAlias("has_bean")
     public static boolean hasBean(String beanName) {
         return ApplicationContextUtils.containsBean(beanName);
     }
@@ -123,6 +124,7 @@ public class BeanFunction {
      * @param beanName Bean名称
      * @return 是否存在相应的Bean定义信息
      */
+    @FunctionAlias("has_bean_definition")
     public static boolean hasBeanDefinition(String beanName) {
         return ApplicationContextUtils.containsBeanDefinition(beanName);
     }
@@ -132,6 +134,7 @@ public class BeanFunction {
      *
      * @param event 事件
      */
+    @FunctionAlias("publish_event")
     public static void publishEvent(Object event) {
         ApplicationContextUtils.publishEvent(event);
     }
@@ -139,6 +142,7 @@ public class BeanFunction {
     /**
      * 获取 application 唯一ID
      */
+    @FunctionAlias("application_id")
     public static String applicationId() {
         return ApplicationContextUtils.getId();
     }
@@ -148,6 +152,7 @@ public class BeanFunction {
      *
      * @return application 名称
      */
+    @FunctionAlias("application_name")
     public static String applicationName() {
         return ApplicationContextUtils.getApplicationName();
     }
@@ -157,6 +162,7 @@ public class BeanFunction {
      *
      * @return display 名称
      */
+    @FunctionAlias("display_name")
     public static String displayName() {
         return ApplicationContextUtils.getDisplayName();
     }
@@ -166,6 +172,7 @@ public class BeanFunction {
      *
      * @return 第一次加载此上下文时的时间戳（毫秒）
      */
+    @FunctionAlias("startup_date")
     public static long startupDate() {
         return ApplicationContextUtils.getStartupDate();
     }
@@ -216,6 +223,7 @@ public class BeanFunction {
      * @param targetObject 用于绑定配置的实体类对象
      * @param prefix       配置
      */
+    @FunctionAlias("init_bind")
     public static void initBind(Object targetObject, String prefix) {
         Object configObj = env(prefix, targetObject.getClass());
         CommonFunctions.initCopy(configObj, targetObject);
