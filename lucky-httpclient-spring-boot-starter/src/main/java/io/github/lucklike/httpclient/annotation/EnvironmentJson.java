@@ -37,12 +37,12 @@ public @interface EnvironmentJson {
     /**
      * 数组类型
      */
-    String ARRAY = "#{typeOf(T(java.util.List), T(java.util.LinkedHashMap))}";
+    String ARRAY = "#{type_of(T(java.util.List), T(java.util.LinkedHashMap))}";
 
     /**
      * Map 类型
      */
-    String MAP = "#{typeOf(T(java.util.LinkedHashMap), T(String), T(Object))}";
+    String MAP = "#{type_of(T(java.util.LinkedHashMap), T(String), T(Object))}";
 
     /**
      * 指定环境变量key
