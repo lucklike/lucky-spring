@@ -13,12 +13,12 @@ public class Constant {
     /**
      * Spring函数空间
      */
-    public final static String SPRING_FUNCTION_SPACE = "__Fun::Spring::__";
+    public final static String SPRING_FUNCTION_SPACE = "__Func::Spring__";
 
     /**
      * 简单HTTP执行器
      */
-    public final static String SIMPLE_HTTP_EXECUTOR = "__Fun::SimpleHttpExecutor::__";
+    public final static String SIMPLE_HTTP_EXECUTOR = "__Func::SimpleHttpExecutor__";
 
 
     public static final String PROXY_FACTORY_BEAN_NAME = "__luckyHttpClientProxyFactory__";
