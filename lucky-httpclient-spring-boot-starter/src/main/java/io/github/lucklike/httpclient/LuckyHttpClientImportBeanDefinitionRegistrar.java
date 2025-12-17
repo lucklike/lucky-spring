@@ -50,6 +50,8 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
+        // 打印版本信息
+        printVersion();
 
         // 构造BeanDefinition生成器
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
@@ -98,7 +100,6 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         });
 
         log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
-        printVersion();
     }
 
     /**
