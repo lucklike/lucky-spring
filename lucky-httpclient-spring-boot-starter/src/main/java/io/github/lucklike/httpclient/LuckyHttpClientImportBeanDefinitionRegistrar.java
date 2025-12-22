@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.luckyframework.httpclient.proxy.Version.printLogo;
 import static com.luckyframework.httpclient.proxy.Version.printVersion;
 
 /**
@@ -100,7 +99,6 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
         // 打印版本信息和logo
         printVersion();
-        printLogo();
     }
 
     /**
