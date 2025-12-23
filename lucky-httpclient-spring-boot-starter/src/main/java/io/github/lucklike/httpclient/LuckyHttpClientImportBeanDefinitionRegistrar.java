@@ -87,7 +87,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
                     registry.registerBeanDefinition(beanName, definition);
-                    log.debug("@HttpClientComponent '{}' is registered", beanClassName);
+                    log.debug("@HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
                     s.getAndIncrement();
                 } else {
                     throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
