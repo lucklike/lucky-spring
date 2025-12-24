@@ -401,7 +401,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             factory.setHttpExecutor(globalConfig.getExecutorFactory().getHttpExecutor());
         } else if (StringUtils.hasText(globalConfig.getExecutorBean())) {
             factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutorBean(), HttpExecutor.class));
-        } else if (factoryConfig.getHttpExecutor() != null) {
+        } else if (globalConfig.getExecutor() != null) {
             factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutor().getHttpExecutorBean(), HttpExecutor.class));
         } else {
             factory.setHttpExecutor(applicationContext.getBeanProvider(HttpExecutor.class).stream().findFirst().get());
