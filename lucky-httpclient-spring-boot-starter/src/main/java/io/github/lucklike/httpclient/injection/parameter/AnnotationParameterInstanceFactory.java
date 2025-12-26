@@ -6,7 +6,12 @@ import org.springframework.core.ResolvableType;
 
 import java.lang.annotation.Annotation;
 
-public abstract class AnnotationParameterInstanceFactory<A extends Annotation> extends AbstractParameterInstanceFactory {
+/**
+ * 基于注解的参数示例工程类实现
+ *
+ * @param <A> 注解类型
+ */
+public abstract class AnnotationParameterInstanceFactory<A extends Annotation> implements ParameterInstanceFactory {
 
     /**
      * 注解类型
@@ -22,28 +27,19 @@ public abstract class AnnotationParameterInstanceFactory<A extends Annotation> e
         this.annotationType = (Class<A>) ResolvableType.forClass(AnnotationParameterInstanceFactory.class, getClass()).getGeneric(0).resolve();
     }
 
-
-    @Override
-    public boolean doCanCreateInstance(ParameterInfo parameterInfo, ResolvableType realType) {
-        // 空跑
-        return false;
-    }
-
     @Override
     public boolean canCreateInstance(ParameterInfo parameterInfo) {
         return AnnotationUtils.isAnnotated(parameterInfo.getParameter(), annotationType);
     }
 
     @Override
-    public Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType) {
-        A annotation = AnnotationUtils.findMergedAnnotation(parameterInfo.getParameter(), annotationType);
-        return doCreateInstance(parameterInfo, realType, annotation);
+    public Object createInstance(ParameterInfo parameterInfo) {
+        return doCreateInstance(parameterInfo, getAnnotation(parameterInfo));
     }
 
     protected A getAnnotation(ParameterInfo parameterInfo) {
-        return AnnotationUtils.getMergedAnnotation(parameterInfo.getParameter(), annotationType);
+        return AnnotationUtils.findMergedAnnotation(parameterInfo.getParameter(), annotationType);
     }
 
-
-    protected abstract Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, A annotation);
+    protected abstract Object doCreateInstance(ParameterInfo parameterInfo, A annotation);
 }

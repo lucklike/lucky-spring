@@ -4,9 +4,6 @@ import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.injection.HttpReference;
-import org.springframework.core.ResolvableType;
-
-import java.util.Objects;
 
 
 /**
@@ -15,9 +12,9 @@ import java.util.Objects;
 public class HttpReferenceParameterInstanceFactory extends AnnotationParameterInstanceFactory<HttpReference> {
 
     @Override
-    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, HttpReference httpReferenceAnn) {
+    protected Object doCreateInstance(ParameterInfo parameterInfo, HttpReference httpReferenceAnn) {
         HttpClientProxyObjectFactory factory = ApplicationContextUtils.getBean(HttpClientProxyObjectFactory.class);
-        Class<?> parameterType = Objects.requireNonNull(realType.resolve());
+        Class<?> parameterType = parameterInfo.getTargetClass();
         switch (httpReferenceAnn.proxyModel()) {
             case JDK:
                 return factory.getJdkProxyObject(parameterType);

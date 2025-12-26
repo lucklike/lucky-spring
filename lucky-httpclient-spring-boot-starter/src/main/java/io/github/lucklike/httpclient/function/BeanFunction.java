@@ -11,7 +11,6 @@ import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
-import io.github.lucklike.httpclient.injection.WrapType;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,7 +24,6 @@ import org.springframework.lang.NonNull;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
@@ -46,7 +44,7 @@ public class BeanFunction {
     @FunctionAlias(__$PARAMETER_INSTANCE_FUNCTION$__)
     public static Object getParameterInstance(ParameterInfo parameterInfo) {
 
-        // 使用Spring容器中的ParameterInstanceFactory来创建参数实例
+        // 使用Spring 容器中的ParameterInstanceFactory来创建参数实例
         ObjectProvider<ParameterInstanceFactory> factoryBeanProvider = ApplicationContextUtils.getBeanProvider(ParameterInstanceFactory.class);
         Iterator<ParameterInstanceFactory> iterator = factoryBeanProvider.orderedStream().iterator();
         while (iterator.hasNext()) {
@@ -57,35 +55,29 @@ public class BeanFunction {
         }
 
         // 使用类型查找
-        ResolvableType paramType = parameterInfo.getResolvableType();
-        WrapType wrapType = WrapType.of(paramType);
-        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(wrapType.getTargetType(paramType));
+        ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(parameterInfo.getTargetResolvableType());
 
-        // ObjectProvider类型不用包装，直接返回
-        if (wrapType == WrapType.OBJECT_PROVIDER) {
+        // ObjectProvider 类型直接返回
+        if (ObjectProvider.class.isAssignableFrom(parameterInfo.getTargetClass())) {
             return beanProvider;
         }
 
         // 将参数实例获取逻辑封装为Supplier
-        Supplier<?> objectSupplier = () -> {
-            try {
-                return beanProvider.getObject();
-            } catch (NoSuchBeanDefinitionException e) {
-                // 找到多个Bean时抛异常
-                if (beanProvider.stream().count() > 1) {
-                    throw e;
-                }
-
-                // 找不到Bean时判断有无@AllowNull注解，有则注入null值，否则抛异常
-                AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
-                if (allowNullAnn != null && allowNullAnn.value()) {
-                    return null;
-                }
+        try {
+            return beanProvider.getObject();
+        } catch (NoSuchBeanDefinitionException e) {
+            // 找到多个 Bean时抛异常
+            if (beanProvider.stream().count() > 1) {
                 throw e;
             }
-        };
 
-        return wrapType.wrap(objectSupplier);
+            // 找不到Bean时判断有无@AllowNull注解，有则注入null值，否则抛异常
+            AllowNull allowNullAnn = AnnotationUtils.sameAnnotationCombined(parameterInfo.getParameter(), AllowNull.class);
+            if (allowNullAnn != null && allowNullAnn.value()) {
+                return null;
+            }
+            throw e;
+        }
     }
 
     /**
