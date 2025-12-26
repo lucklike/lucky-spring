@@ -1,6 +1,9 @@
 package io.github.lucklike.httpclient.injection;
 
+import com.luckyframework.common.FlatBean;
+import com.luckyframework.httpclient.proxy.spel.SpelBean;
 import com.luckyframework.spel.LazyValue;
+import com.luckyframework.spel.SimpleSpelBean;
 import io.github.lucklike.httpclient.SupplierObjectProvider;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
@@ -41,6 +44,21 @@ public enum WrapType {
      * {@link Optional} Wrapper
      */
     OPTIONAL(Optional.class, o -> Optional.ofNullable(o.get())),
+
+    /**
+     * {@link FlatBean} Wrapper
+     */
+    FLAT_BEAN(FlatBean.class, FlatBean::of),
+
+    /**
+     * {@link SpelBean} Wrapper
+     */
+    SPEL_BEAN(SpelBean.class, SpelBean::ofIncomplete),
+
+    /**
+     * {@link SimpleSpelBean} Wrapper
+     */
+    SIMPLE_SPEL_BEAN(SimpleSpelBean.class, SimpleSpelBean::of),
 
     /**
      * Default Wrapper
