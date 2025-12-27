@@ -58,7 +58,7 @@ public class BeanFunction {
         ObjectProvider<Object> beanProvider = ApplicationContextUtils.getBeanProvider(parameterInfo.getTargetResolvableType());
 
         // ObjectProvider 类型直接返回
-        if (ObjectProvider.class.isAssignableFrom(parameterInfo.getTargetClass())) {
+        if (ObjectProvider.class.isAssignableFrom(parameterInfo.getParameter().getType())) {
             return beanProvider;
         }
 

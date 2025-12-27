@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient;
 
+import io.github.lucklike.httpclient.injection.ObjectProviderWrapTypeHolder;
+import io.github.lucklike.httpclient.injection.WrapTypeHolder;
 import io.github.lucklike.httpclient.injection.parameter.BindParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.HttpReferenceParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
@@ -40,4 +42,8 @@ public class LuckyAutoInjectionAutoConfiguration {
         return new BindParameterInstanceFactory();
     }
 
+    @Bean("__objectProviderWrapTypeHolder__")
+    public WrapTypeHolder objectProviderWrapTypeHolder() {
+        return new ObjectProviderWrapTypeHolder();
+    }
 }

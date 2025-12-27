@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.function.Supplier;
 
 /**
- * 基于{@link Supplier}来实现的${@link ObjectProvider}
+ * 基于{@link Supplier}来实现的{@link ObjectProvider}
  *
  * @param <T> 懒加载对象的类型
  */

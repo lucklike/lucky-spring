@@ -44,6 +44,7 @@ import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.httpclient.proxy.spel.ValueSpaceConstant;
+import com.luckyframework.httpclient.proxy.spel.WrapType;
 import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.MonoMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
@@ -89,11 +90,13 @@ import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConvert
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
+import io.github.lucklike.httpclient.injection.WrapTypeHolder;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -210,6 +213,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredSpace(factoryConfig);
+        registeredWapType(factoryConfig);
         registeredUniversalFunction(factory);
         registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -228,7 +232,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         configApiSourceSetting();
         return factory;
     }
-
 
     /**
      * 注册命名空间
@@ -252,6 +255,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
+    /**
+     * 注册 WapType
+     *
+     * @param factoryConfig 工厂配置
+     */
+    private void registeredWapType(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        ObjectProvider<WrapTypeHolder> beanProvider = applicationContext.getBeanProvider(WrapTypeHolder.class);
+        beanProvider.stream().forEach(wth -> WrapType.registerWrapType(wth.getBaseType(), wth.wrapFunction()));
+    }
 
     /**
      * 注册通用函数
