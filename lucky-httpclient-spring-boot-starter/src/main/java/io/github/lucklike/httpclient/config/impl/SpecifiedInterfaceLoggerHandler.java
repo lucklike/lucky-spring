@@ -59,8 +59,8 @@ public class SpecifiedInterfaceLoggerHandler implements LoggerHandler {
             return false;
         }
 
-        // [all] 表示全部
-        if (printLogPackageSet.contains("[all]")) {
+        // *.* 表示全部
+        if (printLogPackageSet.contains("*.*")) {
             return true;
         }
 

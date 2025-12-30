@@ -37,7 +37,8 @@ public class LoggerConfiguration {
     private Class<LoggerHandler> handlerClass;
 
     /**
-     * 指定需要打印日志的包
+     * 指定需要打印日志的包<br/>
+     * *.*表示所有包
      */
     private Set<String> packages = new HashSet<>();
 
@@ -205,7 +206,8 @@ public class LoggerConfiguration {
     }
 
     /**
-     * 指定需要打印日志的包
+     * 指定需要打印日志的包<br/>
+     * *.*表示所有包
      *
      * @param packages 指定需要打印日志的包
      */
@@ -215,7 +217,8 @@ public class LoggerConfiguration {
 
 
     /**
-     * 获取需要打印日志的包集合
+     * 获取需要打印日志的包集合<br/>
+     * *.*表示所有包
      *
      * @return 需要打印日志的包集合
      */
