@@ -7,8 +7,6 @@ public class KeyStoreConfiguration extends KeyStoreInfo {
 
     private String id;
 
-
-
     /**
      * 获取此KeyStore的唯一ID
      *
