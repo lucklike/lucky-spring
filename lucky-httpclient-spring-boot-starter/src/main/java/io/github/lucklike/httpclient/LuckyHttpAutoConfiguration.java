@@ -65,7 +65,6 @@ import io.github.lucklike.httpclient.config.HttpAsyncThreadPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.HttpExecutorConfiguration;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
-import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
 import io.github.lucklike.httpclient.config.Locator;
 import io.github.lucklike.httpclient.config.LocatorAutoConvert;
 import io.github.lucklike.httpclient.config.LocatorParameterConvert;
@@ -715,11 +714,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         SSLConfiguration sslConfig = factoryConfig.getSsl();
 
         // 注册SSLContext
-        KeyStoreConfiguration[] sslContexts = sslConfig.getKeyStores();
-        if (ContainerUtils.isNotEmptyArray(sslContexts)) {
-            for (KeyStoreConfiguration sslContext : sslContexts) {
-                factory.addKeyStoreInfo(sslContext.getId(), sslContext);
-            }
+        Map<String, KeyStoreInfo> keyStoreMap = sslConfig.getKeyStores();
+        if (ContainerUtils.isNotEmptyMap(keyStoreMap)) {
+            keyStoreMap.forEach(factory::addKeyStoreInfo);
         }
 
         // 开启全局SSL配置

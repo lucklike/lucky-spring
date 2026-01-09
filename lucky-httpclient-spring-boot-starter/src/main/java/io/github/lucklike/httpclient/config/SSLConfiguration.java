@@ -1,11 +1,13 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
+import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
 import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import java.util.Map;
 
 public class SSLConfiguration {
 
@@ -59,7 +61,7 @@ public class SSLConfiguration {
     /**
      * KeyStore配置
      */
-    private KeyStoreConfiguration[] keyStores;
+    private Map<String, KeyStoreInfo> keyStores;
 
     /**
      * 是否全局开启SSL，为true时默认开启的时单向认证并且忽略域名校验<br/>
@@ -195,7 +197,7 @@ public class SSLConfiguration {
      *
      * @return 所有SSL上下文配置
      */
-    public KeyStoreConfiguration[] getKeyStores() {
+    public Map<String, KeyStoreInfo> getKeyStores() {
         return keyStores;
     }
 
@@ -204,7 +206,7 @@ public class SSLConfiguration {
      *
      * @param keyStores 一组SSL上下文配置
      */
-    public void setKeyStores(KeyStoreConfiguration[] keyStores) {
+    public void setKeyStores(Map<String, KeyStoreInfo> keyStores) {
         this.keyStores = keyStores;
     }
 }
