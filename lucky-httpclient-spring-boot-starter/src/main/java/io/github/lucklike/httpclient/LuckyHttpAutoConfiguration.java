@@ -31,7 +31,9 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.logging.CustomMasker;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
@@ -60,6 +62,7 @@ import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.AutoConvertConfig;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
+import io.github.lucklike.httpclient.config.CustomMaskerConfig;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpAsyncThreadPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
@@ -69,6 +72,7 @@ import io.github.lucklike.httpclient.config.Locator;
 import io.github.lucklike.httpclient.config.LocatorAutoConvert;
 import io.github.lucklike.httpclient.config.LocatorParameterConvert;
 import io.github.lucklike.httpclient.config.LoggerConfiguration;
+import io.github.lucklike.httpclient.config.LoggerMaskerConfig;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.ParameterConvertConfig;
 import io.github.lucklike.httpclient.config.RType;
@@ -116,6 +120,7 @@ import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -563,8 +568,28 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
             plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
 
+            // 慢请求配置
             plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
             plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
+
+            // 日志脱敏相关配置
+            LoggerMaskerConfig maskers = loggerConfig.getMaskers();
+            plaLoggerHandler.setEnableRequestMask(String.valueOf(maskers.isMaskRequest()));
+            plaLoggerHandler.setEnableResponseMask(String.valueOf(maskers.isMaskResponse()));
+
+            Map<CustomMasker, Set<String>> maskerSetMap = new LinkedHashMap<>();
+            Map<MaskType, Set<String>> generalConfig = maskers.getPredefined();
+            if (ContainerUtils.isNotEmptyMap(generalConfig)) {
+                maskerSetMap.putAll(generalConfig);
+            }
+            List<CustomMaskerConfig> customConfig = maskers.getExtended();
+            if (ContainerUtils.isNotEmptyCollection(customConfig)) {
+                for (CustomMaskerConfig maskerConfig : customConfig) {
+                    CustomMasker customMasker = ClassUtils.newObject(maskerConfig.getClazz());
+                    maskerSetMap.put(customMasker, maskerConfig.getKeys());
+                }
+            }
+            plaLoggerHandler.addCommonMaskers(maskerSetMap);
         }
 
         SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);

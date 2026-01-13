@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import io.github.lucklike.httpclient.config.impl.LoggerImpl;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -148,6 +149,12 @@ public class LoggerConfiguration {
      * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String respLogCondition;
+
+    /**
+     * 日志脱敏配置
+     */
+    @NestedConfigurationProperty
+    private LoggerMaskerConfig maskers = new LoggerMaskerConfig();
 
 
     /**
@@ -536,5 +543,23 @@ public class LoggerConfiguration {
      */
     public void setSlowTime(long slowTime) {
         this.slowTime = slowTime;
+    }
+
+    /**
+     * 获取日志脱敏配置
+     *
+     * @return 日志脱敏配置
+     */
+    public LoggerMaskerConfig getMaskers() {
+        return maskers;
+    }
+
+    /**
+     * 设置日志脱敏配置
+     *
+     * @param maskers 日志脱敏配置
+     */
+    public void setMaskers(LoggerMaskerConfig maskers) {
+        this.maskers = maskers;
     }
 }
