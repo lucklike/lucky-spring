@@ -94,6 +94,7 @@ import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.injection.WrapTypeHolder;
+import io.github.lucklike.httpclient.masker.BindingKeyMasker;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import org.slf4j.Logger;
@@ -578,10 +579,17 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             plaLoggerHandler.setEnableResponseMask(String.valueOf(maskers.isMaskResponse()));
 
             Map<CustomMasker, Set<String>> maskerSetMap = new LinkedHashMap<>();
+
+            // 注册 Spring 容器中的脱敏处理器
+            applicationContext.getBeanProvider(BindingKeyMasker.class).forEach(bkm -> maskerSetMap.put(bkm, bkm.getKeys()));
+
+            // 注册预定义的脱敏处理器
             Map<MaskType, Set<String>> generalConfig = maskers.getPredefined();
             if (ContainerUtils.isNotEmptyMap(generalConfig)) {
                 maskerSetMap.putAll(generalConfig);
             }
+
+            // 注册自定扩展的脱敏处理器
             List<CustomMaskerConfig> customConfig = maskers.getExtended();
             if (ContainerUtils.isNotEmptyCollection(customConfig)) {
                 for (CustomMaskerConfig maskerConfig : customConfig) {
