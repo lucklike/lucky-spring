@@ -593,7 +593,13 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             List<CustomMaskerConfig> customConfig = maskers.getExtended();
             if (ContainerUtils.isNotEmptyCollection(customConfig)) {
                 for (CustomMaskerConfig maskerConfig : customConfig) {
-                    CustomMasker customMasker = ClassUtils.newObject(maskerConfig.getClazz());
+                    CustomMasker customMasker;
+                    String beanName = maskerConfig.getBean();
+                    if (StringUtils.hasText(beanName)) {
+                        customMasker = applicationContext.getBean(beanName, CustomMasker.class);
+                    } else {
+                        customMasker = ClassUtils.newObject(maskerConfig.getClazz());
+                    }
                     maskerSetMap.put(customMasker, maskerConfig.getKeys());
                 }
             }
