@@ -1017,6 +1017,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void httpParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+
+        //设置自动URL推导相关的配置
+        factory.setEnableAutoUrlDerivation(factoryConfig.getEnableAutoUrlDerivation());
+        factory.setAutoDerivationDefMethod(factoryConfig.getAutoDerivationDefMethod());
+
         // 请求参数设置
         factory.setHeaders(factoryConfig.getHeaderParams());
         factory.setPathParameters(factoryConfig.getPathParams());

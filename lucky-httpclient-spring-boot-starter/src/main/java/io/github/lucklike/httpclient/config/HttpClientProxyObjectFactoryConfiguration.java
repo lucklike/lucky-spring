@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
+import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -142,6 +143,28 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 参数转换器相关配置
      */
     private ParameterConvertConfig[] parameterConverts;
+
+
+    /**
+     * 是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *
+     *     例如：
+     *     post$user_getList
+     *     ->
+     *     POST  /user/getList
+     *
+     * </pre>
+     *
+     */
+    private Boolean enableAutoUrlDerivation = false;
+
+    /**
+     * 开启自动 URL 推导功能时的默认请求方法
+     */
+    private RequestMethod autoDerivationDefMethod = RequestMethod.POST;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -314,6 +337,33 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.parameterConverts = parameterConverts;
     }
 
+    /**
+     * 设置是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *
+     *     例如：
+     *     post$user_getList
+     *     ->
+     *     POST  /user/getList
+     * </pre>
+     *
+     * @param enableAutoUrlDerivation 是否开启自动 URL 推导功能
+     */
+    public void setEnableAutoUrlDerivation(Boolean enableAutoUrlDerivation) {
+        this.enableAutoUrlDerivation = enableAutoUrlDerivation;
+    }
+
+    /**
+     * 设置 URL 推导功能时的默认请求方法
+     *
+     * @param autoDerivationDefMethod 默认请求方法
+     */
+    public void setAutoDerivationDefMethod(RequestMethod autoDerivationDefMethod) {
+        this.autoDerivationDefMethod = autoDerivationDefMethod;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -471,4 +521,35 @@ public class HttpClientProxyObjectFactoryConfiguration {
     public ParameterConvertConfig[] getParameterConverts() {
         return parameterConverts;
     }
+
+
+    /**
+     * 是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *
+     *     例如：
+     *     post$user_getList
+     *     ->
+     *     POST  /user/getList
+     * </pre>
+     *
+     * @return 是否开启自动 URL 推导功能
+     */
+    public Boolean getEnableAutoUrlDerivation() {
+        return enableAutoUrlDerivation;
+    }
+
+
+
+    /**
+     * 获取 URL 推导功能时的默认请求方法
+     *
+     * @return 默认请求方法
+     */
+    public RequestMethod getAutoDerivationDefMethod() {
+        return autoDerivationDefMethod;
+    }
+
 }
