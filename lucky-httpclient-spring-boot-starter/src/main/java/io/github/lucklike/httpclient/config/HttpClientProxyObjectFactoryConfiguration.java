@@ -149,12 +149,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 是否开启自动 URL 推导功能
      * <pre>
      *     方法名规则：
-     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
      *
      *     例如：
-     *     post$user_getList
+     *     post$$user$get_list
      *     ->
-     *     POST  /user/getList
+     *     POST  /user/get_list
      *
      * </pre>
      *
@@ -341,12 +341,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 设置是否开启自动 URL 推导功能
      * <pre>
      *     方法名规则：
-     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
      *
      *     例如：
-     *     post$user_getList
+     *     post$$user$get_list
      *     ->
-     *     POST  /user/getList
+     *     POST  /user/get_list
      * </pre>
      *
      * @param enableAutoUrlDerivation 是否开启自动 URL 推导功能
@@ -527,12 +527,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 是否开启自动 URL 推导功能
      * <pre>
      *     方法名规则：
-     *     {RequestMethod}${path1}_{path2}_...._{pathn}
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
      *
      *     例如：
-     *     post$user_getList
+     *     post$$user$get_list
      *     ->
-     *     POST  /user/getList
+     *     POST  /user/get_list
      * </pre>
      *
      * @return 是否开启自动 URL 推导功能
