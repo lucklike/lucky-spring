@@ -1,9 +1,12 @@
 package io.github.lucklike.httpclient.injection;
 
 
+import com.luckyframework.httpclient.proxy.spel.WrapType;
 import org.springframework.core.ResolvableType;
+import org.springframework.lang.NonNull;
 
 import java.lang.reflect.AnnotatedElement;
+import java.util.function.Supplier;
 
 /**
  * 属性信息
@@ -25,6 +28,11 @@ public class PropertyInfo {
     private final ResolvableType type;
 
     /**
+     * 包装类型
+     */
+    private final WrapType wrapType;
+
+    /**
      * 私有构造器
      *
      * @param element 元素信息
@@ -33,6 +41,7 @@ public class PropertyInfo {
     private PropertyInfo(AnnotatedElement element, ResolvableType type) {
         this.element = element;
         this.type = type;
+        this.wrapType = WrapType.of(type);
     }
 
     /**
@@ -62,5 +71,58 @@ public class PropertyInfo {
      */
     public ResolvableType getType() {
         return type;
+    }
+
+
+    /**
+     * 获取包装类型
+     *
+     * @return 包装类型
+     */
+    @NonNull
+    public WrapType getWrapType() {
+        return wrapType;
+    }
+
+    /**
+     * 获取真实类型{@link ResolvableType}
+     *
+     * @return 真实类型{@link ResolvableType}
+     */
+    @NonNull
+    public ResolvableType getTargetResolvableType() {
+        return wrapType.getTargetType(type);
+    }
+
+    /**
+     * 获取真实类型{@link Class}
+     *
+     * @return 真实类型{@link Class}
+     */
+    @NonNull
+    public Class<?> getTargetClass() {
+        ResolvableType targetResolvableType = getTargetResolvableType();
+        Class<?> resolve = targetResolvableType.resolve();
+        return resolve == null ? Object.class : resolve;
+    }
+
+    /**
+     * 对Value进行包装
+     *
+     * @param value 待包装的值
+     * @return 包装后的值
+     */
+    public Object wrapValue(Object value) {
+        return wrapType.wrap(() -> value);
+    }
+
+    /**
+     * 对Value进行包装
+     *
+     * @param valueSupplier 待包装的值
+     * @return 包装后的值
+     */
+    public Object wrapValue(Supplier<?> valueSupplier) {
+        return wrapType.wrap(valueSupplier);
     }
 }

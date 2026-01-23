@@ -50,10 +50,6 @@ public class SpringCloudDomainNameGetter implements DomainNameGetter {
         }
 
         // 拼接URL返回
-        String baseUrl = instance.getUri().toString();
-        if (StringUtils.hasText(path)) {
-            return StringUtils.joinUrlPath(baseUrl, path);
-        }
-        return baseUrl;
+        return StringUtils.joinUrlPath(instance.getUri().toString(), path);
     }
 }

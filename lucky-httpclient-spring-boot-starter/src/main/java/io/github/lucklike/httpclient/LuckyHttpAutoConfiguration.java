@@ -10,14 +10,9 @@ import com.luckyframework.httpclient.core.convert.SpringMultipartFileAutoConvert
 import com.luckyframework.httpclient.core.encoder.BrotliContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ContentEncodingConvertor;
 import com.luckyframework.httpclient.core.encoder.ZstdContentEncodingConvertor;
-import com.luckyframework.httpclient.core.executor.HttpClient5Executor;
-import com.luckyframework.httpclient.core.executor.HttpClientExecutor;
 import com.luckyframework.httpclient.core.executor.HttpExecutor;
-import com.luckyframework.httpclient.core.executor.JdkHttpExecutor;
-import com.luckyframework.httpclient.core.executor.OkHttpExecutor;
 import com.luckyframework.httpclient.core.meta.CookieStore;
 import com.luckyframework.httpclient.core.meta.Response;
-import com.luckyframework.httpclient.core.meta.Version;
 import com.luckyframework.httpclient.core.processor.AbstractSaveResultResponseProcessor;
 import com.luckyframework.httpclient.core.ssl.HostnameVerifierFactory;
 import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
@@ -25,6 +20,7 @@ import com.luckyframework.httpclient.core.ssl.SSLException;
 import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
+import com.luckyframework.httpclient.generalapi.plugin.ValidationPlugin;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
@@ -35,15 +31,22 @@ import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
+import com.luckyframework.httpclient.proxy.logging.CustomMasker;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
+import com.luckyframework.httpclient.proxy.retry.RetryActuator;
+import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
+import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
 import com.luckyframework.httpclient.proxy.spel.StaticMethodEntry;
 import com.luckyframework.httpclient.proxy.spel.ValueSpaceConstant;
+import com.luckyframework.httpclient.proxy.spel.WrapType;
 import com.luckyframework.httpclient.proxy.typeparser.FluxMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.MonoMethodPackTypeParser;
 import com.luckyframework.httpclient.proxy.typeparser.PackTypeParser;
@@ -51,26 +54,31 @@ import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
 import com.luckyframework.reflect.ClassUtils;
+import com.luckyframework.retry.BackoffWaitBeforeRetry;
+import com.luckyframework.retry.TaskResult;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
 import com.luckyframework.threadpool.ThreadPoolParam;
 import io.github.lucklike.httpclient.config.AutoConvertConfig;
 import io.github.lucklike.httpclient.config.CookieManageConfiguration;
+import io.github.lucklike.httpclient.config.CustomMaskerConfig;
 import io.github.lucklike.httpclient.config.GenerateEntry;
+import io.github.lucklike.httpclient.config.HttpAsyncThreadPoolConfiguration;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.HttpConnectionPoolConfiguration;
+import io.github.lucklike.httpclient.config.HttpExecutorConfiguration;
 import io.github.lucklike.httpclient.config.InterceptorGenerateEntry;
-import io.github.lucklike.httpclient.config.KeyStoreConfiguration;
 import io.github.lucklike.httpclient.config.Locator;
 import io.github.lucklike.httpclient.config.LocatorAutoConvert;
 import io.github.lucklike.httpclient.config.LocatorParameterConvert;
 import io.github.lucklike.httpclient.config.LoggerConfiguration;
+import io.github.lucklike.httpclient.config.LoggerMaskerConfig;
 import io.github.lucklike.httpclient.config.ObjectCreatorFactory;
 import io.github.lucklike.httpclient.config.ParameterConvertConfig;
 import io.github.lucklike.httpclient.config.RType;
 import io.github.lucklike.httpclient.config.RedirectConfiguration;
 import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
+import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
@@ -85,10 +93,15 @@ import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConvert
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
+import io.github.lucklike.httpclient.injection.WrapTypeHolder;
+import io.github.lucklike.httpclient.masker.BindingKeyMasker;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
+import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -104,9 +117,11 @@ import org.springframework.core.type.AnnotationMetadata;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -121,6 +136,7 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTO
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.DEFAULT_VALIDATION_PLUGIN_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
@@ -202,6 +218,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredSpace(factoryConfig);
+        registeredWapType(factoryConfig);
         registeredUniversalFunction(factory);
         registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -212,6 +229,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         exceptionHandlerSetting(factory, factoryConfig);
         httpParamSetting(factory, factoryConfig);
         loggerSetting(factory, factoryConfig);
+        retryActuatorSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
         sslSetting(factory, factoryConfig);
         responseConvertSetting(factory, factoryConfig);
@@ -219,7 +237,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         configApiSourceSetting();
         return factory;
     }
-
 
     /**
      * 注册命名空间
@@ -243,6 +260,15 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
+    /**
+     * 注册 WapType
+     *
+     * @param factoryConfig 工厂配置
+     */
+    private void registeredWapType(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        ObjectProvider<WrapTypeHolder> beanProvider = applicationContext.getBeanProvider(WrapTypeHolder.class);
+        beanProvider.stream().forEach(wth -> WrapType.registerWrapType(wth.getBaseType(), wth.wrapFunction()));
+    }
 
     /**
      * 注册通用函数
@@ -354,7 +380,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 注册配置文件中的SpEL函数
-        ClassStaticElement[] springElFunctionClasses = springElConfig.getClasses();
+        ClassStaticElement[] springElFunctionClasses = springElConfig.getFunctionClasses();
         if (ContainerUtils.isNotEmptyArray(springElFunctionClasses)) {
             for (ClassStaticElement springElFunctionClass : springElFunctionClasses) {
                 factory.addSpringElFunctionClass(springElFunctionClass.getNamespace(), springElFunctionClass.getClazz());
@@ -383,14 +409,39 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void httpExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        if (factoryConfig.getHttpExecutorFactory() != null) {
-            factory.setHttpExecutor(factoryConfig.getHttpExecutorFactory().getHttpExecutor());
-        } else if (StringUtils.hasText(factoryConfig.getHttpExecutorBean())) {
-            factory.setHttpExecutor(applicationContext.getBean(factoryConfig.getHttpExecutorBean(), HttpExecutor.class));
-        } else if (factoryConfig.getHttpExecutor() != null) {
-            factory.setHttpExecutor(applicationContext.getBean(factoryConfig.getHttpExecutor().getHttpExecutorBean(), HttpExecutor.class));
+
+        HttpExecutorConfiguration httpExecutorConfig = factoryConfig.getHttpExecutor();
+
+        // 全局Http执行器设置
+        HttpExecutorConfiguration.GlobalConfiguration globalConfig = httpExecutorConfig.getGlobal();
+        if (globalConfig.getExecutorFactory() != null) {
+            factory.setHttpExecutor(globalConfig.getExecutorFactory().getHttpExecutor());
+        } else if (StringUtils.hasText(globalConfig.getExecutorBean())) {
+            factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutorBean(), HttpExecutor.class));
+        } else if (globalConfig.getExecutor() != null) {
+            factory.setHttpExecutor(applicationContext.getBean(globalConfig.getExecutor().getHttpExecutorBean(), HttpExecutor.class));
         } else {
             factory.setHttpExecutor(applicationContext.getBeanProvider(HttpExecutor.class).stream().findFirst().get());
+        }
+
+        // 导入Spring容器中配置的HttpExecutor
+        String[] executorBeanNames = applicationContext.getBeanNamesForType(HttpExecutor.class);
+        if (ContainerUtils.isNotEmptyArray(executorBeanNames)) {
+            for (String executorBeanName : executorBeanNames) {
+                factory.addAlternativeHttpExecutor(executorBeanName, () -> applicationContext.getBean(HttpExecutor.class));
+            }
+        }
+
+        // 导入备用Http执行器设置
+        Map<String, HttpExecutorConfiguration.AlternativeConfiguration> alternativeConfig = httpExecutorConfig.getAlternative();
+        if (ContainerUtils.isNotEmptyMap(alternativeConfig)) {
+            alternativeConfig.forEach((k, v) -> {
+                if (v.isLazy()) {
+                    factory.addAlternativeHttpExecutor(k, v::createExecutor);
+                } else {
+                    factory.addAlternativeHttpExecutor(k, v.createExecutor());
+                }
+            });
         }
     }
 
@@ -419,14 +470,17 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void asyncExecuteSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
 
+        // 获取异步线程池相关的配置
+        HttpAsyncThreadPoolConfiguration asyncThreadPoolConfig = factoryConfig.getThreadPool();
+
         // 设置异步模型
-        Model asyncModel = factoryConfig.getAsyncModel();
+        Model asyncModel = asyncThreadPoolConfig.getAsyncModel();
         if (asyncModel != null) {
             factory.setAsyncModel(asyncModel);
         }
 
         // 设置默认执行器的并发数
-        factory.setDefaultExecutorConcurrency(factoryConfig.getDefaultExecutorConcurrency());
+        factory.setDefaultExecutorConcurrency(asyncThreadPoolConfig.getDefaultExecutorConcurrency());
 
         // 导入Spring容器中配置的Executor
         String[] executorBeanNames = applicationContext.getBeanNamesForType(Executor.class);
@@ -437,7 +491,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 导入用户配置的默认Executor
-        LazyThreadPoolParam defaultPoolParam = factoryConfig.getDefaultThreadPool();
+        LazyThreadPoolParam defaultPoolParam = asyncThreadPoolConfig.getGlobal();
         if (defaultPoolParam != null) {
             if (defaultPoolParam.isLazy()) {
                 factory.setAsyncExecutor(() -> ThreadPoolFactory.createThreadPool(defaultPoolParam));
@@ -447,7 +501,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 导入用户配置的备选Executor
-        Map<String, LazyThreadPoolParam> alternativePoolParamMap = factoryConfig.getAlternativeThreadPool();
+        Map<String, LazyThreadPoolParam> alternativePoolParamMap = asyncThreadPoolConfig.getAlternative();
         if (ContainerUtils.isNotEmptyMap(alternativePoolParamMap)) {
             alternativePoolParamMap.forEach((name, poolParam) -> {
                 if (poolParam.isLazy()) {
@@ -514,6 +568,42 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
             plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
             plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
+
+            // 慢请求配置
+            plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
+            plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
+
+            // 日志脱敏相关配置
+            LoggerMaskerConfig maskers = loggerConfig.getMaskers();
+            plaLoggerHandler.setEnableRequestMask(String.valueOf(maskers.isMaskRequest()));
+            plaLoggerHandler.setEnableResponseMask(String.valueOf(maskers.isMaskResponse()));
+
+            Map<CustomMasker, Set<String>> maskerSetMap = new LinkedHashMap<>();
+
+            // 注册 Spring 容器中的脱敏处理器
+            applicationContext.getBeanProvider(BindingKeyMasker.class).forEach(bkm -> maskerSetMap.put(bkm, bkm.getKeys()));
+
+            // 注册预定义的脱敏处理器
+            Map<MaskType, Set<String>> generalConfig = maskers.getPredefined();
+            if (ContainerUtils.isNotEmptyMap(generalConfig)) {
+                maskerSetMap.putAll(generalConfig);
+            }
+
+            // 注册自定扩展的脱敏处理器
+            List<CustomMaskerConfig> customConfig = maskers.getExtended();
+            if (ContainerUtils.isNotEmptyCollection(customConfig)) {
+                for (CustomMaskerConfig maskerConfig : customConfig) {
+                    CustomMasker customMasker;
+                    String beanName = maskerConfig.getBean();
+                    if (StringUtils.hasText(beanName)) {
+                        customMasker = applicationContext.getBean(beanName, CustomMasker.class);
+                    } else {
+                        customMasker = ClassUtils.newObject(maskerConfig.getClazz());
+                    }
+                    maskerSetMap.put(customMasker, maskerConfig.getKeys());
+                }
+            }
+            plaLoggerHandler.addCommonMaskers(maskerSetMap);
         }
 
         SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);
@@ -521,6 +611,83 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         specifiedInterfaceLoggerHandler.setPrintRequestLog(loggerConfig.isEnableReqLog());
         specifiedInterfaceLoggerHandler.setPrintResponseLog(loggerConfig.isEnableRespLog());
         factory.setLoggerHandler(specifiedInterfaceLoggerHandler);
+    }
+
+    /**
+     * 重试执行器设置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void retryActuatorSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        RetryConfiguration retryConfig = factoryConfig.getRetry();
+        if (!retryConfig.isEnable() || retryConfig.getCount() < 0) {
+            return;
+        }
+
+        // 基于配置的重试决策者实现类
+        class ConfigurationRetryDeciderContext extends RetryDeciderContext<Response> {
+
+            private final String condition;
+            private final String conditionFunc;
+            private final int[] normalStatus;
+            private final int[] exceptionStatus;
+            private final Class<? extends Throwable>[] exceptionClasses;
+            private final Class<? extends Throwable>[] excludeClasses;
+            private final ExceptionModel exCheckModel;
+            private final ExceptionModel exExcludeModel;
+
+            public ConfigurationRetryDeciderContext(RetryConfiguration retryConfig) {
+                this.condition = retryConfig.getCondition();
+                this.conditionFunc = retryConfig.getConditionFunc();
+                this.normalStatus = retryConfig.getNormalStatus();
+                this.exceptionStatus = retryConfig.getExceptionStatus();
+                this.exceptionClasses = retryConfig.getExceptionClasses();
+                this.excludeClasses = retryConfig.getExcludeClasses();
+                this.exCheckModel = retryConfig.getExCheckModel();
+                this.exExcludeModel = retryConfig.getExExcludeModel();
+            }
+
+            @Override
+            protected boolean doNeedRetry(TaskResult<Response> taskResult) {
+                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses, exCheckModel, exExcludeModel);
+                if (isRetryEx) {
+                    return true;
+                }
+                if (taskResult.hasException()) {
+                    return false;
+                }
+                return retryExpressionCheck(taskResult, condition, conditionFunc)
+                        || httpStatusCheck(taskResult, normalStatus, exceptionStatus);
+
+            }
+        }
+
+        // 基于配置的重试等待器
+        class ConfigurationBackoffWaitingBeforeRetryContext extends RunBeforeRetryContext<Object> {
+
+            private final BackoffWaitBeforeRetry backoffWaitBeforeRetry;
+
+            public ConfigurationBackoffWaitingBeforeRetryContext(RetryConfiguration retryConfig) {
+                this.backoffWaitBeforeRetry = new BackoffWaitBeforeRetry(retryConfig.getWaitMillis(), retryConfig.getMultiplier(), retryConfig.getMaxWaitMillis(), retryConfig.getMinWaitMillis());
+            }
+
+            @Override
+            protected void doBeforeRetry(TaskResult<Object> taskResult) {
+                backoffWaitBeforeRetry.beforeRetry(taskResult);
+            }
+        }
+
+        RetryActuator retryActuator = new RetryActuator(
+                retryConfig.getTaskNameFormat(),
+                retryConfig.getCount(),
+                c -> new ConfigurationBackoffWaitingBeforeRetryContext(retryConfig),
+                c -> new ConfigurationRetryDeciderContext(retryConfig),
+                retryConfig.isStrictModel(),
+                null
+        );
+
+        factory.setRetryActuator(retryActuator);
     }
 
     /**
@@ -586,11 +753,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         SSLConfiguration sslConfig = factoryConfig.getSsl();
 
         // 注册SSLContext
-        KeyStoreConfiguration[] sslContexts = sslConfig.getKeyStores();
-        if (ContainerUtils.isNotEmptyArray(sslContexts)) {
-            for (KeyStoreConfiguration sslContext : sslContexts) {
-                factory.addKeyStoreInfo(sslContext.getId(), sslContext);
-            }
+        Map<String, KeyStoreInfo> keyStoreMap = sslConfig.getKeyStores();
+        if (ContainerUtils.isNotEmptyMap(keyStoreMap)) {
+            keyStoreMap.forEach(factory::addKeyStoreInfo);
         }
 
         // 开启全局SSL配置
@@ -852,23 +1017,10 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void httpParamSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 超时时间设置
-        Integer connectionTimeout = factoryConfig.getConnectionTimeout();
-        Integer readTimeout = factoryConfig.getReadTimeout();
-        Integer writeTimeout = factoryConfig.getWriteTimeout();
-        if (connectionTimeout != null) {
-            factory.setConnectionTimeout(connectionTimeout);
-        }
-        if (readTimeout != null) {
-            factory.setReadTimeout(readTimeout);
-        }
-        if (writeTimeout != null) {
-            factory.setWriteTimeout(writeTimeout);
-        }
 
-        // HTTP 版本设置
-        Version httpVersion = factoryConfig.getHttpVersion();
-        factory.setHttpVersion(httpVersion);
+        //设置自动URL推导相关的配置
+        factory.setEnableAutoUrlDerivation(factoryConfig.getEnableAutoUrlDerivation());
+        factory.setAutoDerivationDefMethod(factoryConfig.getAutoDerivationDefMethod());
 
         // 请求参数设置
         factory.setHeaders(factoryConfig.getHeaderParams());
@@ -983,8 +1135,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Order(4)
         @Bean(DEFAULT_JDK_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
-        public HttpExecutor luckyJdkHttpExecutor() {
-            return new JdkHttpExecutor();
+        public HttpExecutor luckyJdkHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+            return HttpExecutorConfiguration.createJdkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -997,12 +1149,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_OKHTTP_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyOkHttp3Executor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpConnectionPool();
-            return new OkHttpExecutor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createOkHttpExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -1015,12 +1162,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpConnectionPool();
-            return new HttpClient5Executor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createHttpClient5Executor(factoryConfig.getHttpExecutor().getGlobal());
         }
 
     }
@@ -1033,12 +1175,24 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME)
         @Role(ROLE_INFRASTRUCTURE)
         public HttpExecutor luckyApacheHttpExecutor(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-            HttpConnectionPoolConfiguration poolConfig = factoryConfig.getHttpConnectionPool();
-            return new HttpClientExecutor(
-                    poolConfig.getMaxIdleConnections(),
-                    poolConfig.getKeepAliveDuration(),
-                    poolConfig.getKeepAliveTimeUnit()
-            );
+            return HttpExecutorConfiguration.createHttpClientExecutor(factoryConfig.getHttpExecutor().getGlobal());
         }
+    }
+
+    /********************** Validation *************************************/
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"javax.validation.Validator"})
+    static class ValidationAutoConfig {
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(DEFAULT_VALIDATION_PLUGIN_BEAN_NAME)
+        public ValidationPlugin validationPlugin(@Autowired(required = false) Validator validator) {
+            if (validator == null) {
+                return new ValidationPluginProvider(new ValidationPlugin());
+            }
+            return new ValidationPluginProvider(new ValidationPlugin(validator));
+        }
+
     }
 }

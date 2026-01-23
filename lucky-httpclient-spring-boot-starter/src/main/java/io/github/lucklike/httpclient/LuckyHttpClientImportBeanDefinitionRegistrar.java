@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.luckyframework.httpclient.proxy.Version.printLogo;
 import static com.luckyframework.httpclient.proxy.Version.printVersion;
 
 /**
@@ -50,7 +49,6 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
-
         // 构造BeanDefinition生成器
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
         ProxyModel globalProxyModel = (ProxyModel) attributes.get("proxyModel");
@@ -89,7 +87,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
                     registry.registerBeanDefinition(beanName, definition);
-                    log.debug("@HttpClientComponent '{}' is registered", beanClassName);
+                    log.debug("@HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
                     s.getAndIncrement();
                 } else {
                     throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
@@ -99,8 +97,8 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
 
         log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
 
+        // 打印版本信息和logo
         printVersion();
-        printLogo();
     }
 
     /**

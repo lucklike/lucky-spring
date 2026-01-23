@@ -4,7 +4,6 @@ import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 
 
@@ -14,9 +13,9 @@ import org.springframework.core.env.Environment;
 public class ValueParameterInstanceFactory extends AnnotationParameterInstanceFactory<Value> {
 
     @Override
-    protected Object doCreateInstance(ParameterInfo parameterInfo, ResolvableType realType, Value valueAnn) {
+    protected Object doCreateInstance(ParameterInfo parameterInfo, Value valueAnn) {
         Environment env = ApplicationContextUtils.getEnvironment();
-        return ConversionUtils.conversion(env.resolveRequiredPlaceholders(valueAnn.value()), realType);
+        return ConversionUtils.conversion(env.resolveRequiredPlaceholders(valueAnn.value()), parameterInfo.getTargetResolvableType());
     }
 
 }

@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import io.github.lucklike.httpclient.config.impl.LoggerImpl;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +38,8 @@ public class LoggerConfiguration {
     private Class<LoggerHandler> handlerClass;
 
     /**
-     * 指定需要打印日志的包
+     * 指定需要打印日志的包<br/>
+     * *.*表示所有包
      */
     private Set<String> packages = new HashSet<>();
 
@@ -52,18 +54,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     private Set<String> setAllowMimeTypes;
@@ -74,18 +88,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     private Set<String> addAllowMimeTypes;
@@ -105,6 +131,16 @@ public class LoggerConfiguration {
     private long respBodyMaxLength = -1L;
 
     /**
+     * 触发警告标志的最小耗时（单位：毫秒）
+     */
+    private long warnTime = -1;
+
+    /**
+     * 触发错误标志的最小耗时（单位：毫秒）
+     */
+    private long slowTime = -1;
+
+    /**
      * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String reqLogCondition;
@@ -113,6 +149,12 @@ public class LoggerConfiguration {
      * 打印响应日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String respLogCondition;
+
+    /**
+     * 日志脱敏配置
+     */
+    @NestedConfigurationProperty
+    private LoggerMaskerConfig maskers = new LoggerMaskerConfig();
 
 
     /**
@@ -171,7 +213,8 @@ public class LoggerConfiguration {
     }
 
     /**
-     * 指定需要打印日志的包
+     * 指定需要打印日志的包<br/>
+     * *.*表示所有包
      *
      * @param packages 指定需要打印日志的包
      */
@@ -181,7 +224,8 @@ public class LoggerConfiguration {
 
 
     /**
-     * 获取需要打印日志的包集合
+     * 获取需要打印日志的包集合<br/>
+     * *.*表示所有包
      *
      * @return 需要打印日志的包集合
      */
@@ -231,18 +275,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      *
      * @param setAllowMimeTypes 打印响应体内容的MimeType集合
@@ -257,18 +313,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      *
      * @param addAllowMimeTypes 追加的打印响应体内容的MimeType集合
@@ -329,18 +397,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     public Set<String> getSetAllowMimeTypes() {
@@ -353,18 +433,30 @@ public class LoggerConfiguration {
      * 默认值：
      * <ui>
      * <li>application/json</li>
+     * <li>application/x-ndjson</li>
      * <li>application/*+json</li>
      *
      * <li>application/xml</li>
      * <li>application/*+xml</li>
-     * <li>text/xml</li>
      *
      * <li>application/x-protobuf</li>
      *
      * <li>application/x-java-serialized-object</li>
      *
+     * <li>application/x-www-form-urlencoded</li>
+     *
+     * <li>application/x-yaml</li>
+     *
      * <li>text/plain</li>
      * <li>text/html</li>
+     * <li>text/css</li>
+     * <li>text/javascript</li>
+     * <li>text/markdown</li>
+     * <li>text/csv</li>
+     * <li>text/xml</li>
+     *
+     * <li>application/javascript</li>
+     * <li>application/x-javascript</li>
      * </ui>
      */
     public Set<String> getAddAllowMimeTypes() {
@@ -417,4 +509,57 @@ public class LoggerConfiguration {
         return enableRespHeaderLog;
     }
 
+    /**
+     * 获取触发警告标志的最小耗时（单位：毫秒）
+     *
+     * @return 触发警告标志的最小耗时
+     */
+    public long getWarnTime() {
+        return warnTime;
+    }
+
+    /**
+     * 设置触发警告标志的最小耗时（单位：毫秒）
+     *
+     * @param warnTime 触发警告标志的最小耗时
+     */
+    public void setWarnTime(long warnTime) {
+        this.warnTime = warnTime;
+    }
+
+    /**
+     * 获取触发错误标志的最小耗时（单位：毫秒）
+     *
+     * @return 触发错误标志的最小耗时
+     */
+    public long getSlowTime() {
+        return slowTime;
+    }
+
+    /**
+     * 设置触发错误标志的最小耗时（单位：毫秒）
+     *
+     * @param slowTime 触发错误标志的最小耗时
+     */
+    public void setSlowTime(long slowTime) {
+        this.slowTime = slowTime;
+    }
+
+    /**
+     * 获取日志脱敏配置
+     *
+     * @return 日志脱敏配置
+     */
+    public LoggerMaskerConfig getMaskers() {
+        return maskers;
+    }
+
+    /**
+     * 设置日志脱敏配置
+     *
+     * @param maskers 日志脱敏配置
+     */
+    public void setMaskers(LoggerMaskerConfig maskers) {
+        this.maskers = maskers;
+    }
 }

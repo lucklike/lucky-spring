@@ -52,14 +52,16 @@ public class InitBindParameterConvert implements ParameterConvert {
     @Override
     public Object convert(ValueContext context, Object value) {
         InitBind initBind = context.getMergedAnnotationCheckParent(InitBind.class);
-        try {
-            BeanFunction.initBind(value, initBind.value());
-            return value;
-        } catch (BindException e) {
-            if (initBind.allowConfigNotExist()) {
-                return value;
+        for (String conf : initBind.value()) {
+            try {
+                String propertyName = context.parseExpression(conf);
+                BeanFunction.initBind(value, propertyName);
+            } catch (BindException e) {
+                if (!initBind.allowConfigNotExist()) {
+                    throw e;
+                }
             }
-            throw e;
         }
+        return value;
     }
 }

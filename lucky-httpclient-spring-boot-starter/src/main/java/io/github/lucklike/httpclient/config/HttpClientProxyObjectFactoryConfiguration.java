@@ -1,18 +1,12 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
-import com.luckyframework.httpclient.core.meta.Version;
-import com.luckyframework.httpclient.proxy.async.Model;
+import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import io.github.lucklike.httpclient.config.impl.HttpExecutorEnum;
-import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
-import io.github.lucklike.httpclient.discovery.RetryableHttpClient;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
-import java.net.HttpURLConnection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * HttpClientProxyObjectFactory配置类
@@ -23,10 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HttpClientProxyObjectFactoryConfiguration {
 
-    /**
-     * 指定使用的HTTP执行器Bean的名称
-     */
-    private String httpExecutorBean;
 
     /**
      * 对象创建器工厂
@@ -34,49 +24,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private ObjectCreatorFactory objectCreatorFactory;
 
     /**
-     * Http请求执行器工厂
-     */
-    private HttpExecutorFactory httpExecutorFactory;
-
-    /**
-     * 使用执行器枚举来指定执行器
-     */
-    private HttpExecutorEnum httpExecutor;
-
-    /**
-     * HTTP请求的异步模型
-     */
-    private Model asyncModel;
-
-    /**
-     * 默认异步执行器的最大并发数，小于0时表示不限制并发数
-     */
-    private int defaultExecutorConcurrency = -1;
-
-    /**
      * 拦截器生成器数组
      */
     private InterceptorGenerateEntry[] interceptorGenerates;
-
-    /**
-     * 连接超时时间
-     */
-    private Integer connectionTimeout;
-
-    /**
-     * 读超时时间
-     */
-    private Integer readTimeout;
-
-    /**
-     * 写超时时间
-     */
-    private Integer writeTimeout;
-
-    /**
-     * HTTP版本
-     */
-    private Version httpVersion;
 
     /**
      * 公共请求头参数
@@ -124,6 +74,19 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private final Map<String, Object> queryParams = new ConfigurationMap();
 
     /**
+     * Http执行器相关额配置
+     */
+    @NestedConfigurationProperty
+    private HttpExecutorConfiguration httpExecutor = new HttpExecutorConfiguration();
+
+    /**
+     * HTTP线程池配置
+     */
+    @NestedConfigurationProperty
+    private HttpAsyncThreadPoolConfiguration threadPool = new HttpAsyncThreadPoolConfiguration();
+
+
+    /**
      * SSL协议相关配置
      */
     @NestedConfigurationProperty
@@ -134,17 +97,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     @NestedConfigurationProperty
     private GenerateEntry<HttpExceptionHandle> exceptionHandleGenerate;
-
-    /**
-     * 用于创建异步调用的线程池的参数
-     */
-    @NestedConfigurationProperty
-    private LazyThreadPoolParam defaultThreadPool;
-
-    /**
-     * 备用线程池
-     */
-    private Map<String, LazyThreadPoolParam> alternativeThreadPool = new ConcurrentHashMap<>();
 
     /**
      * 日志打印相关配置
@@ -165,16 +117,10 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private RedirectConfiguration redirect = new RedirectConfiguration();
 
     /**
-     * 重试相关的配置，需要结合{@link RetryableHttpClient @RetryableHttpClient}注解一起使用
+     * 重试相关的配置
      */
     @NestedConfigurationProperty
     private RetryConfiguration retry = new RetryConfiguration();
-
-    /**
-     * HTTP连接池相关配置
-     */
-    @NestedConfigurationProperty
-    private HttpConnectionPoolConfiguration httpConnectionPool = new HttpConnectionPoolConfiguration();
 
     /**
      * Cookie管理器相关配置
@@ -198,27 +144,31 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     private ParameterConvertConfig[] parameterConverts;
 
+
+    /**
+     * 是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
+     *
+     *     例如：
+     *     post$$user$get_list
+     *     ->
+     *     POST  /user/get_list
+     *
+     * </pre>
+     *
+     */
+    private Boolean enableAutoUrlDerivation = false;
+
+    /**
+     * 开启自动 URL 推导功能时的默认请求方法
+     */
+    private RequestMethod autoDerivationDefMethod = RequestMethod.POST;
+
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
-
-    /**
-     * 设置默认线程池参数
-     *
-     * @param defaultThreadPool 默认线程池参数
-     */
-    public void setDefaultThreadPool(LazyThreadPoolParam defaultThreadPool) {
-        this.defaultThreadPool = defaultThreadPool;
-    }
-
-    /**
-     * 设置备选线程池参数
-     *
-     * @param alternativeThreadPool 备选线程池参数
-     */
-    public void setAlternativeThreadPool(Map<String, LazyThreadPoolParam> alternativeThreadPool) {
-        this.alternativeThreadPool = alternativeThreadPool;
-    }
 
     /**
      * 设置{@link ObjectCreatorFactory 对象创建器工厂}
@@ -230,42 +180,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置{@link HttpExecutorFactory HTTP执行器工厂}
+     * Http执行器相关的设置
      *
-     * @param httpExecutorFactory HTTP执行器工厂
+     * @param httpExecutor Http执行器配置
      */
-    public void setHttpExecutorFactory(HttpExecutorFactory httpExecutorFactory) {
-        this.httpExecutorFactory = httpExecutorFactory;
-    }
-
-    /**
-     * 使用执行器枚举来指定执行器<br/>
-     * {@link HttpExecutorEnum#JDK JDK}: 使用JDK的{@link HttpURLConnection}实现的执行器。<br/>
-     * {@link HttpExecutorEnum#OKHTTP OK_HTTP}: 使用OkHttp3实现的执行器。<br/>
-     * {@link HttpExecutorEnum#HTTP_CLIENT HTTP_CLIENT}: 使用Apache HttpClient实现的执行器。<br/>
-     *
-     * @param httpExecutor 执行器枚举
-     */
-    public void setHttpExecutor(HttpExecutorEnum httpExecutor) {
+    public void setHttpExecutor(HttpExecutorConfiguration httpExecutor) {
         this.httpExecutor = httpExecutor;
     }
 
     /**
-     * 设置HTTP异步模型
+     * 设置HTTP异步线程池相关的参数
      *
-     * @param asyncModel 异步模型
+     * @param threadPool HTTP异步线程池相关的参数
      */
-    public void setAsyncModel(Model asyncModel) {
-        this.asyncModel = asyncModel;
-    }
-
-    /**
-     * 设置默认异步执行器的最大并发数，小于0表示不限制并发数
-     *
-     * @param defaultExecutorConcurrency 默认异步执行器的最大并发数
-     */
-    public void setDefaultExecutorConcurrency(int defaultExecutorConcurrency) {
-        this.defaultExecutorConcurrency = defaultExecutorConcurrency;
+    public void setThreadPool(HttpAsyncThreadPoolConfiguration threadPool) {
+        this.threadPool = threadPool;
     }
 
     /**
@@ -284,42 +213,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setInterceptorGenerates(InterceptorGenerateEntry[] interceptorGenerates) {
         this.interceptorGenerates = interceptorGenerates;
-    }
-
-    /**
-     * 设置连接超时时间
-     *
-     * @param connectionTimeout 连接超时时间
-     */
-    public void setConnectionTimeout(Integer connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
-    }
-
-    /**
-     * 设置读超时时间
-     *
-     * @param readTimeout 读超时时间
-     */
-    public void setReadTimeout(Integer readTimeout) {
-        this.readTimeout = readTimeout;
-    }
-
-    /**
-     * 设置写超时时间
-     *
-     * @param writeTimeout 写超时时间
-     */
-    public void setWriteTimeout(Integer writeTimeout) {
-        this.writeTimeout = writeTimeout;
-    }
-
-    /**
-     * 设置 HTTP 版本
-     *
-     * @param httpVersion HTTP 版本
-     */
-    public void setHttpVersion(Version httpVersion) {
-        this.httpVersion = httpVersion;
     }
 
     /**
@@ -371,14 +264,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.ssl = ssl;
     }
 
-    /**
-     * 设置使用HTTP执行器的SpringBean的名称
-     *
-     * @param httpExecutorBean HTTP执行器的SpringBean的名称
-     */
-    public void setHttpExecutorBean(String httpExecutorBean) {
-        this.httpExecutorBean = httpExecutorBean;
-    }
 
     /**
      * 设置日志相关的配置
@@ -417,15 +302,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置HTTP连接池相关的配置
-     *
-     * @param httpConnectionPool HTTP连接池相关的配置
-     */
-    public void setHttpConnectionPool(HttpConnectionPoolConfiguration httpConnectionPool) {
-        this.httpConnectionPool = httpConnectionPool;
-    }
-
-    /**
      * 设置Cookie管理器相关配置
      *
      * @param cookieManage Cookie管理器相关配置
@@ -461,27 +337,36 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.parameterConverts = parameterConverts;
     }
 
+    /**
+     * 设置是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
+     *
+     *     例如：
+     *     post$$user$get_list
+     *     ->
+     *     POST  /user/get_list
+     * </pre>
+     *
+     * @param enableAutoUrlDerivation 是否开启自动 URL 推导功能
+     */
+    public void setEnableAutoUrlDerivation(Boolean enableAutoUrlDerivation) {
+        this.enableAutoUrlDerivation = enableAutoUrlDerivation;
+    }
+
+    /**
+     * 设置 URL 推导功能时的默认请求方法
+     *
+     * @param autoDerivationDefMethod 默认请求方法
+     */
+    public void setAutoDerivationDefMethod(RequestMethod autoDerivationDefMethod) {
+        this.autoDerivationDefMethod = autoDerivationDefMethod;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
-
-    /**
-     * 获取默认线程池参数
-     *
-     * @return 默认线程池参数
-     */
-    public LazyThreadPoolParam getDefaultThreadPool() {
-        return defaultThreadPool;
-    }
-
-    /**
-     * 获取备选线程池参数
-     *
-     * @return 备选线程池参数
-     */
-    public Map<String, LazyThreadPoolParam> getAlternativeThreadPool() {
-        return alternativeThreadPool;
-    }
 
     /**
      * 获取{@link ObjectCreatorFactory 对象创建器工厂}
@@ -493,39 +378,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取{@link HttpExecutorFactory HTTP请求执行器工厂}
+     * 获取HTTP执行器相关的配置
      *
-     * @return HTTP请求执行器工厂
+     * @return HTTP执行器相关的配置
      */
-    public HttpExecutorFactory getHttpExecutorFactory() {
-        return httpExecutorFactory;
-    }
-
-    /**
-     * 获取执行器对应的执行器枚举
-     *
-     * @return 执行器枚举
-     */
-    public HttpExecutorEnum getHttpExecutor() {
+    public HttpExecutorConfiguration getHttpExecutor() {
         return httpExecutor;
     }
 
     /**
-     * 获取HTTP异步模型
+     * 获取HTTP异步线程池相关的参数
      *
-     * @return 异步模型
+     * @return HTTP异步线程池相关的参数
      */
-    public Model getAsyncModel() {
-        return asyncModel;
-    }
-
-    /**
-     * 获取默认异步执行器的最大并发数
-     *
-     * @return 默认异步执行器的最大并发数
-     */
-    public int getDefaultExecutorConcurrency() {
-        return defaultExecutorConcurrency;
+    public HttpAsyncThreadPoolConfiguration getThreadPool() {
+        return threadPool;
     }
 
     /**
@@ -544,42 +411,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public GenerateEntry<HttpExceptionHandle> getExceptionHandleGenerate() {
         return exceptionHandleGenerate;
-    }
-
-    /**
-     * 获取链接超时时间
-     *
-     * @return 链接超时时间
-     */
-    public Integer getConnectionTimeout() {
-        return connectionTimeout;
-    }
-
-    /**
-     * 获取读超时时间
-     *
-     * @return 读超时时间
-     */
-    public Integer getReadTimeout() {
-        return readTimeout;
-    }
-
-    /**
-     * 获取写超时时间
-     *
-     * @return 写超时时间
-     */
-    public Integer getWriteTimeout() {
-        return writeTimeout;
-    }
-
-    /**
-     * 获取 HTTP 版本
-     *
-     * @return HTTP 版本
-     */
-    public Version getHttpVersion() {
-        return httpVersion;
     }
 
     /**
@@ -619,15 +450,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * HTTP执行器的SpringBean的名称
-     *
-     * @return HTTP执行器的SpringBean的名称
-     */
-    public String getHttpExecutorBean() {
-        return httpExecutorBean;
-    }
-
-    /**
      * 获取日志相关的配置
      *
      * @return 日志相关的配置
@@ -663,14 +485,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
         return retry;
     }
 
-    /**
-     * 获取HTTP连接池相关的配置
-     *
-     * @return HTTP连接池相关的配置
-     */
-    public HttpConnectionPoolConfiguration getHttpConnectionPool() {
-        return httpConnectionPool;
-    }
 
     /**
      * 获取Cookie管理器相关配置
@@ -707,4 +521,35 @@ public class HttpClientProxyObjectFactoryConfiguration {
     public ParameterConvertConfig[] getParameterConverts() {
         return parameterConverts;
     }
+
+
+    /**
+     * 是否开启自动 URL 推导功能
+     * <pre>
+     *     方法名规则：
+     *     {RequestMethod}$${path1}${path2}$....${pathn}
+     *
+     *     例如：
+     *     post$$user$get_list
+     *     ->
+     *     POST  /user/get_list
+     * </pre>
+     *
+     * @return 是否开启自动 URL 推导功能
+     */
+    public Boolean getEnableAutoUrlDerivation() {
+        return enableAutoUrlDerivation;
+    }
+
+
+
+    /**
+     * 获取 URL 推导功能时的默认请求方法
+     *
+     * @return 默认请求方法
+     */
+    public RequestMethod getAutoDerivationDefMethod() {
+        return autoDerivationDefMethod;
+    }
+
 }

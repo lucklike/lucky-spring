@@ -2,15 +2,13 @@ package io.github.lucklike.httpclient.injection;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.reflect.ClassUtils;
-import com.luckyframework.spel.LazyValue;
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.ResolvableType;
+import org.springframework.lang.NonNull;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 
@@ -19,14 +17,6 @@ import java.util.function.Supplier;
  * <pre>
  *     1.通过对象属性注入
  *     2.通过对象方法注入
- * </pre>
- * <p>
- * 2. 并提供懒加载功能，支持注入懒加载类型
- * <pre>
- *     {@link LazyValue}
- *     {@link Supplier}
- *     {@link ObjectProvider}
- *     {@link Optional}
  * </pre>
  *
  * @author fukang
@@ -51,24 +41,7 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
     @Override
     public Object getInjectObject(Object bean, String beanName, PropertyInfo propertyInfo) {
         try {
-            AnnotatedElement element = propertyInfo.getElement();
-            ResolvableType sourceType = propertyInfo.getType();
-
-            // 确定真实的参数类型
-            WrapType wrapType = WrapType.of(sourceType);
-            ResolvableType realType = wrapType.getTargetType(sourceType);
-
-            // 将注入值获取的过程封装成Supplier对象
-            Supplier<?> objectSupplier;
-            if (element instanceof Field) {
-                objectSupplier = () -> getFieldInjectObject(bean, beanName, (Field) element, realType);
-            } else if (element instanceof Parameter) {
-                objectSupplier = () -> getParamInjectObject(bean, beanName, (Parameter) element, realType);
-            } else {
-                throw new IllegalArgumentException("Unsupported field type: " + propertyInfo.getType());
-            }
-
-            return wrapType.wrap(objectSupplier);
+            return propertyInfo.wrapValue(getObjectSupplier(bean, beanName, propertyInfo));
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException) {
                 throw e;
@@ -83,6 +56,20 @@ public abstract class AbstractPropertyInjection implements PropertyInjection {
             String msg = StringUtils.format("Attribute injection failed, injection approach: {}", info);
             throw new BeanCreationException(beanName, msg, e);
         }
+    }
+
+    @NonNull
+    private Supplier<?> getObjectSupplier(Object bean, String beanName, PropertyInfo propertyInfo) {
+        AnnotatedElement element = propertyInfo.getElement();
+        Supplier<?> objectSupplier;
+        if (element instanceof Field) {
+            objectSupplier = () -> getFieldInjectObject(bean, beanName, (Field) element, propertyInfo.getTargetResolvableType());
+        } else if (element instanceof Parameter) {
+            objectSupplier = () -> getParamInjectObject(bean, beanName, (Parameter) element, propertyInfo.getTargetResolvableType());
+        } else {
+            throw new IllegalArgumentException("Unsupported field type: " + propertyInfo.getType());
+        }
+        return objectSupplier;
     }
 
     //------------------------------------------------------------------------------------------------------------

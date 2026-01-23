@@ -58,6 +58,12 @@ public class SpecifiedInterfaceLoggerHandler implements LoggerHandler {
         if (ContainerUtils.isEmptyCollection(printLogPackageSet)) {
             return false;
         }
+
+        // *.* 表示全部
+        if (printLogPackageSet.contains("*.*")) {
+            return true;
+        }
+
         String className = context.getClassContext().getCurrentAnnotatedElement().getName();
         for (String packagePrefix : printLogPackageSet) {
             if (className.startsWith(packagePrefix)) {
