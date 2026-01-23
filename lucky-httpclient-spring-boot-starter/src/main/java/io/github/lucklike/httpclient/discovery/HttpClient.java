@@ -1,7 +1,7 @@
 package io.github.lucklike.httpclient.discovery;
 
-import com.luckyframework.httpclient.proxy.annotations.DomainNameMeta;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
+import com.luckyframework.httpclient.proxy.annotations.ServerAddressMeta;
 import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.core.annotation.AliasFor;
@@ -19,14 +19,14 @@ import java.lang.annotation.Target;
  * @author fukang
  * @version 1.0.0
  * @date 2023/8/30 03:06
- * @see DomainNameMeta
+ * @see ServerAddressMeta
  * @see HttpClientComponent
  * @see CommonDomainNameGetter
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@DomainNameMeta(getter = @ObjectGenerate(CommonDomainNameGetter.class))
+@ServerAddressMeta(getter = @ObjectGenerate(CommonDomainNameGetter.class))
 @HttpClientComponent
 public @interface HttpClient {
 
