@@ -50,9 +50,8 @@ public class SpringSpELConvert extends SpELConvert {
 
     @Override
     protected void paramWrapperPostProcess(ParamWrapper paramWrapper) {
-        super.paramWrapperPostProcess(paramWrapper);
         String expression = paramWrapper.getExpression();
-        if (isSingleEnvExpression(expression)) {
+        if (isSingleEnvExpression(expression) && isSpELExpression(expression)) {
             ResolvableType sourceResult = paramWrapper.getExpectedResultType();
             expression = getSpELRuntime().getValueForType(paramWrapper.setExpectedResultType(String.class));
             paramWrapper.setExpectedResultType(sourceResult);
