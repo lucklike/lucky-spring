@@ -19,6 +19,11 @@ public class LoggerConfiguration {
     private boolean enable = true;
 
     /**
+     * 是否只处理慢响应不打印日志
+     */
+    private boolean onlyHandlerSlowNonPrintLog = false;
+
+    /**
      * 是否开启请求日志，默认开启（只有在{@link #packages}不为{@code null}时才生效）
      */
     private boolean enableReqLog = true;
@@ -48,7 +53,7 @@ public class LoggerConfiguration {
     /**
      * 是否打印响应头信息
      */
-    private boolean enableRespHeaderLog = true;
+    private String enableRespHeaderLog;
 
     /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
@@ -169,6 +174,23 @@ public class LoggerConfiguration {
     @NestedConfigurationProperty
     private LoggerMaskerConfig maskers = new LoggerMaskerConfig();
 
+    /**
+     * 是否只处理慢响应不打印日志
+     *
+     * @return 是否只处理慢响应不打印日志
+     */
+    public boolean isOnlyHandlerSlowNonPrintLog() {
+        return onlyHandlerSlowNonPrintLog;
+    }
+
+    /**
+     * 设置是否只处理慢响应不打印日志
+     *
+     * @param onlyHandlerSlowNonPrintLog 是否只处理慢响应不打印日志
+     */
+    public void setOnlyHandlerSlowNonPrintLog(boolean onlyHandlerSlowNonPrintLog) {
+        this.onlyHandlerSlowNonPrintLog = onlyHandlerSlowNonPrintLog;
+    }
 
     /**
      * 获取用于日志处理的处理类
@@ -418,7 +440,7 @@ public class LoggerConfiguration {
      *
      * @param enableRespHeaderLog 是否打印响应头信息
      */
-    public void setEnableRespHeaderLog(boolean enableRespHeaderLog) {
+    public void setEnableRespHeaderLog(String enableRespHeaderLog) {
         this.enableRespHeaderLog = enableRespHeaderLog;
     }
 
@@ -537,7 +559,7 @@ public class LoggerConfiguration {
      *
      * @return 是否打印响应头信息
      */
-    public boolean isEnableRespHeaderLog() {
+    public String getEnableRespHeaderLog() {
         return enableRespHeaderLog;
     }
 

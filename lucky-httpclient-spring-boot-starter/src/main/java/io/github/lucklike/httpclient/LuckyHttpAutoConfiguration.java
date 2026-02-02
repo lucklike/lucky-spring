@@ -540,7 +540,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
 
         // 功能未开启或者为配置日志打印的包时直接结束
-        if (!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) {
+        if ((!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) && !loggerConfig.isOnlyHandlerSlowNonPrintLog()) {
             return;
         }
 
@@ -562,8 +562,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (loggerHandler instanceof PrintLogAnnotationContextLoggerHandler) {
             PrintLogAnnotationContextLoggerHandler plaLoggerHandler = (PrintLogAnnotationContextLoggerHandler) loggerHandler;
             plaLoggerHandler.setReqCondition(loggerConfig.getReqLogCondition());
+            plaLoggerHandler.setOnlyHandlerSlowNonPrintLog(String.valueOf(loggerConfig.isOnlyHandlerSlowNonPrintLog()));
             plaLoggerHandler.setRespCondition(loggerConfig.getRespLogCondition());
-            plaLoggerHandler.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
+            plaLoggerHandler.setPrintRespHeader(loggerConfig.getEnableRespHeaderLog());
             Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
             if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
                 plaLoggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
