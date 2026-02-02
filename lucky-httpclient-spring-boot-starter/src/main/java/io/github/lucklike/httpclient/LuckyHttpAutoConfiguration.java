@@ -35,6 +35,7 @@ import com.luckyframework.httpclient.proxy.logging.CustomMasker;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.SlowResponseHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
@@ -544,11 +545,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 获取日志处理器实现类
-        LoggerHandler loggerHandler;
-        Class<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
+        LoggerHandler loggerHandler = null;
+        SimpleGenerateEntry<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
         if (logHandlerClass != null) {
-            loggerHandler = ClassUtils.newObject(logHandlerClass);
-        } else {
+            if (logHandlerClass.hasBeanName()) {
+                loggerHandler = applicationContext.getBean(logHandlerClass.getBeanName(), LoggerHandler.class);
+            } else if (logHandlerClass.hasType()) {
+                loggerHandler = ClassUtils.newObject(logHandlerClass.getType());
+            }
+        }
+        if (loggerHandler == null) {
             loggerHandler = loggerConfig.getType().getLoggerHandler();
         }
 
@@ -572,6 +578,18 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             // 慢请求配置
             plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
             plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
+            SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler = loggerConfig.getSlowResponseHandler();
+            if (slowResponseHandler != null) {
+                if (slowResponseHandler.hasBeanName()) {
+                    plaLoggerHandler.setSlowResponseHandler(applicationContext.getBean(slowResponseHandler.getBeanName(), SlowResponseHandler.class));
+                } else if (slowResponseHandler.hasType()) {
+                    plaLoggerHandler.setSlowResponseHandler(ClassUtils.newObject(slowResponseHandler.getType()));
+                }
+            }
+
+
+            // 配置用于获取唯一ID的SpEL表达式
+            plaLoggerHandler.setUniqueId(loggerConfig.getUniqueId());
 
             // 日志脱敏相关配置
             LoggerMaskerConfig maskers = loggerConfig.getMaskers();
@@ -765,9 +783,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             HostnameVerifier hostnameVerifier = TrustAllHostnameVerifier.DEFAULT_INSTANCE;
             SimpleGenerateEntry<HostnameVerifierFactory> hvbFactory = sslConfig.getHostnameVerifier();
             if (hvbFactory != null) {
-                if (StringUtils.hasText(hvbFactory.getBeanName())) {
+                if (hvbFactory.hasBeanName()) {
                     hostnameVerifier = applicationContext.getBean(hvbFactory.getBeanName(), HostnameVerifierFactory.class).getHostnameVerifier();
-                } else if (hvbFactory.getType() != null) {
+                } else if (hvbFactory.hasType()) {
                     hostnameVerifier = ClassUtils.newObject(hvbFactory.getType()).getHostnameVerifier();
                 }
             } else if (StringUtils.hasText(sslConfig.getHostnameVerifierExpression())) {
@@ -777,7 +795,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
             // SSLSocketFactory
             SimpleGenerateEntry<SSLSocketFactoryFactory> sslFactoryConfig = sslConfig.getSslSocketFactory();
-            if (sslFactoryConfig != null && (StringUtils.hasText(sslFactoryConfig.getBeanName()) || sslFactoryConfig.getType() != null)) {
+            if (sslFactoryConfig != null && (sslFactoryConfig.hasBeanName() || sslFactoryConfig.hasType())) {
                 if (StringUtils.hasText(sslFactoryConfig.getBeanName())) {
                     factory.setSslSocketFactory(applicationContext.getBean(sslFactoryConfig.getBeanName(), SSLSocketFactoryFactory.class).getSSLSocketFactory());
                 } else {

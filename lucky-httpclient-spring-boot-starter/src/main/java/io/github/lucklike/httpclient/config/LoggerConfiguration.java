@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
+import com.luckyframework.httpclient.proxy.logging.SlowResponseHandler;
 import io.github.lucklike.httpclient.config.impl.LoggerImpl;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -35,7 +36,8 @@ public class LoggerConfiguration {
     /**
      * 处理类
      */
-    private Class<LoggerHandler> handlerClass;
+    @NestedConfigurationProperty
+    private SimpleGenerateEntry<LoggerHandler> handlerClass;
 
     /**
      * 指定需要打印日志的包<br/>
@@ -141,6 +143,17 @@ public class LoggerConfiguration {
     private long slowTime = -1;
 
     /**
+     * 慢响应处理器
+     */
+    @NestedConfigurationProperty
+    private SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler;
+
+    /**
+     * 用于获取唯一ID的SpEL表达式
+     */
+    private String uniqueId = "#{$unique_id$}";
+
+    /**
      * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String reqLogCondition;
@@ -162,7 +175,8 @@ public class LoggerConfiguration {
      *
      * @return 用于日志处理的处理类
      */
-    public Class<LoggerHandler> getHandlerClass() {
+
+    public SimpleGenerateEntry<LoggerHandler> getHandlerClass() {
         return handlerClass;
     }
 
@@ -172,8 +186,26 @@ public class LoggerConfiguration {
      *
      * @param handlerClass 用于日志处理的处理类
      */
-    public void setHandlerClass(Class<LoggerHandler> handlerClass) {
+    public void setHandlerClass(SimpleGenerateEntry<LoggerHandler> handlerClass) {
         this.handlerClass = handlerClass;
+    }
+
+    /**
+     * 获取慢响应处理器
+     *
+     * @return 慢响应处理器
+     */
+    public SimpleGenerateEntry<SlowResponseHandler> getSlowResponseHandler() {
+        return slowResponseHandler;
+    }
+
+    /**
+     * 设置慢响应处理器
+     *
+     * @param slowResponseHandler 慢响应处理器
+     */
+    public void setSlowResponseHandler(SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler) {
+        this.slowResponseHandler = slowResponseHandler;
     }
 
     /**
@@ -543,6 +575,24 @@ public class LoggerConfiguration {
      */
     public void setSlowTime(long slowTime) {
         this.slowTime = slowTime;
+    }
+
+    /**
+     * 获取用于获取唯一ID的SpEL表达式
+     *
+     * @return 用于获取唯一ID的SpEL表达式
+     */
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
+    /**
+     * 设置用于获取唯一ID的SpEL表达式
+     *
+     * @param uniqueId 用于获取唯一ID的SpEL表达式
+     */
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
     }
 
     /**

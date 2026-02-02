@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
+import com.luckyframework.common.StringUtils;
+
 /**
  * 简单生成器实体
  *
@@ -53,5 +55,23 @@ public class SimpleGenerateEntry<T> {
      */
     public void setBeanName(String beanName) {
         this.beanName = beanName;
+    }
+
+    /**
+     * 是否存在BeanName配置
+     *
+     * @return 是否存在BeanName配置
+     */
+    public boolean hasBeanName() {
+        return StringUtils.hasText(beanName);
+    }
+
+    /**
+     * 是否存在类型配置
+     *
+     * @return 是否存在类型配置
+     */
+    public boolean hasType() {
+        return type != null;
     }
 }
