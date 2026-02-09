@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
-import com.luckyframework.httpclient.proxy.logging.SlowResponseHandler;
 import io.github.lucklike.httpclient.config.impl.LoggerImpl;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -19,11 +18,6 @@ public class LoggerConfiguration {
     private boolean enable = true;
 
     /**
-     * 是否只处理慢响应不打印日志
-     */
-    private boolean onlyHandlerSlowNonPrintLog = false;
-
-    /**
      * 是否开启请求日志，默认开启（只有在{@link #packages}不为{@code null}时才生效）
      */
     private boolean enableReqLog = true;
@@ -32,6 +26,11 @@ public class LoggerConfiguration {
      * 是否开启响应日志，默认开启（只有在{@link #packages}不为{@code null}时才生效）
      */
     private boolean enableRespLog = true;
+
+    /**
+     * 日志组件异常时是否打印详细的错误信息
+     */
+    private boolean logErrorWithDetails = false;
 
     /**
      * 日志打印类型
@@ -148,17 +147,6 @@ public class LoggerConfiguration {
     private long slowTime = -1;
 
     /**
-     * 慢响应处理器
-     */
-    @NestedConfigurationProperty
-    private SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler;
-
-    /**
-     * 用于获取唯一ID的SpEL表达式
-     */
-    private String uniqueId = "#{$unique_id$}";
-
-    /**
      * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String reqLogCondition;
@@ -173,24 +161,6 @@ public class LoggerConfiguration {
      */
     @NestedConfigurationProperty
     private LoggerMaskerConfig maskers = new LoggerMaskerConfig();
-
-    /**
-     * 是否只处理慢响应不打印日志
-     *
-     * @return 是否只处理慢响应不打印日志
-     */
-    public boolean isOnlyHandlerSlowNonPrintLog() {
-        return onlyHandlerSlowNonPrintLog;
-    }
-
-    /**
-     * 设置是否只处理慢响应不打印日志
-     *
-     * @param onlyHandlerSlowNonPrintLog 是否只处理慢响应不打印日志
-     */
-    public void setOnlyHandlerSlowNonPrintLog(boolean onlyHandlerSlowNonPrintLog) {
-        this.onlyHandlerSlowNonPrintLog = onlyHandlerSlowNonPrintLog;
-    }
 
     /**
      * 获取用于日志处理的处理类
@@ -210,24 +180,6 @@ public class LoggerConfiguration {
      */
     public void setHandlerClass(SimpleGenerateEntry<LoggerHandler> handlerClass) {
         this.handlerClass = handlerClass;
-    }
-
-    /**
-     * 获取慢响应处理器
-     *
-     * @return 慢响应处理器
-     */
-    public SimpleGenerateEntry<SlowResponseHandler> getSlowResponseHandler() {
-        return slowResponseHandler;
-    }
-
-    /**
-     * 设置慢响应处理器
-     *
-     * @param slowResponseHandler 慢响应处理器
-     */
-    public void setSlowResponseHandler(SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler) {
-        this.slowResponseHandler = slowResponseHandler;
     }
 
     /**
@@ -285,6 +237,24 @@ public class LoggerConfiguration {
      */
     public Set<String> getPackages() {
         return packages;
+    }
+
+    /**
+     * 日志组件异常时是否打印详细的错误信息
+     *
+     * @return 日志组件异常时是否打印详细的错误信息
+     */
+    public boolean isLogErrorWithDetails() {
+        return logErrorWithDetails;
+    }
+
+    /**
+     * 设置日志组件异常时是否打印详细的错误信息
+     *
+     * @param logErrorWithDetails 日志组件异常时是否打印详细的错误信息
+     */
+    public void setLogErrorWithDetails(boolean logErrorWithDetails) {
+        this.logErrorWithDetails = logErrorWithDetails;
     }
 
     /**
@@ -597,24 +567,6 @@ public class LoggerConfiguration {
      */
     public void setSlowTime(long slowTime) {
         this.slowTime = slowTime;
-    }
-
-    /**
-     * 获取用于获取唯一ID的SpEL表达式
-     *
-     * @return 用于获取唯一ID的SpEL表达式
-     */
-    public String getUniqueId() {
-        return uniqueId;
-    }
-
-    /**
-     * 设置用于获取唯一ID的SpEL表达式
-     *
-     * @param uniqueId 用于获取唯一ID的SpEL表达式
-     */
-    public void setUniqueId(String uniqueId) {
-        this.uniqueId = uniqueId;
     }
 
     /**

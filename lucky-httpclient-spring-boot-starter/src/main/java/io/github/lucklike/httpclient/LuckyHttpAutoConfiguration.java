@@ -35,7 +35,6 @@ import com.luckyframework.httpclient.proxy.logging.CustomMasker;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
-import com.luckyframework.httpclient.proxy.logging.SlowResponseHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
@@ -540,7 +539,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
 
         // 功能未开启或者为配置日志打印的包时直接结束
-        if ((!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) && !loggerConfig.isOnlyHandlerSlowNonPrintLog()) {
+        if (!loggerConfig.isEnable() || ContainerUtils.isEmptyCollection(loggerConfig.getPackages())) {
             return;
         }
 
@@ -562,7 +561,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (loggerHandler instanceof PrintLogAnnotationContextLoggerHandler) {
             PrintLogAnnotationContextLoggerHandler plaLoggerHandler = (PrintLogAnnotationContextLoggerHandler) loggerHandler;
             plaLoggerHandler.setReqCondition(loggerConfig.getReqLogCondition());
-            plaLoggerHandler.setOnlyHandlerSlowNonPrintLog(String.valueOf(loggerConfig.isOnlyHandlerSlowNonPrintLog()));
+            plaLoggerHandler.setLogErrorWithDetails(loggerConfig.isLogErrorWithDetails());
             plaLoggerHandler.setRespCondition(loggerConfig.getRespLogCondition());
             plaLoggerHandler.setPrintRespHeader(loggerConfig.getEnableRespHeaderLog());
             Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
@@ -579,18 +578,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             // 慢请求配置
             plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
             plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
-            SimpleGenerateEntry<SlowResponseHandler> slowResponseHandler = loggerConfig.getSlowResponseHandler();
-            if (slowResponseHandler != null) {
-                if (slowResponseHandler.hasBeanName()) {
-                    plaLoggerHandler.setSlowResponseHandler(applicationContext.getBean(slowResponseHandler.getBeanName(), SlowResponseHandler.class));
-                } else if (slowResponseHandler.hasType()) {
-                    plaLoggerHandler.setSlowResponseHandler(ClassUtils.newObject(slowResponseHandler.getType()));
-                }
-            }
-
-
-            // 配置用于获取唯一ID的SpEL表达式
-            plaLoggerHandler.setUniqueId(loggerConfig.getUniqueId());
 
             // 日志脱敏相关配置
             LoggerMaskerConfig maskers = loggerConfig.getMaskers();
