@@ -41,6 +41,7 @@ import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import com.luckyframework.httpclient.proxy.retry.RetryActuator;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
+import com.luckyframework.httpclient.proxy.slow.AbstractSlowResponseHandler;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
@@ -81,6 +82,7 @@ import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
+import io.github.lucklike.httpclient.config.SlowResponseHandlerConfiguration;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
@@ -228,6 +230,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
         httpParamSetting(factory, factoryConfig);
+        slowResponseHandlerSetting(factory, factoryConfig);
         loggerSetting(factory, factoryConfig);
         retryActuatorSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
@@ -528,6 +531,28 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
+     * 慢响应处理相关配置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void slowResponseHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
+        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 && slowResponseConfig.getHandler() != null) {
+            SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
+            AbstractSlowResponseHandler slowResponseHandler;
+            if (StringUtils.hasText(handler.getBeanName())) {
+                slowResponseHandler = applicationContext.getBean(handler.getBeanName(), AbstractSlowResponseHandler.class);
+            } else {
+                slowResponseHandler = ClassUtils.newObject(handler.getType());
+            }
+            slowResponseHandler.setSlowTime(slowResponseConfig.getSlowTime());
+
+            factory.setSlowResponseHandler(slowResponseHandler);
+        }
+    }
+
+    /**
      * 日志处理器设置
      *
      * @param factory       工厂实例
@@ -574,10 +599,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
             plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
             plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
-
-            // 慢请求配置
-            plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
-            plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
 
             // 日志脱敏相关配置
             LoggerMaskerConfig maskers = loggerConfig.getMaskers();

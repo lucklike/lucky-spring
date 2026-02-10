@@ -137,16 +137,6 @@ public class LoggerConfiguration {
     private long respBodyMaxLength = -1L;
 
     /**
-     * 触发警告标志的最小耗时（单位：毫秒）
-     */
-    private long warnTime = -1;
-
-    /**
-     * 触发错误标志的最小耗时（单位：毫秒）
-     */
-    private long slowTime = -1;
-
-    /**
      * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String reqLogCondition;
@@ -531,42 +521,6 @@ public class LoggerConfiguration {
      */
     public String getEnableRespHeaderLog() {
         return enableRespHeaderLog;
-    }
-
-    /**
-     * 获取触发警告标志的最小耗时（单位：毫秒）
-     *
-     * @return 触发警告标志的最小耗时
-     */
-    public long getWarnTime() {
-        return warnTime;
-    }
-
-    /**
-     * 设置触发警告标志的最小耗时（单位：毫秒）
-     *
-     * @param warnTime 触发警告标志的最小耗时
-     */
-    public void setWarnTime(long warnTime) {
-        this.warnTime = warnTime;
-    }
-
-    /**
-     * 获取触发错误标志的最小耗时（单位：毫秒）
-     *
-     * @return 触发错误标志的最小耗时
-     */
-    public long getSlowTime() {
-        return slowTime;
-    }
-
-    /**
-     * 设置触发错误标志的最小耗时（单位：毫秒）
-     *
-     * @param slowTime 触发错误标志的最小耗时
-     */
-    public void setSlowTime(long slowTime) {
-        this.slowTime = slowTime;
     }
 
     /**
