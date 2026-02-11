@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.FontUtil;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
@@ -116,6 +117,8 @@ import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -540,14 +543,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
         if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 && slowResponseConfig.getHandler() != null) {
             SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
-            AbstractSlowResponseHandler slowResponseHandler;
-            if (StringUtils.hasText(handler.getBeanName())) {
-                slowResponseHandler = applicationContext.getBean(handler.getBeanName(), AbstractSlowResponseHandler.class);
-            } else {
-                slowResponseHandler = ClassUtils.newObject(handler.getType());
-            }
+            AbstractSlowResponseHandler slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
             slowResponseHandler.setSlowTime(slowResponseConfig.getSlowTime());
-
             factory.setSlowResponseHandler(slowResponseHandler);
         }
     }
@@ -570,13 +567,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
         // 获取日志处理器实现类
         LoggerHandler loggerHandler = null;
-        SimpleGenerateEntry<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
-        if (logHandlerClass != null) {
-            if (logHandlerClass.hasBeanName()) {
-                loggerHandler = applicationContext.getBean(logHandlerClass.getBeanName(), LoggerHandler.class);
-            } else if (logHandlerClass.hasType()) {
-                loggerHandler = ClassUtils.newObject(logHandlerClass.getType());
-            }
+        SimpleGenerateEntry<LoggerHandler> logHandlerEntry = loggerConfig.getHandlerClass();
+        if (logHandlerEntry != null) {
+            loggerHandler = createObject("lucky.http-client.logger.handler-class", logHandlerEntry);
         }
         if (loggerHandler == null) {
             loggerHandler = loggerConfig.getType().getLoggerHandler();
@@ -749,7 +742,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = cookieManageConfig.getCookieStore();
             Integer priority = cookieManageConfig.getPriority();
             if (cookieStoreGenerate != null) {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject(cookieStoreGenerate)), priority);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store",cookieStoreGenerate)), priority);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
@@ -792,11 +785,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             HostnameVerifier hostnameVerifier = TrustAllHostnameVerifier.DEFAULT_INSTANCE;
             SimpleGenerateEntry<HostnameVerifierFactory> hvbFactory = sslConfig.getHostnameVerifier();
             if (hvbFactory != null) {
-                if (hvbFactory.hasBeanName()) {
-                    hostnameVerifier = applicationContext.getBean(hvbFactory.getBeanName(), HostnameVerifierFactory.class).getHostnameVerifier();
-                } else if (hvbFactory.hasType()) {
-                    hostnameVerifier = ClassUtils.newObject(hvbFactory.getType()).getHostnameVerifier();
-                }
+                hostnameVerifier = createObject("lucky.http-client.ssl.hostname-verifier", hvbFactory).getHostnameVerifier();
             } else if (StringUtils.hasText(sslConfig.getHostnameVerifierExpression())) {
                 hostnameVerifier = factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getHostnameVerifierExpression()).setExpectedResultType(HostnameVerifier.class));
             }
@@ -804,12 +793,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
             // SSLSocketFactory
             SimpleGenerateEntry<SSLSocketFactoryFactory> sslFactoryConfig = sslConfig.getSslSocketFactory();
-            if (sslFactoryConfig != null && (sslFactoryConfig.hasBeanName() || sslFactoryConfig.hasType())) {
-                if (StringUtils.hasText(sslFactoryConfig.getBeanName())) {
-                    factory.setSslSocketFactory(applicationContext.getBean(sslFactoryConfig.getBeanName(), SSLSocketFactoryFactory.class).getSSLSocketFactory());
-                } else {
-                    factory.setSslSocketFactory(ClassUtils.newObject(sslFactoryConfig.getType()).getSSLSocketFactory());
-                }
+            if (sslFactoryConfig != null) {
+                factory.setSslSocketFactory(createObject("lucky.http-client.ssl.ssl-socket-factory", sslFactoryConfig).getSSLSocketFactory());
             } else if (StringUtils.hasText(sslConfig.getSslSocketFactoryExpression())) {
                 factory.setSslSocketFactory(factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getSslSocketFactoryExpression()).setExpectedResultType(SSLSocketFactory.class)));
             } else {
@@ -1057,12 +1042,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T createObject(SimpleGenerateEntry<T> generateEntry) {
-        if (StringUtils.hasText(generateEntry.getBeanName())) {
+    @NonNull
+    private <T> T createObject(String configDesc, SimpleGenerateEntry<T> generateEntry) {
+        if (generateEntry.hasBeanName()) {
             return (T) applicationContext.getBean(generateEntry.getBeanName());
-        } else {
-            return ClassUtils.newObject(generateEntry.getType());
+        } else if (generateEntry.hasType()) {
+            return applicationContext.getBeanProvider(generateEntry.getType()).stream().findFirst().orElse(ClassUtils.newObject(generateEntry.getType()));
         }
+        throw new LuckyRuntimeException("{} Failed to create an object instance. No configuration item [bean-name, type] was provided.", FontUtil.getRedStr("[configKey: '") + FontUtil.getRedUnderline(configDesc) + FontUtil.getRedStr("']"));
     }
 
 
