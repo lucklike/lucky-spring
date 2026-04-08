@@ -26,6 +26,7 @@ import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationSource;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
@@ -43,6 +44,7 @@ import com.luckyframework.httpclient.proxy.retry.RetryActuator;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.slow.AbstractSlowResponseHandler;
+import com.luckyframework.httpclient.proxy.slow.ResponseTimeSpent;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
@@ -541,9 +543,19 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void slowResponseHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
-        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 && slowResponseConfig.getHandler() != null) {
-            SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
-            AbstractSlowResponseHandler slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
+        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 ) {
+            AbstractSlowResponseHandler slowResponseHandler;
+            if (slowResponseConfig.getHandler() != null){
+                SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
+                slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
+            } else {
+                slowResponseHandler = new AbstractSlowResponseHandler() {
+                    @Override
+                    public void handleSlowResponse(MethodContext context, Response response, ResponseTimeSpent responseTimeSpent) {
+
+                    }
+                };
+            }
             slowResponseHandler.setSlowTime(slowResponseConfig.getSlowTime());
             factory.setSlowResponseHandler(slowResponseHandler);
         }
