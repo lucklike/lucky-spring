@@ -291,7 +291,7 @@ public class BeanFunction {
                 // 目标对象的属性为null时，尝试使用反射调用其无参构造器进行构造之后再进行属性的拷贝
                 else {
                     try {
-                        Object newTargetPropertyValue = ClassUtils.newObject(targetProperty.getDescriptor().getPropertyType());
+                        Object newTargetPropertyValue =targetProperty.newObject();
                         copyProperties(propertyValue, newTargetPropertyValue, filter, this);
                         targetProperty.setValue(newTargetPropertyValue);
                     } catch (LuckyReflectionException e) {
