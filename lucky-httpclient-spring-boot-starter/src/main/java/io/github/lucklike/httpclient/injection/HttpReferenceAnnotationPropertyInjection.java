@@ -28,12 +28,12 @@ public class HttpReferenceAnnotationPropertyInjection extends AnnotationProperty
 
     @Override
     protected Object getInjectObjectByField(Object bean, String beanName, Field field, ResolvableType fieldType, HttpReference httpReferenceAnn) {
-        return getHttpClientObject(fieldType.resolve(), httpReferenceAnn);
+        return getHttpClientObject(fieldType.toClass(), httpReferenceAnn);
     }
 
     @Override
     protected Object getInjectObjectByParam(Object bean, String beanName, Parameter param, ResolvableType paramType, HttpReference httpReferenceAnn) {
-        return getHttpClientObject(paramType.resolve(), httpReferenceAnn);
+        return getHttpClientObject(paramType.toClass(), httpReferenceAnn);
     }
 
 

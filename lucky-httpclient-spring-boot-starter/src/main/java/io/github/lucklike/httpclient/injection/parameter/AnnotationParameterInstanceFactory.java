@@ -24,7 +24,7 @@ public abstract class AnnotationParameterInstanceFactory<A extends Annotation> i
      */
     @SuppressWarnings("unchecked")
     public AnnotationParameterInstanceFactory() {
-        this.annotationType = (Class<A>) ResolvableType.forClass(AnnotationParameterInstanceFactory.class, getClass()).getGeneric(0).resolve();
+        this.annotationType = (Class<A>) ResolvableType.forClass(AnnotationParameterInstanceFactory.class, getClass()).getGeneric(0).toClass();
     }
 
     @Override
