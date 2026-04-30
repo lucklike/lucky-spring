@@ -34,14 +34,16 @@ import java.util.Map;
 @SpELImport(UseMockConfiguration.MockConfigFunction.class)
 public @interface UseMockConfiguration {
 
-    String configBean() default "#{str('{}MockConfiguration', $class$.getSimpleName())}";
+    String DEF_MOCK_BEAN_SUFFIX = "$MockConfiguration";
+
+    String configBean() default "";
 
     class MockConfigFunction {
 
         @FunctionAlias("__config_mock_enable__")
         public static boolean mockEnable(MethodContext mc) {
             UseMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(UseMockConfiguration.class);
-            String beanName = mc.parseExpression(mockConfigAnn.configBean(), String.class);
+            String beanName = getMockConfigurationBeanName(mc, mockConfigAnn.configBean());
 
             // 不存在该Bean定义信息时
             if (!ApplicationContextUtils.containsBeanDefinition(beanName)) {
@@ -65,7 +67,7 @@ public @interface UseMockConfiguration {
         @FunctionAlias("__config_mock_result__")
         public static MockResponse mockResult(MethodContext mc) throws InterruptedException {
             UseMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(UseMockConfiguration.class);
-            String beanName = mc.parseExpression(mockConfigAnn.configBean(), String.class);
+            String beanName = getMockConfigurationBeanName(mc, mockConfigAnn.configBean());
 
             MockResponse mockResponse = MockResponse.create();
             mockResponse.header("Mock-Annotation", "@UseMockConfiguration");
@@ -156,6 +158,14 @@ public @interface UseMockConfiguration {
 
             //return
             return mockResponse;
+        }
+
+        private static String getMockConfigurationBeanName(MethodContext mc, String configBean) {
+            if (StringUtils.hasText(configBean)) {
+                return mc.parseExpression(configBean, String.class);
+            }
+            String[] beanNamesForType = ApplicationContextUtils.getBeanNamesForType(mc.getClassContext().getCurrentAnnotatedElement());
+            return beanNamesForType[0] + DEF_MOCK_BEAN_SUFFIX;
         }
 
 
