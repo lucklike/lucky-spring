@@ -164,7 +164,7 @@ public @interface UseMockConfiguration {
             if (StringUtils.hasText(configBean)) {
                 return mc.parseExpression(configBean, String.class);
             }
-            String[] beanNamesForType = ApplicationContextUtils.getBeanNamesForType(mc.getClassContext().getCurrentAnnotatedElement());
+            String[] beanNamesForType = ApplicationContextUtils.getBeanNamesForType(mc.getProxyObject().getClass());
             return beanNamesForType[0] + DEF_MOCK_BEAN_SUFFIX;
         }
 
