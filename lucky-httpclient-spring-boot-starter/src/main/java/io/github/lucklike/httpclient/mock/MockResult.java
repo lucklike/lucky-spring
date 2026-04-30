@@ -17,7 +17,7 @@ public class MockResult {
     /**
      * 是否启用当前 Mock 结果
      */
-    private boolean enable;
+    private boolean enable = true;
 
     /**
      * 模拟延时配置，单位毫秒
