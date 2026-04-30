@@ -21,12 +21,12 @@ public class WhenMockResult {
     /**
      * 模拟延时配置，单位毫秒
      */
-    private long latency;
+    private Long latency;
 
     /**
      * 模拟 HTTP 状态码
      */
-    private int status = 200;
+    private Integer status;
 
     /**
      * 模拟响应头
@@ -44,7 +44,7 @@ public class WhenMockResult {
      *
      * @return 拟延时配置，单位毫秒
      */
-    public long getLatency() {
+    public Long getLatency() {
         return latency;
     }
 
@@ -53,7 +53,7 @@ public class WhenMockResult {
      *
      * @param latency 拟延时配置，单位毫秒
      */
-    public void setLatency(long latency) {
+    public void setLatency(Long latency) {
         this.latency = latency;
     }
 
@@ -62,7 +62,7 @@ public class WhenMockResult {
      *
      * @return HTTP 状态码
      */
-    public int getStatus() {
+    public Integer getStatus() {
         return status;
     }
 
@@ -71,7 +71,7 @@ public class WhenMockResult {
      *
      * @param status HTTP 状态码
      */
-    public void setStatus(int status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 

@@ -3,22 +3,23 @@ package io.github.lucklike.httpclient.mock;
 import java.util.Map;
 
 /**
+ * Mock相关配置的配置类
  *
  * @author fukang
  * @version 1.0.0
  * @date 2026/4/30 00:37
  */
-public class CommonMockConfiguration {
+public class MockConfiguration {
 
     /**
      * Mock总开关
      */
-    private boolean enable = true;
+    private boolean enable = false;
 
     /**
      * 总延时配置，单位毫秒
      */
-    private long latency;
+    private Long latency;
 
     /**
      * 方法模拟配置
@@ -48,7 +49,7 @@ public class CommonMockConfiguration {
      *
      * @return 总延时配置，单位毫秒
      */
-    public long getLatency() {
+    public Long getLatency() {
         return latency;
     }
 
@@ -57,7 +58,7 @@ public class CommonMockConfiguration {
      *
      * @param latency 总延时配置，单位毫秒
      */
-    public void setLatency(long latency) {
+    public void setLatency(Long latency) {
         this.latency = latency;
     }
 
