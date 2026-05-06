@@ -4,6 +4,7 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import io.github.lucklike.httpclient.config.mock.MockConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.Map;
@@ -171,6 +172,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 开启自动 URL 推导功能时的默认请求方法
      */
     private RequestMethod autoDerivationDefMethod = RequestMethod.POST;
+
+    /**
+     * 模拟配置
+     */
+    private Map<String, MockConfiguration> mockConfigs;
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -379,6 +385,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.autoDerivationDefMethod = autoDerivationDefMethod;
     }
 
+    /**
+     * 设置模拟配置
+     *
+     * @param mockConfigs 模拟配置
+     */
+    public void setMockConfigs(Map<String, MockConfiguration> mockConfigs) {
+        this.mockConfigs = mockConfigs;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -575,4 +590,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
         return autoDerivationDefMethod;
     }
 
+    /**
+     * 获取模拟配置
+     *
+     * @return 模拟配置
+     */
+    public Map<String, MockConfiguration> getMockConfigs() {
+        return mockConfigs;
+    }
 }

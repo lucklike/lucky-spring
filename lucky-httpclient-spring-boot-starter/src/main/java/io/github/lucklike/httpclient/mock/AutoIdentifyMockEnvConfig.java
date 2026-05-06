@@ -140,9 +140,9 @@ import java.lang.annotation.Target;
 public @interface AutoIdentifyMockEnvConfig {
 
     /**
-     * 配置前缀，默认值为${lucky.mock-configs.#{$class$.getSimpleName()}}
+     * 配置前缀，默认值为${lucky.http-client.mock-configs.#{$class$.getSimpleName()}}
      */
-    String value() default "lucky.mock-configs.#{$class$.getSimpleName()}";
+    String value() default "lucky.http-client.mock-configs.#{$class$.getSimpleName()}";
 
 
     /**
