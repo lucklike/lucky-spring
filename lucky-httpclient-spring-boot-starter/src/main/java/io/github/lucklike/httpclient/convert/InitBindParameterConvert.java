@@ -36,7 +36,7 @@ public class InitBindParameterConvert implements ParameterConvert {
 
         // 标注在类上或者方法上时，需要检查type是否与当前参数类型相匹配
         InitBind initBind = context.getMergedAnnotationCheckParent(InitBind.class);
-        Class<?> valueType = context.getType().resolve();
+        Class<?> valueType = context.getType().toClass();
         for (Class<?> type : initBind.types()) {
             // 不对JDK中的类型提供支持
             if (ClassUtils.isJdkType(type)) {
@@ -55,7 +55,7 @@ public class InitBindParameterConvert implements ParameterConvert {
         for (String conf : initBind.value()) {
             try {
                 String propertyName = context.parseExpression(conf);
-                BeanFunction.initBind(value, propertyName);
+                BeanFunction.spelInitBind(context, value, propertyName);
             } catch (BindException e) {
                 if (!initBind.allowConfigNotExist()) {
                     throw e;
@@ -64,4 +64,5 @@ public class InitBindParameterConvert implements ParameterConvert {
         }
         return value;
     }
+
 }

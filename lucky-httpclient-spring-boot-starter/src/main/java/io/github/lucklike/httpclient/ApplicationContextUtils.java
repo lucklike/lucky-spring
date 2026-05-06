@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.conversion.ConversionUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -10,6 +11,7 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ public class ApplicationContextUtils  {
     
     public static void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         context = applicationContext;
+        context.getBeanProvider(ProtocolResolver.class).forEach(ConversionUtils::addProtocolResolver);
     }
 
     public static ApplicationContext getApplicationContext() {

@@ -35,7 +35,7 @@ public abstract class AnnotationPropertyInjection<A extends Annotation> extends 
      */
     @SuppressWarnings("unchecked")
     public AnnotationPropertyInjection() {
-        this.annotationType = (Class<A>) ResolvableType.forClass(AnnotationPropertyInjection.class, getClass()).getGeneric(0).resolve();
+        this.annotationType = (Class<A>) ResolvableType.forClass(AnnotationPropertyInjection.class, getClass()).getGeneric(0).toClass();
     }
 
     @Override

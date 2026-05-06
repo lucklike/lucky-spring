@@ -53,7 +53,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
         ProxyModel globalProxyModel = (ProxyModel) attributes.get("proxyModel");
         String proxyFactoryName = (String) attributes.get("proxyFactoryName");
-        log.info("HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, globalProxyModel);
+        log.info("[⚙️] HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, globalProxyModel);
         LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
                 new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, globalProxyModel);
 
@@ -65,7 +65,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             scannedClasses = new Class[]{ClassUtils.getClass(importingClassMetadata.getClassName())};
         }
         String[] finalScannedPackages = ScanUtils.getPackages(scannedClasses, scannedPackages);
-        log.info("lucky-httpclient start scanning the package {}", Arrays.toString(finalScannedPackages));
+        log.info("[🔎] lucky-httpclient start scanning the package {}", Arrays.toString(finalScannedPackages));
 
         // 包扫描以及BeanDefinition注册
         AtomicInteger s = new AtomicInteger();
@@ -87,7 +87,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
                     registry.registerBeanDefinition(beanName, definition);
-                    log.debug("@HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
+                    log.debug("[🍀] @HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
                     s.getAndIncrement();
                 } else {
                     throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
@@ -95,7 +95,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
             }
         });
 
-        log.info("lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
+        log.info("[✅] lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
 
         // 打印版本信息和logo
         printVersion();

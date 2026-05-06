@@ -2,12 +2,19 @@ package io.github.lucklike.httpclient.function;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.FontUtil;
+import com.luckyframework.exception.LuckyReflectionException;
+import com.luckyframework.httpclient.core.util.BeanUtils;
+import com.luckyframework.httpclient.core.util.PropertyConvert;
+import com.luckyframework.httpclient.core.util.PropertyFilter;
+import com.luckyframework.httpclient.core.util.PropertyInfo;
+import com.luckyframework.httpclient.proxy.context.Context;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
 import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
+import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
@@ -23,8 +30,8 @@ import org.springframework.lang.NonNull;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Objects;
 
+import static com.luckyframework.httpclient.core.util.BeanUtils.copyProperties;
 import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$PARAMETER_INSTANCE_FUNCTION$__;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
 
@@ -198,6 +205,17 @@ public class BeanFunction {
     }
 
     /**
+     * 判断环境变量中是否存在某个配置
+     *
+     * @param propertyKey 配置项
+     * @return 环境变量中是否存在某个配置
+     */
+    @FunctionAlias("contains_property")
+    public static boolean containsProperty(String propertyKey) {
+        return ApplicationContextUtils.getEnvironment().containsProperty(propertyKey);
+    }
+
+    /**
      * 将环境变量中的某一段配置绑定到否个实体类对象上
      *
      * @param targetObject 用于绑定配置的实体类对象
@@ -221,6 +239,21 @@ public class BeanFunction {
         CommonFunctions.initCopy(configObj, targetObject);
     }
 
+    /**
+     * 支持SpEL计算（String）
+     * 初始化绑定,如果target对象中的某个属性不为初始值时（引用类型的初始值为null， 基本类型的初始值参考JDK规范），拷贝时则忽略该属性
+     *
+     * @param context 上下文对象
+     * @param targetObject 用于绑定配置的实体类对象
+     * @param prefix 配置
+     */
+    @FunctionAlias("sqel_init_bind")
+    public static void spelInitBind(Context context, Object targetObject, String prefix) {
+        Object configObj = env(prefix, targetObject.getClass());
+        BeanUtils.TargetPropertyIsDefValueExecuteCopy filter = new BeanUtils.TargetPropertyIsDefValueExecuteCopy();
+        copyProperties(configObj, targetObject, filter, new SpELPropertyCopyConvert(context, filter));
+    }
+
     @FunctionFilter
     private static ResolvableType getConvertType(Object[] type) {
         if (ContainerUtils.isEmptyArray(type)) {
@@ -232,6 +265,53 @@ public class BeanFunction {
     @NonNull
     @FunctionFilter
     private static Class<?> getConvertClass(Object[] type) {
-        return Objects.requireNonNull(getConvertType(type).resolve());
+        return getConvertType(type).toClass();
+    }
+
+    /**
+     * 默认的属性转换器
+     */
+    static class SpELPropertyCopyConvert implements PropertyConvert {
+
+        private final PropertyFilter filter;
+        private final Context context;
+
+        SpELPropertyCopyConvert(Context context, PropertyFilter filter) {
+            this.filter = filter;
+            this.context = context;
+        }
+
+
+        @Override
+        public void convert(PropertyInfo sourceProperty, PropertyInfo targetProperty) {
+            // 进行SpEL计算
+            Object propertyValue = sourceProperty.getValue();
+            if (propertyValue instanceof String) {
+                propertyValue = context.parseExpression(propertyValue.toString(), String.class);
+            }
+
+            if (sourceProperty.isJdkType()) {
+                targetProperty.setValue(propertyValue);
+            } else {
+                Object targetPropertyValue = targetProperty.getValue();
+
+                //目标对象的属性不为null时，直接进行属性的拷贝
+                if (targetPropertyValue != null) {
+                    copyProperties(propertyValue, targetPropertyValue, filter, this);
+                }
+                // 目标对象的属性为null时，尝试使用反射调用其无参构造器进行构造之后再进行属性的拷贝
+                else {
+                    try {
+                        Object newTargetPropertyValue =targetProperty.newObject();
+                        copyProperties(propertyValue, newTargetPropertyValue, filter, this);
+                        targetProperty.setValue(newTargetPropertyValue);
+                    } catch (LuckyReflectionException e) {
+                        // ignore
+                    }
+                }
+
+
+            }
+        }
     }
 }

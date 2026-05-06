@@ -28,6 +28,11 @@ public class LoggerConfiguration {
     private boolean enableRespLog = true;
 
     /**
+     * 日志组件异常时是否打印详细的错误信息
+     */
+    private boolean logErrorWithDetails = false;
+
+    /**
      * 日志打印类型
      */
     private LoggerImpl type = LoggerImpl.BEAUTIFUL;
@@ -35,7 +40,8 @@ public class LoggerConfiguration {
     /**
      * 处理类
      */
-    private Class<LoggerHandler> handlerClass;
+    @NestedConfigurationProperty
+    private SimpleGenerateEntry<LoggerHandler> handlerClass;
 
     /**
      * 指定需要打印日志的包<br/>
@@ -46,7 +52,7 @@ public class LoggerConfiguration {
     /**
      * 是否打印响应头信息
      */
-    private boolean enableRespHeaderLog = true;
+    private String enableRespHeaderLog;
 
     /**
      * MimeType为这些类型时，将打印响应体日志（覆盖默认值）<br/>
@@ -131,16 +137,6 @@ public class LoggerConfiguration {
     private long respBodyMaxLength = -1L;
 
     /**
-     * 触发警告标志的最小耗时（单位：毫秒）
-     */
-    private long warnTime = -1;
-
-    /**
-     * 触发错误标志的最小耗时（单位：毫秒）
-     */
-    private long slowTime = -1;
-
-    /**
      * 打印请求日志的条件，这里可以写一个返回值为boolean类型的SpEL表达式，true时才会打印日志
      */
     private String reqLogCondition;
@@ -156,13 +152,13 @@ public class LoggerConfiguration {
     @NestedConfigurationProperty
     private LoggerMaskerConfig maskers = new LoggerMaskerConfig();
 
-
     /**
      * 获取用于日志处理的处理类
      *
      * @return 用于日志处理的处理类
      */
-    public Class<LoggerHandler> getHandlerClass() {
+
+    public SimpleGenerateEntry<LoggerHandler> getHandlerClass() {
         return handlerClass;
     }
 
@@ -172,7 +168,7 @@ public class LoggerConfiguration {
      *
      * @param handlerClass 用于日志处理的处理类
      */
-    public void setHandlerClass(Class<LoggerHandler> handlerClass) {
+    public void setHandlerClass(SimpleGenerateEntry<LoggerHandler> handlerClass) {
         this.handlerClass = handlerClass;
     }
 
@@ -231,6 +227,24 @@ public class LoggerConfiguration {
      */
     public Set<String> getPackages() {
         return packages;
+    }
+
+    /**
+     * 日志组件异常时是否打印详细的错误信息
+     *
+     * @return 日志组件异常时是否打印详细的错误信息
+     */
+    public boolean isLogErrorWithDetails() {
+        return logErrorWithDetails;
+    }
+
+    /**
+     * 设置日志组件异常时是否打印详细的错误信息
+     *
+     * @param logErrorWithDetails 日志组件异常时是否打印详细的错误信息
+     */
+    public void setLogErrorWithDetails(boolean logErrorWithDetails) {
+        this.logErrorWithDetails = logErrorWithDetails;
     }
 
     /**
@@ -386,7 +400,7 @@ public class LoggerConfiguration {
      *
      * @param enableRespHeaderLog 是否打印响应头信息
      */
-    public void setEnableRespHeaderLog(boolean enableRespHeaderLog) {
+    public void setEnableRespHeaderLog(String enableRespHeaderLog) {
         this.enableRespHeaderLog = enableRespHeaderLog;
     }
 
@@ -505,44 +519,8 @@ public class LoggerConfiguration {
      *
      * @return 是否打印响应头信息
      */
-    public boolean isEnableRespHeaderLog() {
+    public String getEnableRespHeaderLog() {
         return enableRespHeaderLog;
-    }
-
-    /**
-     * 获取触发警告标志的最小耗时（单位：毫秒）
-     *
-     * @return 触发警告标志的最小耗时
-     */
-    public long getWarnTime() {
-        return warnTime;
-    }
-
-    /**
-     * 设置触发警告标志的最小耗时（单位：毫秒）
-     *
-     * @param warnTime 触发警告标志的最小耗时
-     */
-    public void setWarnTime(long warnTime) {
-        this.warnTime = warnTime;
-    }
-
-    /**
-     * 获取触发错误标志的最小耗时（单位：毫秒）
-     *
-     * @return 触发错误标志的最小耗时
-     */
-    public long getSlowTime() {
-        return slowTime;
-    }
-
-    /**
-     * 设置触发错误标志的最小耗时（单位：毫秒）
-     *
-     * @param slowTime 触发错误标志的最小耗时
-     */
-    public void setSlowTime(long slowTime) {
-        this.slowTime = slowTime;
     }
 
     /**

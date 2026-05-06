@@ -105,6 +105,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private LoggerConfiguration logger = new LoggerConfiguration();
 
     /**
+     * 慢响应相关配置
+     */
+    @NestedConfigurationProperty
+    private SlowResponseHandlerConfiguration slowResponseConfig;
+
+    /**
      * SpEL表达式相关的配置
      */
     @NestedConfigurationProperty
@@ -272,6 +278,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public void setLogger(LoggerConfiguration logger) {
         this.logger = logger;
+    }
+
+    /**
+     * 设置慢响应相关配置
+     *
+     * @param slowResponseConfig 慢响应相关配置
+     */
+    public void setSlowResponseConfig(SlowResponseHandlerConfiguration slowResponseConfig) {
+        this.slowResponseConfig = slowResponseConfig;
     }
 
     /**
@@ -459,6 +474,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 获取慢响应相关配置
+     *
+     * @return 慢响应相关配置
+     */
+    public SlowResponseHandlerConfiguration getSlowResponseConfig() {
+        return slowResponseConfig;
+    }
+
+    /**
      * 获取SpEL相关的配置
      *
      * @return SpEL相关的配置
@@ -540,7 +564,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     public Boolean getEnableAutoUrlDerivation() {
         return enableAutoUrlDerivation;
     }
-
 
 
     /**

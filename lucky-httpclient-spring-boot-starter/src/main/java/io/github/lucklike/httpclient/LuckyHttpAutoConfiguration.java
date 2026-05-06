@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.FontUtil;
 import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.exception.LuckyRuntimeException;
@@ -25,6 +26,7 @@ import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationSource;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.creator.ObjectCreator;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
@@ -41,6 +43,8 @@ import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import com.luckyframework.httpclient.proxy.retry.RetryActuator;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
+import com.luckyframework.httpclient.proxy.slow.AbstractSlowResponseHandler;
+import com.luckyframework.httpclient.proxy.slow.ResponseTimeSpent;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
 import com.luckyframework.httpclient.proxy.spel.MethodSpaceConstant;
 import com.luckyframework.httpclient.proxy.spel.SpELConvert;
@@ -81,6 +85,7 @@ import io.github.lucklike.httpclient.config.ResponseConvertConfiguration;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.SSLConfiguration;
 import io.github.lucklike.httpclient.config.SimpleGenerateEntry;
+import io.github.lucklike.httpclient.config.SlowResponseHandlerConfiguration;
 import io.github.lucklike.httpclient.config.SpELConfiguration;
 import io.github.lucklike.httpclient.config.SpELRuntimeFactory;
 import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
@@ -114,6 +119,8 @@ import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -228,6 +235,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         httpExecuteSetting(factory, factoryConfig);
         exceptionHandlerSetting(factory, factoryConfig);
         httpParamSetting(factory, factoryConfig);
+        slowResponseHandlerSetting(factory, factoryConfig);
         loggerSetting(factory, factoryConfig);
         retryActuatorSetting(factory, factoryConfig);
         interceptorSetting(factory, factoryConfig);
@@ -528,6 +536,32 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     /**
+     * 慢响应处理相关配置
+     *
+     * @param factory       工厂实例
+     * @param factoryConfig 工厂配置
+     */
+    private void slowResponseHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+        SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
+        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 ) {
+            AbstractSlowResponseHandler slowResponseHandler;
+            if (slowResponseConfig.getHandler() != null){
+                SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
+                slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
+            } else {
+                slowResponseHandler = new AbstractSlowResponseHandler() {
+                    @Override
+                    public void handleSlowResponse(MethodContext context, Response response, ResponseTimeSpent responseTimeSpent) {
+
+                    }
+                };
+            }
+            slowResponseHandler.setSlowTime(slowResponseConfig.getSlowTime());
+            factory.setSlowResponseHandler(slowResponseHandler);
+        }
+    }
+
+    /**
      * 日志处理器设置
      *
      * @param factory       工厂实例
@@ -544,11 +578,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
         // 获取日志处理器实现类
-        LoggerHandler loggerHandler;
-        Class<LoggerHandler> logHandlerClass = loggerConfig.getHandlerClass();
-        if (logHandlerClass != null) {
-            loggerHandler = ClassUtils.newObject(logHandlerClass);
-        } else {
+        LoggerHandler loggerHandler = null;
+        SimpleGenerateEntry<LoggerHandler> logHandlerEntry = loggerConfig.getHandlerClass();
+        if (logHandlerEntry != null) {
+            loggerHandler = createObject("lucky.http-client.logger.handler-class", logHandlerEntry);
+        }
+        if (loggerHandler == null) {
             loggerHandler = loggerConfig.getType().getLoggerHandler();
         }
 
@@ -556,8 +591,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         if (loggerHandler instanceof PrintLogAnnotationContextLoggerHandler) {
             PrintLogAnnotationContextLoggerHandler plaLoggerHandler = (PrintLogAnnotationContextLoggerHandler) loggerHandler;
             plaLoggerHandler.setReqCondition(loggerConfig.getReqLogCondition());
+            plaLoggerHandler.setLogErrorWithDetails(loggerConfig.isLogErrorWithDetails());
             plaLoggerHandler.setRespCondition(loggerConfig.getRespLogCondition());
-            plaLoggerHandler.setPrintRespHeader(loggerConfig.isEnableRespHeaderLog());
+            plaLoggerHandler.setPrintRespHeader(loggerConfig.getEnableRespHeaderLog());
             Set<String> allowPrintLogBodyMimeTypes = loggerConfig.getSetAllowMimeTypes();
             if (ContainerUtils.isNotEmptyCollection(allowPrintLogBodyMimeTypes)) {
                 plaLoggerHandler.setAllowPrintLogBodyMimeTypes(allowPrintLogBodyMimeTypes);
@@ -568,10 +604,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             }
             plaLoggerHandler.setAllowPrintLogReqBodyMaxLength(loggerConfig.getReqBodyMaxLength());
             plaLoggerHandler.setAllowPrintLogRespBodyMaxLength(loggerConfig.getRespBodyMaxLength());
-
-            // 慢请求配置
-            plaLoggerHandler.setWarnTime(loggerConfig.getWarnTime());
-            plaLoggerHandler.setSlowTime(loggerConfig.getSlowTime());
 
             // 日志脱敏相关配置
             LoggerMaskerConfig maskers = loggerConfig.getMaskers();
@@ -722,7 +754,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = cookieManageConfig.getCookieStore();
             Integer priority = cookieManageConfig.getPriority();
             if (cookieStoreGenerate != null) {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject(cookieStoreGenerate)), priority);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store",cookieStoreGenerate)), priority);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
@@ -765,11 +797,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             HostnameVerifier hostnameVerifier = TrustAllHostnameVerifier.DEFAULT_INSTANCE;
             SimpleGenerateEntry<HostnameVerifierFactory> hvbFactory = sslConfig.getHostnameVerifier();
             if (hvbFactory != null) {
-                if (StringUtils.hasText(hvbFactory.getBeanName())) {
-                    hostnameVerifier = applicationContext.getBean(hvbFactory.getBeanName(), HostnameVerifierFactory.class).getHostnameVerifier();
-                } else if (hvbFactory.getType() != null) {
-                    hostnameVerifier = ClassUtils.newObject(hvbFactory.getType()).getHostnameVerifier();
-                }
+                hostnameVerifier = createObject("lucky.http-client.ssl.hostname-verifier", hvbFactory).getHostnameVerifier();
             } else if (StringUtils.hasText(sslConfig.getHostnameVerifierExpression())) {
                 hostnameVerifier = factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getHostnameVerifierExpression()).setExpectedResultType(HostnameVerifier.class));
             }
@@ -777,12 +805,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
             // SSLSocketFactory
             SimpleGenerateEntry<SSLSocketFactoryFactory> sslFactoryConfig = sslConfig.getSslSocketFactory();
-            if (sslFactoryConfig != null && (StringUtils.hasText(sslFactoryConfig.getBeanName()) || sslFactoryConfig.getType() != null)) {
-                if (StringUtils.hasText(sslFactoryConfig.getBeanName())) {
-                    factory.setSslSocketFactory(applicationContext.getBean(sslFactoryConfig.getBeanName(), SSLSocketFactoryFactory.class).getSSLSocketFactory());
-                } else {
-                    factory.setSslSocketFactory(ClassUtils.newObject(sslFactoryConfig.getType()).getSSLSocketFactory());
-                }
+            if (sslFactoryConfig != null) {
+                factory.setSslSocketFactory(createObject("lucky.http-client.ssl.ssl-socket-factory", sslFactoryConfig).getSSLSocketFactory());
             } else if (StringUtils.hasText(sslConfig.getSslSocketFactoryExpression())) {
                 factory.setSslSocketFactory(factory.getSpELConverter().parseExpression(new ParamWrapper(sslConfig.getSslSocketFactoryExpression()).setExpectedResultType(SSLSocketFactory.class)));
             } else {
@@ -1030,12 +1054,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T createObject(SimpleGenerateEntry<T> generateEntry) {
-        if (StringUtils.hasText(generateEntry.getBeanName())) {
+    @NonNull
+    private <T> T createObject(String configDesc, SimpleGenerateEntry<T> generateEntry) {
+        if (generateEntry.hasBeanName()) {
             return (T) applicationContext.getBean(generateEntry.getBeanName());
-        } else {
-            return ClassUtils.newObject(generateEntry.getType());
+        } else if (generateEntry.hasType()) {
+            return applicationContext.getBeanProvider(generateEntry.getType()).stream().findFirst().orElse(ClassUtils.newObject(generateEntry.getType()));
         }
+        throw new LuckyRuntimeException("{} Failed to create an object instance. No configuration item [bean-name, type] was provided.", FontUtil.getRedStr("[configKey: '") + FontUtil.getRedUnderline(configDesc) + FontUtil.getRedStr("']"));
     }
 
 
