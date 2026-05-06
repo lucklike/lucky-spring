@@ -5,6 +5,7 @@ import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.mock.MockConfiguration;
+import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.Map;
@@ -177,6 +178,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 模拟配置
      */
     private Map<String, MockConfiguration> mockConfigs;
+
+    /**
+     * 全局简单HTTP配置集合
+     */
+    private Map<String, SimpleHttpClientConfiguration> simpleClientConfigs;
+
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -394,6 +401,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.mockConfigs = mockConfigs;
     }
 
+    /**
+     * 设置全局简单HTTP配置集合
+     *
+     * @param simpleClientConfigs 全局简单HTTP配置集合
+     */
+    public void setSimpleClientConfigs(Map<String, SimpleHttpClientConfiguration> simpleClientConfigs) {
+        this.simpleClientConfigs = simpleClientConfigs;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -597,5 +613,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public Map<String, MockConfiguration> getMockConfigs() {
         return mockConfigs;
+    }
+
+    /**
+     * 获取全局简单HTTP配置集合
+     *
+     * @return 全局简单HTTP配置集合
+     */
+    public Map<String, SimpleHttpClientConfiguration> getSimpleClientConfigs() {
+        return simpleClientConfigs;
     }
 }
