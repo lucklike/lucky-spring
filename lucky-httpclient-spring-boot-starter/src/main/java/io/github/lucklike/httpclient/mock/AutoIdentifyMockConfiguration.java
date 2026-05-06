@@ -136,8 +136,8 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 @Mock(enable = "#{__config_mock_enable__($mc$)}", mockResp = "#{__config_mock_result__($mc$)}")
-@SpELImport(AutoIdentifyMockEnvConfig.MockConfigFunctionAndCallback.class)
-public @interface AutoIdentifyMockEnvConfig {
+@SpELImport(AutoIdentifyMockConfiguration.MockConfigFunctionAndCallback.class)
+public @interface AutoIdentifyMockConfiguration {
 
     /**
      * 配置前缀，默认值为${lucky.http-client.mock-configs.#{$class$.getSimpleName()}}
@@ -150,7 +150,7 @@ public @interface AutoIdentifyMockEnvConfig {
      */
     class MockConfigFunctionAndCallback {
 
-        public static final String MOCK_CONFIG = "$AutoIdentifyMockEnvConfig";
+        public static final String MOCK_CONFIG = "$AutoIdentifyMockConfiguration";
 
         /**
          * 初始化Mock配置，检查Mock配置是否存在，存在则加载
@@ -160,7 +160,7 @@ public @interface AutoIdentifyMockEnvConfig {
          */
         @Callback(lifecycle = Lifecycle.CLASS, storeOrNot = true, storeName = MOCK_CONFIG)
         public static MockConfiguration initMockConfiguration(ClassContext cc) {
-            AutoIdentifyMockEnvConfig annConfig = cc.getMergedAnnotation(AutoIdentifyMockEnvConfig.class);
+            AutoIdentifyMockConfiguration annConfig = cc.getMergedAnnotation(AutoIdentifyMockConfiguration.class);
             String configKey = cc.parseExpression(annConfig.value(), String.class);
             if (!StringUtils.hasText(configKey)) {
                 return null;
@@ -201,8 +201,8 @@ public @interface AutoIdentifyMockEnvConfig {
             MockResponse mockResponse = MockConfigFunction.mockResult(mc, mockConfig);
 
             // 设置特殊Mock响应头
-            AutoIdentifyMockEnvConfig mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockEnvConfig.class);
-            mockResponse.header("Mock-Annotation", "@AutoIdentifyMockEnvConfig");
+            AutoIdentifyMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockConfiguration.class);
+            mockResponse.header("Mock-Annotation", "@AutoIdentifyMockConfiguration");
             mockResponse.header("Mock-Environment-Prefix", mc.parseExpression(mockConfigAnn.value(), String.class));
             mockResponse.header("Mock-Environment-Property", MockConfigFunction.getApiName(mc));
 
