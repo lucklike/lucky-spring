@@ -4,8 +4,11 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import io.github.lucklike.httpclient.config.mock.MockConfiguration;
+import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -171,6 +174,17 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * 开启自动 URL 推导功能时的默认请求方法
      */
     private RequestMethod autoDerivationDefMethod = RequestMethod.POST;
+
+    /**
+     * 模拟配置
+     */
+    private Map<String, MockConfiguration> mockConfigs = new LinkedHashMap<>();
+
+    /**
+     * 全局简单HTTP配置集合
+     */
+    private Map<String, SimpleHttpClientConfiguration> simpleClientConfigs = new LinkedHashMap<>();
+
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -379,6 +393,24 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.autoDerivationDefMethod = autoDerivationDefMethod;
     }
 
+    /**
+     * 设置模拟配置
+     *
+     * @param mockConfigs 模拟配置
+     */
+    public void setMockConfigs(Map<String, MockConfiguration> mockConfigs) {
+        this.mockConfigs = mockConfigs;
+    }
+
+    /**
+     * 设置全局简单HTTP配置集合
+     *
+     * @param simpleClientConfigs 全局简单HTTP配置集合
+     */
+    public void setSimpleClientConfigs(Map<String, SimpleHttpClientConfiguration> simpleClientConfigs) {
+        this.simpleClientConfigs = simpleClientConfigs;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -575,4 +607,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
         return autoDerivationDefMethod;
     }
 
+    /**
+     * 获取模拟配置
+     *
+     * @return 模拟配置
+     */
+    public Map<String, MockConfiguration> getMockConfigs() {
+        return mockConfigs;
+    }
+
+    /**
+     * 获取全局简单HTTP配置集合
+     *
+     * @return 全局简单HTTP配置集合
+     */
+    public Map<String, SimpleHttpClientConfiguration> getSimpleClientConfigs() {
+        return simpleClientConfigs;
+    }
 }

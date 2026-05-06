@@ -120,7 +120,6 @@ import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
