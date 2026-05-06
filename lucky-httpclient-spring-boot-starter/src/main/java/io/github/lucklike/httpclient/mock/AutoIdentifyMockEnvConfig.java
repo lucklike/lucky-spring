@@ -23,6 +23,110 @@ import java.lang.annotation.Target;
 /**
  * 自动识别环境变量中的Mock配置
  *
+ * <pre>
+ *  eg:
+ *  Class Api:
+ * </pre>
+ * <pre>
+ *  {@code
+ *      @HttpClient("http://localhost:8080")
+ *      @AutoIdentifyFileMock
+ *      public interface AutoIdentifyFileMockApi {
+ *
+ *          @Get("login")
+ *          SpelBean<?> login();
+ *
+ *          @Post("logout")
+ *          String logout(@JsonParam String token);
+ *      }
+ *  }
+ * </pre>
+ *
+ * <pre>
+ *   Mock_AutoIdentifyFileMockApi.yml:
+ * </pre>
+ *
+ * <pre>
+ *  {@code
+ *  #总开关
+ * enable: true
+ * #方法级别的延时模拟，（单位：毫秒）
+ * latency: 1000
+ *
+ * #各个方法的Mock配置
+ * methods:
+ *     #login方法的Mock数据
+ *     login:
+ *         #方法级别开关
+ *         enable: false
+ *         #条件匹配
+ *         match:
+ *           #条件1+结果1
+ *           - when: "#{1==1}"
+ *             latency: 1200
+ *             status: 200
+ *             headers:
+ *               Server: nginx/1.18.0
+ *               Date: Mon, 16 Mar 2026 06:46:14 GMT
+ *               Content-Length: 157
+ *             body:
+ *               txt: qwqw
+ *               file: classpath:deded/lll.txt
+ *           # 条件2+结果2
+ *           - when: "#{c == 3}"
+ *             latency: 1300
+ *             status: 404
+ *             headers:
+ *               Server: nginx/1.18.0
+ *               Date: Mon, 16 Mar 2026 06:46:14 GMT
+ *               Content-Length: 157
+ *             body:
+ *               txt: 404 Not Found
+ *               file: classpath:deded/lll.txt
+ *
+ *         #延时模拟，（单位：毫秒）
+ *         latency: 1000
+ *         #状态码
+ *         status: 200
+ *         #响应头，Key和Value均支持SpEL表达式
+ *         headers:
+ *           Content-Type: application/json
+ *           X-Random-Emial: #{random_email()};
+ *         #响应体
+ *         body:
+ *           #文本格式响应体，支持SpEL表达式
+ *           txt: |
+ *             {
+ *               "access_token": "e6c0991176784141583030b2af550655812729af8cd92598b5b99a9c0f89",
+ *               "expire_time": 36000,
+ *               "expires_in": "2026-01-08 21:06:04",
+ *               "random_tel": "#{random_tel()}"
+ *             }
+ *           #文件类型的响应体
+ *           file: classpath:test/mocak.pdf
+ *
+ *     #logout方法的Mock数据
+ *     logout:
+ *         headers:
+ *           Content-Type: application/json
+ *         body:
+ *           txt: |
+ *             {
+ *                 "error": {
+ *                     "error_no": "0",
+ *                     "error_info": "",
+ *                     "error_pathinfo": null
+ *                 },
+ *                 "data": {
+ *                     "staff_no": "1163",
+ *                     "user_id": "1163",
+ *                     "user_name": "fukang7075",
+ *                     "info": "【#{$0}】登出成功"
+ *                 }
+ *             }
+ *  }
+ * </pre>
+ *
  * @author fukang
  * @version 1.0.0
  * @date 2026/4/30 00:27
@@ -36,9 +140,9 @@ import java.lang.annotation.Target;
 public @interface AutoIdentifyMockEnvConfig {
 
     /**
-     * 配置前缀
+     * 配置前缀，默认值为${lucky.mock-configs.#{$class$.getSimpleName()}}
      */
-    String value();
+    String value() default "lucky.mock-configs.#{$class$.getSimpleName()}";
 
 
     /**
