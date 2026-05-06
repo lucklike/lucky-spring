@@ -2,11 +2,7 @@ package io.github.lucklike.httpclient.function;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.FontUtil;
-import com.luckyframework.exception.LuckyReflectionException;
 import com.luckyframework.httpclient.core.util.BeanUtils;
-import com.luckyframework.httpclient.core.util.PropertyConvert;
-import com.luckyframework.httpclient.core.util.PropertyFilter;
-import com.luckyframework.httpclient.core.util.PropertyInfo;
 import com.luckyframework.httpclient.proxy.context.Context;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
@@ -14,7 +10,6 @@ import com.luckyframework.httpclient.proxy.spel.FunctionFilter;
 import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.ParameterInfo;
 import com.luckyframework.reflect.AnnotationUtils;
-import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.annotation.AllowNull;
 import io.github.lucklike.httpclient.injection.BindException;
@@ -266,52 +261,5 @@ public class BeanFunction {
     @FunctionFilter
     private static Class<?> getConvertClass(Object[] type) {
         return getConvertType(type).toClass();
-    }
-
-    /**
-     * 默认的属性转换器
-     */
-    static class SpELPropertyCopyConvert implements PropertyConvert {
-
-        private final PropertyFilter filter;
-        private final Context context;
-
-        SpELPropertyCopyConvert(Context context, PropertyFilter filter) {
-            this.filter = filter;
-            this.context = context;
-        }
-
-
-        @Override
-        public void convert(PropertyInfo sourceProperty, PropertyInfo targetProperty) {
-            // 进行SpEL计算
-            Object propertyValue = sourceProperty.getValue();
-            if (propertyValue instanceof String) {
-                propertyValue = context.parseExpression(propertyValue.toString(), String.class);
-            }
-
-            if (sourceProperty.isJdkType()) {
-                targetProperty.setValue(propertyValue);
-            } else {
-                Object targetPropertyValue = targetProperty.getValue();
-
-                //目标对象的属性不为null时，直接进行属性的拷贝
-                if (targetPropertyValue != null) {
-                    copyProperties(propertyValue, targetPropertyValue, filter, this);
-                }
-                // 目标对象的属性为null时，尝试使用反射调用其无参构造器进行构造之后再进行属性的拷贝
-                else {
-                    try {
-                        Object newTargetPropertyValue =targetProperty.newObject();
-                        copyProperties(propertyValue, newTargetPropertyValue, filter, this);
-                        targetProperty.setValue(newTargetPropertyValue);
-                    } catch (LuckyReflectionException e) {
-                        // ignore
-                    }
-                }
-
-
-            }
-        }
     }
 }

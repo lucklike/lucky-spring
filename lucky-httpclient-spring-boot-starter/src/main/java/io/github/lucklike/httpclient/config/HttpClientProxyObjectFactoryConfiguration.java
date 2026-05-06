@@ -8,6 +8,7 @@ import io.github.lucklike.httpclient.config.mock.MockConfiguration;
 import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -177,12 +178,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     /**
      * 模拟配置
      */
-    private Map<String, MockConfiguration> mockConfigs;
+    private Map<String, MockConfiguration> mockConfigs = new LinkedHashMap<>();
 
     /**
      * 全局简单HTTP配置集合
      */
-    private Map<String, SimpleHttpClientConfiguration> simpleClientConfigs;
+    private Map<String, SimpleHttpClientConfiguration> simpleClientConfigs = new LinkedHashMap<>();
 
 
     //------------------------------------------------------------------------------------------------

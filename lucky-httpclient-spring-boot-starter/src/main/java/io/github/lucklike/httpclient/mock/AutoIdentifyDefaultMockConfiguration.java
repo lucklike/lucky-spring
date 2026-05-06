@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.mock;
 
-import com.luckyframework.common.StringUtils;
+import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.mock.Mock;
@@ -11,7 +11,8 @@ import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
-import io.github.lucklike.httpclient.function.BeanFunction;
+import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -19,9 +20,13 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Map;
+
+import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.simple.SimpleHttpClient.SimpleHttpClientFunctionAndCallback.getConfigId;
 
 /**
- * 自动识别环境变量中的Mock配置
+ * 自动识别环境变量中的Mock配置，默认的配置前缀为${lucky.http-client.mock-configs.#{$class$.getSimpleName()}}
  *
  * <pre>
  *  eg:
@@ -129,28 +134,22 @@ import java.lang.annotation.Target;
  *
  * @author fukang
  * @version 1.0.0
- * @date 2026/4/30 00:27
+ * @date 2026/5/7 01:47
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@Mock(enable = "#{__config_mock_enable__($mc$)}", mockResp = "#{__config_mock_result__($mc$)}")
-@SpELImport(AutoIdentifyMockConfiguration.MockConfigFunctionAndCallback.class)
-public @interface AutoIdentifyMockConfiguration {
-
-    /**
-     * Mock配置前缀
-     */
-    String value();
-
+@Mock(enable = "#{__def_config_mock_enable__($mc$)}", mockResp = "#{__def_config_mock_result__($mc$)}")
+@SpELImport(AutoIdentifyDefaultMockConfiguration.MockConfigFunctionAndCallback.class)
+public @interface AutoIdentifyDefaultMockConfiguration {
 
     /**
      * Mock配置相关的工具函数与回调函数
      */
     class MockConfigFunctionAndCallback {
 
-        public static final String MOCK_CONFIG = "$AutoIdentifyMockConfiguration";
+        public static final String MOCK_CONFIG = "$AutoIdentifyDefaultMockConfiguration";
 
         /**
          * 初始化Mock配置，检查Mock配置是否存在，存在则加载
@@ -159,18 +158,13 @@ public @interface AutoIdentifyMockConfiguration {
          * @return Mock配置
          */
         @Callback(lifecycle = Lifecycle.CLASS, storeOrNot = true, storeName = MOCK_CONFIG)
-        public static MockConfiguration loadMockConfiguration(ClassContext cc) {
-            AutoIdentifyMockConfiguration annConfig = cc.getMergedAnnotation(AutoIdentifyMockConfiguration.class);
-            String configKey = cc.parseExpression(annConfig.value(), String.class);
-            if (!StringUtils.hasText(configKey)) {
-                return null;
-            }
-            try {
-                return BeanFunction.env(configKey, MockConfiguration.class);
-            } catch (Exception e) {
-                return null;
-            }
+        public static MockConfiguration loadMockConfiguration(ClassContext cc,
+                                                              @Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfiguration) {
+            Map<String, io.github.lucklike.httpclient.config.mock.MockConfiguration> mockConfigs = factoryConfiguration.getMockConfigs();
+            io.github.lucklike.httpclient.config.mock.MockConfiguration mockConfiguration = mockConfigs.get(getConfigId(cc));
+            return ConversionUtils.conversion(mockConfiguration, MockConfiguration.class);
         }
+
 
         /**
          * 是否执行Mock逻辑，Mock配置对象存在且开关开启
@@ -178,7 +172,7 @@ public @interface AutoIdentifyMockConfiguration {
          * @param mc 方法上下文
          * @return 是否执行Mock逻辑
          */
-        @FunctionAlias("__config_mock_enable__")
+        @FunctionAlias("__def_config_mock_enable__")
         public static boolean mockEnable(MethodContext mc) {
             MockConfiguration mockConfig = mc.getRootVar(MOCK_CONFIG, MockConfiguration.class);
             return MockConfigFunction.mockEnable(mc, mockConfig);
@@ -192,7 +186,7 @@ public @interface AutoIdentifyMockConfiguration {
          * @return {@link MockResponse}对象
          * @throws InterruptedException 可能出现的异常
          */
-        @FunctionAlias("__config_mock_result__")
+        @FunctionAlias("__def_config_mock_result__")
         public static MockResponse mockResult(MethodContext mc) throws InterruptedException {
 
             // 将Mock配置转化为MockResponse对象
@@ -200,15 +194,13 @@ public @interface AutoIdentifyMockConfiguration {
             MockResponse mockResponse = MockConfigFunction.mockResult(mc, mockConfig);
 
             // 设置特殊Mock响应头
-            AutoIdentifyMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockConfiguration.class);
-            mockResponse.header("Mock-Annotation", "@AutoIdentifyMockConfiguration");
-            mockResponse.header("Mock-Environment-Prefix", mc.parseExpression(mockConfigAnn.value(), String.class));
+            mockResponse.header("Mock-Annotation", "@AutoIdentifyDefaultMockConfiguration");
+            mockResponse.header("Mock-Environment-Prefix", "lucky.http-client.mock-configs." + getConfigId(mc.getClassContext()));
             mockResponse.header("Mock-Environment-Property", MockConfigFunction.getApiName(mc));
 
             //return
             return mockResponse;
         }
-
 
     }
 }
