@@ -99,7 +99,8 @@ public @interface AutoIdentifyMockEnvConfig {
             // 设置特殊Mock响应头
             AutoIdentifyMockEnvConfig mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockEnvConfig.class);
             mockResponse.header("Mock-Annotation", "@AutoIdentifyMockEnvConfig");
-            mockResponse.header("Mock-Config-Env-Key", mockConfigAnn.value());
+            mockResponse.header("Mock-Environment-Prefix", mockConfigAnn.value());
+            mockResponse.header("Mock-Environment-Property", MockConfigFunction.getApiName(mc));
 
             //return
             return mockResponse;
