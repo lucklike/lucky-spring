@@ -205,6 +205,17 @@ public class BeanFunction {
     }
 
     /**
+     * 判断环境变量中是否存在某个配置
+     *
+     * @param propertyKey 配置项
+     * @return 环境变量中是否存在某个配置
+     */
+    @FunctionAlias("contains_property")
+    public static boolean containsProperty(String propertyKey) {
+        return ApplicationContextUtils.getEnvironment().containsProperty(propertyKey);
+    }
+
+    /**
      * 将环境变量中的某一段配置绑定到否个实体类对象上
      *
      * @param targetObject 用于绑定配置的实体类对象

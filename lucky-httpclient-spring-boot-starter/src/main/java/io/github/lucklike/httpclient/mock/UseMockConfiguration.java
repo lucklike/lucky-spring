@@ -3,12 +3,15 @@ package io.github.lucklike.httpclient.mock;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.Resources;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.mock.Mock;
 import com.luckyframework.httpclient.proxy.mock.MockResponse;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
-import io.github.lucklike.httpclient.ApplicationContextUtils;
+import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
+import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
+import io.github.lucklike.httpclient.function.BeanFunction;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -34,25 +37,51 @@ import java.util.Map;
 @SpELImport(UseMockConfiguration.MockConfigFunction.class)
 public @interface UseMockConfiguration {
 
-    String DEF_MOCK_BEAN_SUFFIX = "$MockConfiguration";
+    /**
+     * 配置前缀
+     */
+    String value();
 
-    String configBean() default "";
 
+    /**
+     * Mock配置相关的工具函数与回调函数
+     */
     class MockConfigFunction {
 
-        @FunctionAlias("__config_mock_enable__")
-        public static boolean mockEnable(MethodContext mc) {
-            UseMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(UseMockConfiguration.class);
-            String beanName = getMockConfigurationBeanName(mc, mockConfigAnn.configBean());
+        public static final String USE_MOCK_CONFIG = "$useMockConfiguration";
 
-            // 不存在该Bean定义信息时
-            if (!ApplicationContextUtils.containsBeanDefinition(beanName)) {
-                return false;
+        /**
+         * 初始化Mock配置，检查Mock配置是否存在，存在则加载
+         *
+         * @param cc 类上下文对象
+         * @return Mock配置
+         */
+        @Callback(lifecycle = Lifecycle.CLASS, storeOrNot = true, storeName = USE_MOCK_CONFIG)
+        public static MockConfiguration initMockConfiguration(ClassContext cc) {
+            UseMockConfiguration annConfig = cc.getMergedAnnotation(UseMockConfiguration.class);
+            String configKey = annConfig.value();
+            if (!StringUtils.hasText(configKey)) {
+                return null;
+            }
+            try {
+                return BeanFunction.env(configKey, MockConfiguration.class);
+            } catch (Exception e) {
+                return null;
             }
 
+        }
+
+        /**
+         * 是否执行Mock逻辑，Mock配置对象存在且开关开启
+         *
+         * @param mc 方法上下文
+         * @return 是否执行Mock逻辑
+         */
+        @FunctionAlias("__config_mock_enable__")
+        public static boolean mockEnable(MethodContext mc) {
             // 判断总开关
-            MockConfiguration mockConfig = ApplicationContextUtils.getBean(beanName, MockConfiguration.class);
-            if (!mockConfig.isEnable()) {
+            MockConfiguration mockConfig = mc.getRootVar(USE_MOCK_CONFIG, MockConfiguration.class);
+            if (mockConfig == null || !mockConfig.isEnable()) {
                 return false;
             }
 
@@ -64,16 +93,22 @@ public @interface UseMockConfiguration {
         }
 
 
+        /**
+         * 将Mock配置对象转化为{@link MockResponse}对象
+         *
+         * @param mc 方法上下文
+         * @return {@link MockResponse}对象
+         * @throws InterruptedException 可能出现的异常
+         */
         @FunctionAlias("__config_mock_result__")
         public static MockResponse mockResult(MethodContext mc) throws InterruptedException {
             UseMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(UseMockConfiguration.class);
-            String beanName = getMockConfigurationBeanName(mc, mockConfigAnn.configBean());
 
             MockResponse mockResponse = MockResponse.create();
             mockResponse.header("Mock-Annotation", "@UseMockConfiguration");
-            mockResponse.header("Mock-Config-Bean", beanName);
+            mockResponse.header("Mock-Config-Env-Key", mockConfigAnn.value());
 
-            MockConfiguration mockConfig = ApplicationContextUtils.getBean(beanName, MockConfiguration.class);
+            MockConfiguration mockConfig = mc.getRootVar(USE_MOCK_CONFIG, MockConfiguration.class);
             String methodName = mc.getCurrentAnnotatedElement().getName();
             MockResult mockResult = mockConfig.getMethods().get(methodName);
 
@@ -159,15 +194,6 @@ public @interface UseMockConfiguration {
             //return
             return mockResponse;
         }
-
-        private static String getMockConfigurationBeanName(MethodContext mc, String configBean) {
-            if (StringUtils.hasText(configBean)) {
-                return mc.parseExpression(configBean, String.class);
-            }
-            String[] beanNamesForType = ApplicationContextUtils.getBeanNamesForType(mc.getProxyObject().getClass());
-            return beanNamesForType[0] + DEF_MOCK_BEAN_SUFFIX;
-        }
-
 
         /**
          * 设置状态
