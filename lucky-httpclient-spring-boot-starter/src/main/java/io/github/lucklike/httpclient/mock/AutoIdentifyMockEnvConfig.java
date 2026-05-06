@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 使用 Mock 配置
+ * 自动识别环境变量中的Mock配置
  *
  * @author fukang
  * @version 1.0.0
@@ -34,8 +34,8 @@ import java.util.Map;
 @Documented
 @Inherited
 @Mock(enable = "#{__config_mock_enable__($mc$)}", mockResp = "#{__config_mock_result__($mc$)}")
-@SpELImport(UseMockConfiguration.MockConfigFunction.class)
-public @interface UseMockConfiguration {
+@SpELImport(AutoIdentifyMockEnvConfig.MockConfigFunction.class)
+public @interface AutoIdentifyMockEnvConfig {
 
     /**
      * 配置前缀
@@ -58,7 +58,7 @@ public @interface UseMockConfiguration {
          */
         @Callback(lifecycle = Lifecycle.CLASS, storeOrNot = true, storeName = USE_MOCK_CONFIG)
         public static MockConfiguration initMockConfiguration(ClassContext cc) {
-            UseMockConfiguration annConfig = cc.getMergedAnnotation(UseMockConfiguration.class);
+            AutoIdentifyMockEnvConfig annConfig = cc.getMergedAnnotation(AutoIdentifyMockEnvConfig.class);
             String configKey = annConfig.value();
             if (!StringUtils.hasText(configKey)) {
                 return null;
@@ -102,10 +102,10 @@ public @interface UseMockConfiguration {
          */
         @FunctionAlias("__config_mock_result__")
         public static MockResponse mockResult(MethodContext mc) throws InterruptedException {
-            UseMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(UseMockConfiguration.class);
+            AutoIdentifyMockEnvConfig mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockEnvConfig.class);
 
             MockResponse mockResponse = MockResponse.create();
-            mockResponse.header("Mock-Annotation", "@UseMockConfiguration");
+            mockResponse.header("Mock-Annotation", "@AutoIdentifyMockEnvConfig");
             mockResponse.header("Mock-Config-Env-Key", mockConfigAnn.value());
 
             MockConfiguration mockConfig = mc.getRootVar(USE_MOCK_CONFIG, MockConfiguration.class);
