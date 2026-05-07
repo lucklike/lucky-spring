@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.config.simple;
 
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
+import io.github.lucklike.httpclient.config.GenerateEntry;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.LinkedHashMap;
@@ -48,6 +49,12 @@ public class SimpleHttpClientConfiguration {
      * 额外的自定义请求参数
      */
     private Map<String, Object> additionalParams = new LinkedHashMap<>();
+
+    /**
+     * 生命周期管理器
+     */
+    @NestedConfigurationProperty
+    private GenerateEntry<LifeCycleManager> lifecycleManager;
 
     /**
      * 设置的请求头参数
@@ -191,5 +198,21 @@ public class SimpleHttpClientConfiguration {
      */
     public void setAdditionalParams(Map<String, Object> additionalParams) {
         this.additionalParams = additionalParams;
+    }
+
+    /**
+     * 获取生命周期管理器对象
+     * @return 生命周期管理器对象
+     */
+    public GenerateEntry<LifeCycleManager> getLifecycleManager() {
+        return lifecycleManager;
+    }
+
+    /**
+     * 设置生命周期管理器对象
+     * @param lifecycleManager 生命周期管理器对象
+     */
+    public void setLifecycleManager(GenerateEntry<LifeCycleManager> lifecycleManager) {
+        this.lifecycleManager = lifecycleManager;
     }
 }

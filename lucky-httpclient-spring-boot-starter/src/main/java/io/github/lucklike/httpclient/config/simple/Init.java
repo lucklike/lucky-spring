@@ -1,6 +1,7 @@
-package io.github.lucklike.httpclient.simple;
+package io.github.lucklike.httpclient.config.simple;
 
 import com.luckyframework.httpclient.proxy.annotations.ValueUnpack;
+import com.luckyframework.reflect.Combination;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -20,5 +21,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @ValueUnpack(unpackClass = InitContextValueUnpack.class)
+@Combination(ValueUnpack.class)
 public @interface Init {
+
+    /**
+     * 指定需要绑定的参数配置项
+     */
+    String[] value() default {"_#{get_api_id($mc$)}_"};
 }

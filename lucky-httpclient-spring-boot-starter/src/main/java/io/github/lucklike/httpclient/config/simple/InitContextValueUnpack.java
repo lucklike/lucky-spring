@@ -1,16 +1,14 @@
-package io.github.lucklike.httpclient.simple;
+package io.github.lucklike.httpclient.config.simple;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.util.BeanUtils;
 import com.luckyframework.httpclient.proxy.context.Context;
-import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import com.luckyframework.httpclient.proxy.context.ValueContext;
-import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpackException;
 import com.luckyframework.httpclient.proxy.unpack.ValueUnpackContext;
-import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
 import io.github.lucklike.httpclient.function.SpELPropertyCopyConvert;
 
 import java.util.Map;
@@ -30,16 +28,24 @@ public class InitContextValueUnpack implements ContextValueUnpack {
     @Override
     @SuppressWarnings("unchecked")
     public Object getRealValue(ValueUnpackContext unpackContext, Object wrapperValue) throws ContextValueUnpackException {
+        // 只有参数类型的上下文才进行绑定
         ValueContext valueContext = unpackContext.getContext();
+        if (!(valueContext instanceof ParameterContext)) {
+            return wrapperValue;
+        }
 
-        //  获取配置
+        // 尝试直接绑定整个 initParams
         SimpleHttpClientConfiguration config = unpackContext.getRootVar(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.CLASS_CONFIG_NAME, SimpleHttpClientConfiguration.class);
         Map<String, Object> initParams = config.getInitParams();
-        Object apiInitParams = initParams.get(MockConfigFunction.getApiName(valueContext.lookupContext(MethodContext.class)));
-
         spelInitBind(valueContext, wrapperValue, initParams);
-        if ((apiInitParams instanceof Map) && ContainerUtils.isNotEmptyMap((Map<?, ?>)apiInitParams)) {
-            spelInitBind(valueContext, wrapperValue, (Map<String, Object>) apiInitParams);
+
+        // 绑定@Init 注解中指定的配置
+        Init initAnn = unpackContext.toAnnotation(Init.class);
+        for (String initConfigKey : initAnn.value()) {
+            Object initConfigParams = initParams.get(valueContext.parseExpression(initConfigKey, String.class));
+            if ((initConfigParams instanceof Map) && ContainerUtils.isNotEmptyMap((Map<?, ?>)initConfigParams)) {
+                spelInitBind(valueContext, wrapperValue, (Map<String, Object>) initConfigParams);
+            }
         }
         return wrapperValue;
     }

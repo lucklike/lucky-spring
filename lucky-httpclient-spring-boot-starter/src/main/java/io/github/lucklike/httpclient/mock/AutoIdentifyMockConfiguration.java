@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.mock;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.mock.Mock;
 import com.luckyframework.httpclient.proxy.mock.MockResponse;
 import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
@@ -203,7 +204,7 @@ public @interface AutoIdentifyMockConfiguration {
             AutoIdentifyMockConfiguration mockConfigAnn = mc.getMergedAnnotationCheckParent(AutoIdentifyMockConfiguration.class);
             mockResponse.header("Mock-Annotation", "@AutoIdentifyMockConfiguration");
             mockResponse.header("Mock-Environment-Prefix", mc.parseExpression(mockConfigAnn.value(), String.class));
-            mockResponse.header("Mock-Environment-Property", MockConfigFunction.getApiName(mc));
+            mockResponse.header("Mock-Environment-Property", CommonFunctions.getApiId(mc));
 
             //return
             return mockResponse;

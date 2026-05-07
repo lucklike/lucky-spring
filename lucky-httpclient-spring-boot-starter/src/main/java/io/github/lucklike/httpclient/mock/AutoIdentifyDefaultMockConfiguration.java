@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.mock;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.mock.Mock;
 import com.luckyframework.httpclient.proxy.mock.MockResponse;
 import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
@@ -23,7 +24,7 @@ import java.lang.annotation.Target;
 import java.util.Map;
 
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
-import static io.github.lucklike.httpclient.simple.SimpleHttpClient.SimpleHttpClientFunctionAndCallback.getConfigId;
+import static io.github.lucklike.httpclient.config.simple.SimpleHttpClient.SimpleHttpClientFunctionAndCallback.getConfigId;
 
 /**
  * 自动识别环境变量中的Mock配置，默认的配置前缀为${lucky.http-client.mock-configs.#{$class$.getSimpleName()}}
@@ -196,7 +197,7 @@ public @interface AutoIdentifyDefaultMockConfiguration {
             // 设置特殊Mock响应头
             mockResponse.header("Mock-Annotation", "@AutoIdentifyDefaultMockConfiguration");
             mockResponse.header("Mock-Environment-Prefix", "lucky.http-client.mock-configs." + getConfigId(mc.getClassContext()));
-            mockResponse.header("Mock-Environment-Property", MockConfigFunction.getApiName(mc));
+            mockResponse.header("Mock-Environment-Property", CommonFunctions.getApiId(mc));
 
             //return
             return mockResponse;

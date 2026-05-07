@@ -1,8 +1,12 @@
-package io.github.lucklike.httpclient.simple;
+package io.github.lucklike.httpclient.config.simple;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Request;
+import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
+import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
+import com.luckyframework.httpclient.proxy.annotations.RespConvert;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
@@ -15,12 +19,13 @@ import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
 import com.luckyframework.reflect.AnnotationUtils;
+import com.luckyframework.reflect.ClassUtils;
+import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
 import io.github.lucklike.httpclient.discovery.HttpClient;
-import io.github.lucklike.httpclient.mock.AutoIdentifyDefaultMockConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AliasFor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.beans.Introspector;
@@ -41,8 +46,8 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@HttpClient(func = "get_http_server_url")
-@AutoIdentifyDefaultMockConfiguration
+@HttpClient(func = "__get_http_server_url__")
+@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
 @SpELImport(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.class)
 public @interface SimpleHttpClient {
 
@@ -60,17 +65,24 @@ public @interface SimpleHttpClient {
     String path() default "";
 
     /**
-     * 请求参数处理器，用户可使用该接口扩展自己的参数设置逻辑
+     * 生命周期管理器对象的 Class
      */
-    Class<? extends RequestParameterHandler> reqHandler() default RequestParameterHandler.class;
+    Class<? extends LifeCycleManager> lifecycle() default LifeCycleManager.class;
+
+    /**
+     * 生命周期管理器对象生成器对象
+     */
+    ObjectGenerate lifecycleGenerate() default @ObjectGenerate(LifeCycleManager.class);
 
     /**
      * 简单HTTP客户端实现相关的工具函数和回调函数
      */
     class SimpleHttpClientFunctionAndCallback {
 
+        // 配置对象名称
         public static final String CLASS_CONFIG_NAME = "$SimpleHttpClientConfig";
-        public static final String CLASS_HANDLER_NAME = "$RequestParameterHandler";
+        // 生命周期管理器对象名称
+        public static final String CLASS_LIFE_CYCLE_MANAGER_NAME = "$LifeCycleManager";
 
         /**
          * 将当前Http客户端相关的配置加载到上下文中
@@ -82,51 +94,88 @@ public @interface SimpleHttpClient {
         @Callback(lifecycle = Lifecycle.CLASS, storeOrNot = true, unfold = true)
         public static Map<String, Object> loadSimpleHttpClientConfig(ClassContext cc,
                                                                      @Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfiguration) {
-            Map<String, Object> resultMap = new HashMap<>(2);
 
-            // 初始化SimpleHttpClientConfiguration配置
+            // 初始化LifeCycleManager和SimpleHttpClientConfiguration配置
             Map<String, SimpleHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getSimpleClientConfigs();
-            resultMap.put(CLASS_CONFIG_NAME, simpleHttpClientConfigs.get(getConfigId(cc)));
+            SimpleHttpClientConfiguration config = simpleHttpClientConfigs.get(getConfigId(cc));
 
-            // 初始化RequestParameterHandler配置
-            SimpleHttpClient ann = cc.getMergedAnnotation(SimpleHttpClient.class);
-            if (ann.reqHandler() != RequestParameterHandler.class) {
-                resultMap.put(CLASS_HANDLER_NAME, cc.generateObject(ann.reqHandler(), Scope.SINGLETON));
-            }
+            // 封装成 Map 后返回
+            Map<String, Object> resultMap = new HashMap<>(2);
+            resultMap.put(CLASS_CONFIG_NAME, config);
+            resultMap.put(CLASS_LIFE_CYCLE_MANAGER_NAME, createLifeCycleManager(cc, config));
 
             return resultMap;
         }
 
         /**
+         * 创建{@link LifeCycleManager}对象
          *
-         * @param mc                      方法上下文
-         * @param request                 请求对象
-         * @param config                  当前HTTP客户端的配置
-         * @param requestParameterHandler 参数处理器扩展对象
+         * @param cc     类上下文
+         * @param config 当前HTTP客户端的配置
+         * @return {@link LifeCycleManager}对象
+         */
+        @Nullable
+        @SuppressWarnings("unchecked")
+        private static LifeCycleManager createLifeCycleManager(ClassContext cc, SimpleHttpClientConfiguration config) {
+            // 优先从配置中进行初始化
+            if (config != null && config.getLifecycleManager() != null) {
+                GenerateEntry<LifeCycleManager> generate = config.getLifecycleManager();
+                return cc.generateObject(
+                        generate.getType() == null ? LifeCycleManager.class : generate.getType(),
+                        generate.getBeanName(),
+                        generate.getScope(),
+                        (Consumer<LifeCycleManager>) ClassUtils.newObject(generate.getConsumerClass())
+                );
+            }
+
+            // 其次从注解中进行初始化
+            SimpleHttpClient ann = cc.getMergedAnnotation(SimpleHttpClient.class);
+            ObjectGenerate generate = ann.lifecycleGenerate();
+
+            // 优先使用生成器对象
+            if (ObjectGenerateUtil.isEffectiveObjectGenerate(generate, LifeCycleManager.class)) {
+                return cc.generateObject(generate);
+            }
+
+            // 其实使用 Class
+            if (ann.lifecycle() != LifeCycleManager.class) {
+                return cc.generateObject(ann.lifecycle(), Scope.SINGLETON);
+            }
+
+            return null;
+        }
+
+        /**
+         * 请求对象初始化完成时调用
+         *
+         * @param mc               方法上下文
+         * @param request          请求对象
+         * @param config           当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.REQUEST_INIT)
         public static void requestInit(MethodContext mc,
                                        Request request,
                                        @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                       @Rar(CLASS_HANDLER_NAME) RequestParameterHandler requestParameterHandler) {
-            if (requestParameterHandler != null) {
-                requestParameterHandler.requestInit(mc, request, config);
+                                       @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            if (lifeCycleManager != null) {
+                lifeCycleManager.requestInit(mc, request, config);
             }
         }
 
         /**
-         * 填充请求参数的回调函数
+         * 请求对象封装完成时调用
          *
-         * @param mc                      方法上下文
-         * @param request                 请求对象
-         * @param config                  当前HTTP客户端的配置
-         * @param requestParameterHandler 参数处理器扩展对象
+         * @param mc               方法上下文
+         * @param request          请求对象
+         * @param config           当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.REQUEST)
-        public static void fillHttpRequestParameter(MethodContext mc,
-                                                    Request request,
-                                                    @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                                    @Rar(CLASS_HANDLER_NAME) RequestParameterHandler requestParameterHandler) {
+        public static void requestCompleted(MethodContext mc,
+                                            Request request,
+                                            @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
+                                            @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
             // Query param setter
             setParameter(mc, request, config.getQueryParams(), req -> req.getRequest().addQueryParameter(req.getName(), req.getValue()));
 
@@ -143,8 +192,27 @@ public @interface SimpleHttpClient {
             setMultipartFormData(mc, request, config.getMultipartFormParams());
 
             // 执行扩展方法
-            if (requestParameterHandler != null) {
-                requestParameterHandler.requestCompleted(mc, request, config);
+            if (lifeCycleManager != null) {
+                lifeCycleManager.requestCompleted(mc, request, config);
+            }
+        }
+
+
+        /**
+         * 响应对象返回完成时调用
+         *
+         * @param mc               方法上下文
+         * @param response         响应对象
+         * @param config           当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
+         */
+        @Callback(lifecycle = Lifecycle.RESPONSE)
+        public static void responseCompleted(MethodContext mc,
+                                             Response response,
+                                             @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
+                                             @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            if (lifeCycleManager != null) {
+                lifeCycleManager.responseCompleted(mc, response, config);
             }
         }
 
@@ -155,13 +223,48 @@ public @interface SimpleHttpClient {
          * @param config 当前HTTP客户端的配置
          * @return 目标HTTP服务地址
          */
-        @FunctionAlias("get_http_server_url")
+        @FunctionAlias("__get_http_server_url__")
         public static String getHttpServerUrl(ClassContext cc,
                                               @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config) {
             if (config == null || !StringUtils.hasText(config.getUrl())) {
                 throw new ConfigurationParserException("Missing necessary configuration: ['lucky.http-client.simple-client-configs.{}.url']", getConfigId(cc));
             }
             return config.getUrl();
+        }
+
+        /**
+         * 获取响应元类型
+         *
+         * @param mc 方法上下文对象
+         * @return 响应元类型
+         */
+        @FunctionAlias("__get_response_meta_type__")
+        public static Object getResponseMetaType(MethodContext mc,
+                                                 @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            if (lifeCycleManager != null) {
+                return lifeCycleManager.getResponseMetaType(mc);
+            }
+            return Object.class;
+        }
+
+        /**
+         * 结果转换
+         *
+         * @param mc               方法上下文
+         * @param response         响应对象
+         * @param config           当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
+         * @return 最终的响应结果
+         */
+        @FunctionAlias("__result_convert__")
+        public static Object resultConvert(MethodContext mc,
+                                           Response response,
+                                           @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
+                                           @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            if (lifeCycleManager != null) {
+                return lifeCycleManager.resultConvert(mc, response, config);
+            }
+            return response.getEntity(mc.getResultType());
         }
 
         /**
