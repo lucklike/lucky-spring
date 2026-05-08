@@ -227,7 +227,7 @@ public @interface SimpleHttpClient {
         public static String getHttpServerUrl(ClassContext cc,
                                               @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config) {
             if (config == null || !StringUtils.hasText(config.getUrl())) {
-                throw new ConfigurationParserException("Missing necessary configuration: ['lucky.http-client.simple-client-configs.{}.url']", getConfigId(cc));
+                throw new ConfigurationParserException("[@SimpleHttpClient('{0}')] Missing necessary configuration: 'lucky.http-client.simple-client-configs.{0}.url'", getConfigId(cc));
             }
             return config.getUrl();
         }
