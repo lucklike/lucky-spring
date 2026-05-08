@@ -23,7 +23,7 @@ public interface LifeCycleManager {
      * @param request 请求对象
      * @param config  配置信息
      */
-    default void requestInit(MethodContext mc, Request request, SimpleHttpClientConfiguration config) {
+    default void requestInit(MethodContext mc, Request request, SimpleHttpClientConfiguration config) throws Exception {
 
     }
 
@@ -34,7 +34,7 @@ public interface LifeCycleManager {
      * @param request 请求对象
      * @param config  配置信息
      */
-    default void requestCompleted(MethodContext mc, Request request, SimpleHttpClientConfiguration config) {
+    default void requestCompleted(MethodContext mc, Request request, SimpleHttpClientConfiguration config) throws Exception {
 
     }
 
@@ -44,7 +44,7 @@ public interface LifeCycleManager {
      * @param mc 方法上下文
      * @return 响应元类型
      */
-    default ResolvableType getResponseMetaType(MethodContext mc) {
+    default ResolvableType getResponseMetaType(MethodContext mc) throws Exception {
         return ResolvableType.forClass(Object.class);
     }
 
@@ -55,7 +55,7 @@ public interface LifeCycleManager {
      * @param response 响应对象
      * @param config   配置信息
      */
-    default void responseCompleted(MethodContext mc, Response response, SimpleHttpClientConfiguration config) {
+    default void responseCompleted(MethodContext mc, Response response, SimpleHttpClientConfiguration config) throws Exception {
 
     }
 
@@ -67,7 +67,7 @@ public interface LifeCycleManager {
      * @param config   配置信息
      * @return 转化后的最终结果
      */
-    default Object resultConvert(MethodContext mc, Response response, SimpleHttpClientConfiguration config) {
+    default Object resultConvert(MethodContext mc, Response response, SimpleHttpClientConfiguration config) throws Exception {
         return response.getEntity(mc.getResultType());
     }
 

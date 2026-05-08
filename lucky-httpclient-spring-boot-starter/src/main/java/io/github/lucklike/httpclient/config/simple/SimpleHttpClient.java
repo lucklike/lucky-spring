@@ -157,7 +157,7 @@ public @interface SimpleHttpClient {
         public static void requestInit(MethodContext mc,
                                        Request request,
                                        @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                       @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+                                       @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             if (lifeCycleManager != null) {
                 lifeCycleManager.requestInit(mc, request, config);
             }
@@ -175,7 +175,7 @@ public @interface SimpleHttpClient {
         public static void requestCompleted(MethodContext mc,
                                             Request request,
                                             @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                            @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+                                            @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             // Query param setter
             setParameter(mc, request, config.getQueryParams(), req -> req.getRequest().addQueryParameter(req.getName(), req.getValue()));
 
@@ -210,7 +210,7 @@ public @interface SimpleHttpClient {
         public static void responseCompleted(MethodContext mc,
                                              Response response,
                                              @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                             @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+                                             @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             if (lifeCycleManager != null) {
                 lifeCycleManager.responseCompleted(mc, response, config);
             }
@@ -240,7 +240,7 @@ public @interface SimpleHttpClient {
          */
         @FunctionAlias("__get_response_meta_type__")
         public static Object getResponseMetaType(MethodContext mc,
-                                                 @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+                                                 @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             if (lifeCycleManager != null) {
                 return lifeCycleManager.getResponseMetaType(mc);
             }
@@ -260,7 +260,7 @@ public @interface SimpleHttpClient {
         public static Object resultConvert(MethodContext mc,
                                            Response response,
                                            @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config,
-                                           @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+                                           @Rar(CLASS_LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             if (lifeCycleManager != null) {
                 return lifeCycleManager.resultConvert(mc, response, config);
             }
