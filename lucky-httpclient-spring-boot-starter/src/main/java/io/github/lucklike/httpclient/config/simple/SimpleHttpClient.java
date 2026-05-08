@@ -19,7 +19,6 @@ import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
-import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.config.GenerateEntry;
@@ -30,7 +29,6 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.beans.Introspector;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -53,6 +51,11 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
 @SpELImport(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.class)
 public @interface SimpleHttpClient {
+
+    /**
+     * ApiId，ApiId相同的接口共享同一套配置
+     */
+    String apiId() default "";
 
     /**
      * 配置Bean的名称，同{@link Component#value()}
@@ -346,20 +349,17 @@ public @interface SimpleHttpClient {
         }
 
         /**
-         * 获取当前API的ConfigId
+         * 获取当前API的ApiId
          *
          * @param cc 类上下文
          * @return 当前API的ConfigId
          */
         public static String getConfigId(ClassContext cc) {
-            Class<?> proxyObjectClass = cc.getCurrentAnnotatedElement();
-            Component componentAnn = AnnotationUtils.findMergedAnnotation(proxyObjectClass, Component.class);
-            if (componentAnn != null && StringUtils.hasText(componentAnn.value())) {
-                return componentAnn.value();
+            SimpleHttpClient ann = cc.getMergedAnnotation(SimpleHttpClient.class);
+            if (ann != null && StringUtils.hasText(ann.apiId())) {
+                return ann.apiId();
             }
-            String beanClassName = proxyObjectClass.getName();
-            String shortClassName = org.springframework.util.ClassUtils.getShortName(beanClassName);
-            return Introspector.decapitalize(shortClassName);
+            return cc.getCurrentAnnotatedElement().getSimpleName();
         }
     }
 
