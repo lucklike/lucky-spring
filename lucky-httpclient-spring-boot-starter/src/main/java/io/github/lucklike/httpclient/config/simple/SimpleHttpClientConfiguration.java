@@ -202,6 +202,7 @@ public class SimpleHttpClientConfiguration {
 
     /**
      * 获取生命周期管理器对象
+     *
      * @return 生命周期管理器对象
      */
     public GenerateEntry<LifeCycleManager> getLifecycleManager() {
@@ -210,9 +211,11 @@ public class SimpleHttpClientConfiguration {
 
     /**
      * 设置生命周期管理器对象
+     *
      * @param lifecycleManager 生命周期管理器对象
      */
     public void setLifecycleManager(GenerateEntry<LifeCycleManager> lifecycleManager) {
         this.lifecycleManager = lifecycleManager;
     }
 }
+
