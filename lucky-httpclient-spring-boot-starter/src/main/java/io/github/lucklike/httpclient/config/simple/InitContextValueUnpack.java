@@ -4,6 +4,7 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.util.BeanUtils;
 import com.luckyframework.httpclient.proxy.context.Context;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import com.luckyframework.httpclient.proxy.context.ValueContext;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
@@ -38,6 +39,13 @@ public class InitContextValueUnpack implements ContextValueUnpack {
         SimpleHttpClientConfiguration config = unpackContext.getRootVar(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.CLASS_CONFIG_NAME, SimpleHttpClientConfiguration.class);
         Map<String, Object> initParams = config.getInitParams();
         spelInitBind(valueContext, wrapperValue, initParams);
+
+        // 尝试绑定方法专属配置
+        String methodSpecialConfig = SimpleHttpClient.SimpleHttpClientFunctionAndCallback.getMethodSpecialConfig(valueContext.lookupContext(MethodContext.class));
+        Object methodSpecialParams = initParams.get(methodSpecialConfig);
+        if ((methodSpecialParams instanceof Map) && ContainerUtils.isNotEmptyMap((Map<?, ?>)methodSpecialParams)) {
+            spelInitBind(valueContext, wrapperValue, (Map<String, Object>) methodSpecialParams);
+        }
 
         // 绑定@Init 注解中指定的配置
         Init initAnn = unpackContext.toAnnotation(Init.class);

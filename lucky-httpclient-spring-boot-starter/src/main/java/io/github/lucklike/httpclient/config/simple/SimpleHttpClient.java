@@ -12,6 +12,7 @@ import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.creator.Scope;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.Rar;
@@ -20,6 +21,7 @@ import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
+import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.discovery.HttpClient;
@@ -36,6 +38,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
@@ -102,7 +105,7 @@ public @interface SimpleHttpClient {
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
             resultMap.put(CLASS_CONFIG_NAME, config);
-            resultMap.put(CLASS_LIFE_CYCLE_MANAGER_NAME, createLifeCycleManager(cc, config));
+            resultMap.put(CLASS_LIFE_CYCLE_MANAGER_NAME, LazyValue.of(() -> createLifeCycleManager(cc, config)));
 
             return resultMap;
         }
@@ -275,12 +278,28 @@ public @interface SimpleHttpClient {
          * @param configMap       配置 Map
          * @param requestConsumer 请求消费者
          */
+        @SuppressWarnings("unchecked")
         private static void setParameter(MethodContext mc, Request request, Map<String, Object> configMap, Consumer<RequestParameter> requestConsumer) {
             if (ContainerUtils.isEmptyMap(configMap)) {
                 return;
             }
-            configMap.forEach((name, value) -> {
+
+            // 当前方法的特殊配置KEY
+            String methodKey = getMethodSpecialConfig(mc);
+            for (Map.Entry<String, Object> entry : configMap.entrySet()) {
+                String name = entry.getKey();
                 String pName = mc.parseExpression(name, String.class);
+                Object value = entry.getValue();
+
+                // 是方法专属配置时需要进行特殊处理
+                if (isMethodSpecialUseConfig(pName)) {
+                    if (Objects.equals(methodKey, pName) && value instanceof Map) {
+                        setParameter(mc, request, (Map<String, Object>) value, requestConsumer);
+                    }
+                    continue;
+                }
+
+                // 通用参数
                 if (ContainerUtils.isIterable(value)) {
                     ContainerUtils.getIterable(value).forEach(e -> {
                         requestConsumer.accept(RequestParameter.of(pName, mc.parseExpression(String.valueOf(e)), request));
@@ -288,7 +307,27 @@ public @interface SimpleHttpClient {
                 } else {
                     requestConsumer.accept(RequestParameter.of(pName, mc.parseExpression(String.valueOf(value)), request));
                 }
-            });
+            }
+        }
+
+        /**
+         * 是否为方法专用配置
+         *
+         * @param configName 配置名称
+         * @return 是否为方法专用配置
+         */
+        public static boolean isMethodSpecialUseConfig(String configName) {
+            return configName.startsWith("__") && configName.endsWith("__");
+        }
+
+        /**
+         * 获取方法专属配置名称
+         *
+         * @param mc 方法上下文
+         * @return 方法专属配置名称
+         */
+        public static String getMethodSpecialConfig(MethodContext mc) {
+            return StringUtils.format("__{}__", CommonFunctions.getApiId(mc));
         }
 
         /**

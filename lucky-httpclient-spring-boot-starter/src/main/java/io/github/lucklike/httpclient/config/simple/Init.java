@@ -27,5 +27,5 @@ public @interface Init {
     /**
      * 指定需要绑定的参数配置项
      */
-    String[] value() default {"_#{get_api_id($mc$)}_"};
+    String[] value() default {};
 }
