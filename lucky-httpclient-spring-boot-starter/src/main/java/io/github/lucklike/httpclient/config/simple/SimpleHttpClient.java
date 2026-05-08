@@ -7,6 +7,7 @@ import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
 import com.luckyframework.httpclient.proxy.annotations.RespConvert;
+import com.luckyframework.httpclient.proxy.configapi.ApiConfig;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
@@ -50,12 +51,14 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @HttpClient(func = "__get_http_server_url__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
 @SpELImport(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.class)
+@ApiConfig
 public @interface SimpleHttpClient {
 
     /**
-     * ApiId，ApiId相同的接口共享同一套配置
+     * 配置ID，配置ID相同的接口共享同一套配置
      */
-    String apiId() default "";
+    @AliasFor(annotation = ApiConfig.class, attribute = "value")
+    String configId() default "";
 
     /**
      * 配置Bean的名称，同{@link Component#value()}
@@ -103,7 +106,7 @@ public @interface SimpleHttpClient {
 
             // 初始化LifeCycleManager和SimpleHttpClientConfiguration配置
             Map<String, SimpleHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getSimpleClientConfigs();
-            SimpleHttpClientConfiguration config = simpleHttpClientConfigs.get(getConfigId(cc));
+            SimpleHttpClientConfiguration config = simpleHttpClientConfigs.get(CommonFunctions.getApiConfigId(cc));
 
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
@@ -233,7 +236,7 @@ public @interface SimpleHttpClient {
         public static String getHttpServerUrl(ClassContext cc,
                                               @Rar(CLASS_CONFIG_NAME) SimpleHttpClientConfiguration config) {
             if (config == null || !StringUtils.hasText(config.getUrl())) {
-                throw new ConfigurationParserException("[@SimpleHttpClient('{0}')] Missing necessary configuration: 'lucky.http-client.simple-client-configs.{0}.url'", getConfigId(cc));
+                throw new ConfigurationParserException("[@SimpleHttpClient('{0}')] Missing necessary configuration: 'lucky.http-client.simple-client-configs.{0}.url'", CommonFunctions.getApiConfigId(cc));
             }
             return config.getUrl();
         }
@@ -346,20 +349,6 @@ public @interface SimpleHttpClient {
 
             // File param setter
             setParameter(mc, request, multipartFormData.getFile(), req -> req.getRequest().addResources(req.getName(), ResourceFunctions.resource(String.valueOf(req.getValue()))));
-        }
-
-        /**
-         * 获取当前API的ApiId
-         *
-         * @param cc 类上下文
-         * @return 当前API的ConfigId
-         */
-        public static String getConfigId(ClassContext cc) {
-            SimpleHttpClient ann = cc.getMergedAnnotation(SimpleHttpClient.class);
-            if (ann != null && StringUtils.hasText(ann.apiId())) {
-                return ann.apiId();
-            }
-            return cc.getCurrentAnnotatedElement().getSimpleName();
         }
     }
 
