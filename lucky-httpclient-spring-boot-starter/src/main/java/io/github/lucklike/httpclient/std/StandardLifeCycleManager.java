@@ -33,12 +33,12 @@ import static com.luckyframework.httpclient.core.executor.Constant.OKHTTP_PM_WRI
 public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
-    public String buildUrl(MethodContext mc, StandardApiConfiguration apiConfig) {
+    public String buildUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
         return apiConfig.getUrl();
     }
 
     @Override
-    public void requestInit(MethodContext mc, Request request, StandardApiConfiguration apiConfig) {
+    public void requestInit(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
         // 设置请求方法
         setRequestMethod(request, apiConfig);
         // 填充固定的请求参数
@@ -51,12 +51,12 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
 
     @Override
-    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) {
+    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
         timeoutSetter(request, apiConfig);
     }
 
     @Override
-    public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) {
+    public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
         String metaType = apiConfig.getMetaType();
         if (StringUtils.hasText(metaType)) {
             return mc.parseExpression(metaType, ResolvableType.class);
@@ -65,7 +65,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
     }
 
     @Override
-    public Object resultConvert(MethodContext mc, Response response, StandardApiConfiguration apiConfig) {
+    public Object resultConvert(MethodContext mc, Response response, StandardApiConfiguration apiConfig) throws Exception {
         // 处理条件转换器配置
         for (Condition condition : apiConfig.getConditionConvert()) {
             String assertion = condition.getAssertion();
