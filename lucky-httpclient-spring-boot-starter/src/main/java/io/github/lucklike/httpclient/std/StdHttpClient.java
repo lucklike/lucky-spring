@@ -247,7 +247,7 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 目标HTTP服务地址
          */
-        @FunctionAlias("__get_http_server_path__")
+        @FunctionAlias("__get_http_server_url__")
         public static String getHttpServerUrl(MethodContext mc,
                                               @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                               @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
@@ -262,7 +262,7 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return HTTP接口Path
          */
-        @FunctionAlias("__get_http_server_url__")
+        @FunctionAlias("__get_http_server_path__")
         public static String getHttpServerPath(MethodContext mc,
                                                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
