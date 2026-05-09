@@ -8,9 +8,11 @@ import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
+import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.io.Resource;
@@ -33,9 +35,26 @@ import static com.luckyframework.httpclient.core.executor.Constant.OKHTTP_PM_WRI
 public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
-    public String buildUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
-        return apiConfig.getUrl();
+    public String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+        String url = apiConfig.getUrl();
+        if (!StringUtils.hasText(url)) {
+            throw new ConfigurationParserException(
+                    "@StdHttpClient('{0}')[{1}] Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{0}.url'",
+                    CommonFunctions.getApiConfigId(mc.getClassContext()),
+                    mc.getClassContext().getCurrentAnnotatedElement().getName()
+            );
+        }
+        return url;
     }
+
+    @Override
+    public String buildApiPath(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+        if (!(apiConfig instanceof StandardHttpClientConfiguration)) {
+            return apiConfig.getUrl();
+        }
+        return "";
+    }
+
 
     @Override
     public void requestInit(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {

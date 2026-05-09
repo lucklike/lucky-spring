@@ -17,13 +17,22 @@ import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_RES
 public interface LifeCycleManager {
 
     /**
-     * 构建完整 URL
+     * 构建基本 Url
      *
      * @param mc        方法上下文对象
      * @param apiConfig 配置信息
-     * @return 完整 URL
+     * @return 基本 URL
      */
-    String buildUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
+    String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
+
+    /**
+     * 构建 Api 接口的 Path 部分
+     *
+     * @param mc        方法上下文对象
+     * @param apiConfig 配置信息
+     * @return Api 接口的 Path 部分
+     */
+    String buildApiPath(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
 
     /**
      * 请求对象刚完成初始化时执行
