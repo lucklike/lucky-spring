@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.config.simple;
+package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.conversion.ConversionUtils;
@@ -36,16 +36,9 @@ public class InitContextValueUnpack implements ContextValueUnpack {
         }
 
         // 尝试直接绑定整个 initParams
-        SimpleHttpClientConfiguration config = unpackContext.getRootVar(SimpleHttpClient.SimpleHttpClientFunctionAndCallback.CLASS_CONFIG_NAME, SimpleHttpClientConfiguration.class);
+        StandardApiConfiguration config = unpackContext.getRootVar(StdHttpClient.SimpleHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
         Map<String, Object> initParams = config.getInitParams();
         spelInitBind(valueContext, wrapperValue, initParams);
-
-        // 尝试绑定方法专属配置
-        String methodSpecialConfig = SimpleHttpClient.SimpleHttpClientFunctionAndCallback.getMethodSpecialConfig(valueContext.lookupContext(MethodContext.class));
-        Object methodSpecialParams = initParams.get(methodSpecialConfig);
-        if ((methodSpecialParams instanceof Map) && ContainerUtils.isNotEmptyMap((Map<?, ?>)methodSpecialParams)) {
-            spelInitBind(valueContext, wrapperValue, (Map<String, Object>) methodSpecialParams);
-        }
 
         // 绑定@Init 注解中指定的配置
         Init initAnn = unpackContext.toAnnotation(Init.class);

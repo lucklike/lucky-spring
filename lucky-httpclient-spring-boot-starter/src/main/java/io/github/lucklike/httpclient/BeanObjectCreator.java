@@ -25,33 +25,8 @@ public class BeanObjectCreator extends ReflectObjectCreator {
 
     @Override
     protected <T> T doCreateObject(Class<T> clazz, String msg) {
-        boolean hasClass = clazz != null && clazz != Void.class;
-        boolean hasName = StringUtils.hasText(msg);
-
-        if (hasName) {
-            return hasClass
-                    ? applicationContext.getBean(msg, clazz)
-                    : (T) applicationContext.getBean(msg);
-        } else {
-            return createObjectByClass(clazz);
-        }
-
-    }
-
-
-    /**
-     * 使用Class来创建实例
-     * <pre>
-     *     1.尝试从Spring容器中获取Bean对象
-     *     2.使用反射创建对象
-     * </pre>
-     *
-     * @param clazz Class
-     * @return Class的实例对象
-     */
-    private <T> T createObjectByClass(Class<T> clazz) {
-        return applicationContext
-                .getBeanProvider(clazz)
-                .getIfUnique(() -> super.doCreateObject(clazz));
+        return StringUtils.hasText(msg)
+                ? (T) applicationContext.getBean(msg)
+                : super.doCreateObject(clazz);
     }
 }
