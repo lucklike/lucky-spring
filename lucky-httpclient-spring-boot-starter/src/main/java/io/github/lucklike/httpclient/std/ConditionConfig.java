@@ -1,5 +1,8 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.StringUtils;
+
 import java.util.Map;
 
 /**
@@ -55,5 +58,14 @@ public class ConditionConfig {
      */
     public void setConfigs(Map<String, Object> configs) {
         this.configs = configs;
+    }
+
+    /**
+     * 是否是有效的配置
+     *
+     * @return 是否是有效配置
+     */
+    public boolean effective() {
+        return StringUtils.hasText(condition) && ContainerUtils.isNotEmptyMap(configs);
     }
 }

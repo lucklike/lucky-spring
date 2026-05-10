@@ -57,5 +57,13 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
     public void setMethodConfigs(Map<String, StandardApiConfiguration> methodConfigs) {
         this.methodConfigs = methodConfigs;
     }
+
+    @Override
+    public void removeNonEffectiveConfig() {
+        super.removeNonEffectiveConfig();
+        methodConfigs.forEach((cc, config) -> {
+            config.removeNonEffectiveConfig();
+        });
+    }
 }
 

@@ -578,4 +578,18 @@ public class StandardApiConfiguration {
     public void setConditionBody(List<ConditionBody> conditionBody) {
         this.conditionBody = conditionBody;
     }
+
+
+    /**
+     * 移除无效配置
+     */
+    public void removeNonEffectiveConfig() {
+        conditionHeaderParams.removeIf(config -> !config.effective());
+        conditionPathParams.removeIf(config -> !config.effective());
+        conditionQueryParams.removeIf(config -> !config.effective());
+        conditionFormParams.removeIf(config -> !config.effective());
+        conditionMultipartFormParams.removeIf(config -> !config.effective());
+        conditionBody.removeIf(config -> !config.effective());
+        conditionConvert.removeIf(config -> !config.effective());
+    }
 }

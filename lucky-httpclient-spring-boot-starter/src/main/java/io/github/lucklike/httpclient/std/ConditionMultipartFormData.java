@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 
 /**
@@ -31,5 +33,15 @@ public class ConditionMultipartFormData extends MultipartFormData {
      */
     public void setCondition(String condition) {
         this.condition = condition;
+    }
+
+    /**
+     * 是否是有效的配置
+     *
+     * @return 是否是有效配置
+     */
+    public boolean effective() {
+        return StringUtils.hasText(condition) &&
+                (ContainerUtils.isNotEmptyMap(getTxt()) || ContainerUtils.isNotEmptyMap(getFile()));
     }
 }

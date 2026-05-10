@@ -37,13 +37,14 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.luckyframework.common.ContainerUtils.mergeList;
+import static com.luckyframework.common.ContainerUtils.mergeMap;
+import static com.luckyframework.common.StringUtils.blankReturnDefault;
+import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -121,6 +122,7 @@ public @interface StdHttpClient {
             // 初始化LifeCycleManager和SimpleHttpClientConfiguration配置
             Map<String, StandardHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getStandardClientConfigs();
             StandardHttpClientConfiguration config = simpleHttpClientConfigs.get(CommonFunctions.getApiConfigId(cc));
+            config.removeNonEffectiveConfig();
 
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
@@ -308,6 +310,7 @@ public @interface StdHttpClient {
          * @param config 标准 API 配置
          * @return 合并后的配置
          */
+        @SuppressWarnings("unchecked")
         private static StandardApiConfiguration mergeConfig(MethodMetaContext mec, StandardHttpClientConfiguration config) {
             String apiId = getApiId(mec);
             StandardApiConfiguration methodConfig = config.getMethodConfigs().get(apiId);
@@ -317,19 +320,19 @@ public @interface StdHttpClient {
 
             StandardApiConfiguration apiConfig = new StandardApiConfiguration();
             apiConfig.setUrl(methodConfig.getUrl());
-            apiConfig.setMethod(getNonNull(config.getMethod(), methodConfig.getMethod()));
-            apiConfig.setConnectTimeout(getNonNull(config.getConnectTimeout(), methodConfig.getConnectTimeout()));
-            apiConfig.setReadTimeout(getNonNull(config.getReadTimeout(), methodConfig.getReadTimeout()));
-            apiConfig.setWriteTimeout(getNonNull(config.getWriteTimeout(), methodConfig.getWriteTimeout()));
-            apiConfig.setCallTimeout(getNonNull(config.getCallTimeout(), methodConfig.getCallTimeout()));
-            apiConfig.setConnectionRequestTimeout(getNonNull(config.getConnectionRequestTimeout(), methodConfig.getConnectionRequestTimeout()));
+            apiConfig.setMethod(nullReturnDefault(config.getMethod(), methodConfig.getMethod()));
+            apiConfig.setConnectTimeout(nullReturnDefault(config.getConnectTimeout(), methodConfig.getConnectTimeout()));
+            apiConfig.setReadTimeout(nullReturnDefault(config.getReadTimeout(), methodConfig.getReadTimeout()));
+            apiConfig.setWriteTimeout(nullReturnDefault(config.getWriteTimeout(), methodConfig.getWriteTimeout()));
+            apiConfig.setCallTimeout(nullReturnDefault(config.getCallTimeout(), methodConfig.getCallTimeout()));
+            apiConfig.setConnectionRequestTimeout(nullReturnDefault(config.getConnectionRequestTimeout(), methodConfig.getConnectionRequestTimeout()));
 
             apiConfig.setHeaderParams(mergeMap(config.getHeaderParams(), methodConfig.getHeaderParams()));
             apiConfig.setPathParams(mergeMap(config.getPathParams(), methodConfig.getPathParams()));
             apiConfig.setQueryParams(mergeMap(config.getQueryParams(), methodConfig.getQueryParams()));
             apiConfig.setFormParams(mergeMap(config.getFormParams(), methodConfig.getFormParams()));
             apiConfig.setMultipartFormParams(mergeMultipartFormData(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
-            apiConfig.setBody(getNonBlank(config.getBody(), methodConfig.getBody()));
+            apiConfig.setBody(blankReturnDefault(config.getBody(), methodConfig.getBody()));
 
             apiConfig.setConditionHeaderParams(mergeList(config.getConditionHeaderParams(), methodConfig.getConditionHeaderParams()));
             apiConfig.setConditionPathParams(mergeList(config.getConditionPathParams(), methodConfig.getConditionPathParams()));
@@ -342,8 +345,8 @@ public @interface StdHttpClient {
             apiConfig.setInitParams(mergeMap(config.getInitParams(), methodConfig.getInitParams()));
             apiConfig.setAdditionalParams(mergeMap(config.getAdditionalParams(), methodConfig.getAdditionalParams()));
 
-            apiConfig.setMetaType(getNonBlank(config.getMetaType(), methodConfig.getMetaType()));
-            apiConfig.setResultConvert(getNonBlank(config.getResultConvert(), methodConfig.getResultConvert()));
+            apiConfig.setMetaType(blankReturnDefault(config.getMetaType(), methodConfig.getMetaType()));
+            apiConfig.setResultConvert(blankReturnDefault(config.getResultConvert(), methodConfig.getResultConvert()));
 
             return apiConfig;
         }
@@ -359,28 +362,14 @@ public @interface StdHttpClient {
             return api == null ? mc.getCurrentAnnotatedElement().getName() : api.value();
         }
 
-        private static String getNonBlank(String c, String m) {
-            return StringUtils.hasText(m) ? m : c;
-        }
-
-        private static <T> T getNonNull(T c, T m) {
-            return m == null ? c : m;
-        }
-
-        private static Map<String, Object> mergeMap(Map<String, Object> cMap, Map<String, Object> mMap) {
-            Map<String, Object> resultMap = new LinkedHashMap<>();
-            resultMap.putAll(cMap);
-            resultMap.putAll(mMap);
-            return resultMap;
-        }
-
-        private static <T> List<T> mergeList(List<T> cList, List<T> mList) {
-            List<T> resultList = new ArrayList<>();
-            resultList.addAll(cList);
-            resultList.addAll(mList);
-            return resultList;
-        }
-
+        /**
+         * 合并MultipartFormData配置
+         *
+         * @param cf Class 级别配置
+         * @param mf Method 级别配置
+         * @return 合并后的配置
+         */
+        @SuppressWarnings("unchecked")
         private static MultipartFormData mergeMultipartFormData(MultipartFormData cf, MultipartFormData mf) {
             MultipartFormData multipartFormData = new MultipartFormData();
             multipartFormData.setTxt(mergeMap(cf.getTxt(), mf.getTxt()));

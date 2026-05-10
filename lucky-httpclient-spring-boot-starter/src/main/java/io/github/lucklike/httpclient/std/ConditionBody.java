@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.common.StringUtils;
 import org.springframework.core.io.Resource;
 
 /**
@@ -53,5 +54,14 @@ public class ConditionBody {
      */
     public void setBody(String body) {
         this.body = body;
+    }
+
+    /**
+     * 是否是有效的配置
+     *
+     * @return 是否是有效配置
+     */
+    public boolean effective() {
+        return StringUtils.hasText(condition) && StringUtils.hasText(body);
     }
 }
