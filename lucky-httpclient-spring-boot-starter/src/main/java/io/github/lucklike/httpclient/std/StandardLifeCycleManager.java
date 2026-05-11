@@ -2,26 +2,53 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.ContentType;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.core.ssl.KeyStoreInfo;
+import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryWrap;
+import com.luckyframework.httpclient.core.ssl.SSLUtils;
+import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
+import com.luckyframework.httpclient.proxy.configapi.ConfigApi;
+import com.luckyframework.httpclient.proxy.configapi.ConfigApiBackoffWaitingBeforeRetryContext;
+import com.luckyframework.httpclient.proxy.configapi.ConfigApiHttpExceptionRetryDeciderContext;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
+import com.luckyframework.httpclient.proxy.configapi.RetryConf;
+import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
+import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
+import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
+import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
+import com.luckyframework.httpclient.proxy.spel.SpELVariate;
+import com.luckyframework.httpclient.proxy.ssl.SSLSocketFactoryBuilder;
+import io.github.lucklike.httpclient.config.RetryConfiguration;
+import io.github.lucklike.httpclient.retry.ConfigurationBackoffWaitingBeforeRetryContext;
+import io.github.lucklike.httpclient.retry.ConfigurationRetryDeciderContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.io.Resource;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.luckyframework.httpclient.core.executor.Constant.HTTPCLIENT_PM_CONNECTION_REQUEST_TIMEOUT;
 import static com.luckyframework.httpclient.core.executor.Constant.OKHTTP_PM_CALL_TIMEOUT;
 import static com.luckyframework.httpclient.core.executor.Constant.OKHTTP_PM_WRITE_TIMEOUT;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_COUNT$__;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_DECIDER_FUNCTION$__;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_RUN_BEFORE_RETRY_FUNCTION$__;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_SWITCH$__;
+import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_TASK_NAME$__;
 
 /**
  * 标准的生命周期管理器
@@ -53,6 +80,8 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         fillConditionRequestParameter(mc, request, apiConfig);
         // 填充请求体参数
         fillRequestBodyParameter(mc, request, apiConfig);
+        // SSL参数设置
+        sslSetter(mc, request, apiConfig);
     }
 
 
@@ -186,6 +215,72 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
         // 通用 Body
         setRequestBody(mc, request, apiConfig.getBody());
+    }
+
+
+    /**
+     * SSL相关配置
+     *
+     * @param context   方法上下文实例
+     * @param request   当前请求实例
+     * @param apiConfig 当前API配置
+     */
+    private void sslSetter(MethodContext context, Request request, StandardApiConfiguration apiConfig) {
+        SSLConf ssl = apiConfig.getSslConfig();
+        if (Objects.equals(Boolean.TRUE, ssl.getEnable())) {
+
+            // HostnameVerifier
+            HostnameVerifier hostnameVerifier = StringUtils.hasText(ssl.getHostnameVerifier()) ? context.parseExpression(ssl.getHostnameVerifier(), HostnameVerifier.class) : TrustAllHostnameVerifier.DEFAULT_INSTANCE;
+
+            // SSLSocketFactory
+            SSLSocketFactory sslSocketFactory;
+            if (StringUtils.hasText(ssl.getSslSocketFactory())) {
+                sslSocketFactory = context.parseExpression(ssl.getSslSocketFactory(), SSLSocketFactory.class);
+            } else {
+                KeyStoreInfo keyStoreInfo = ssl.getKeyStoreInfo();
+                KeyStoreInfo trustStoreInfo = ssl.getTrustStoreInfo();
+
+                String keyStore = ssl.getKeyStore();
+                String trustStore = ssl.getTrustStore();
+                if (keyStoreInfo == null) {
+                    keyStoreInfo = SSLSocketFactoryBuilder.getKeyStoreInfo(context, keyStore);
+                }
+                if (trustStoreInfo == null) {
+                    trustStoreInfo = SSLSocketFactoryBuilder.getKeyStoreInfo(context, trustStore);
+                }
+                sslSocketFactory = new SSLSocketFactoryWrap(SSLUtils.createSSLContext(ssl.getProtocol(), keyStoreInfo, trustStoreInfo));
+            }
+            request.setHostnameVerifier(hostnameVerifier);
+            request.setSSLSocketFactory(sslSocketFactory);
+        }
+    }
+
+
+    /**
+     * 设置重试相关的配置
+     *
+     * @param context   方法上下文实例
+     * @param apiConfig 当前API配置
+     */
+    private void retrySetter(MethodContext context, StandardApiConfiguration apiConfig) {
+        RetryConfiguration retryConfig = apiConfig.getRetryConfig();
+        if (Objects.equals(Boolean.TRUE, retryConfig.isEnable())) {
+            SpELVariate contextVar = context.getContextVar();
+
+            contextVar.addVariable(__$RETRY_SWITCH$__, true);
+
+            String taskName = retryConfig.getTaskNameFormat();
+            if (StringUtils.hasText(taskName)) {
+                contextVar.addVariable(__$RETRY_TASK_NAME$__, taskName);
+            }
+
+            contextVar.addVariable(__$RETRY_COUNT$__, retryConfig.getCount());
+            Function<MethodContext, RunBeforeRetryContext<?>> beforeRetryFunction = c -> new ConfigurationBackoffWaitingBeforeRetryContext(retryConfig);
+            Function<MethodContext, RetryDeciderContext<?>> deciderFunction = c -> new ConfigurationRetryDeciderContext(retryConfig);
+
+            contextVar.addVariable(__$RETRY_RUN_BEFORE_RETRY_FUNCTION$__, beforeRetryFunction);
+            contextVar.addVariable(__$RETRY_DECIDER_FUNCTION$__, deciderFunction);
+        }
     }
 
     /**

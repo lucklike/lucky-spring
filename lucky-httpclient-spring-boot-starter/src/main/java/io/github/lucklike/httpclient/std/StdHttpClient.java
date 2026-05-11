@@ -353,6 +353,8 @@ public @interface StdHttpClient {
 
             apiConfig.setMetaType(blankReturnDefault(methodConfig.getMetaType(), config.getMetaType()));
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
+            apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
+            apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
 
             return apiConfig;
         }

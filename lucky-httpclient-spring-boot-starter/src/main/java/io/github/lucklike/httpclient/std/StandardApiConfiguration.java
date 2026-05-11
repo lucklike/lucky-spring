@@ -3,6 +3,9 @@ package io.github.lucklike.httpclient.std;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
+import com.luckyframework.httpclient.proxy.configapi.RetryConf;
+import com.luckyframework.httpclient.proxy.configapi.SSLConf;
+import io.github.lucklike.httpclient.config.RetryConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.ArrayList;
@@ -151,6 +154,18 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private List<Condition> conditionConvert = new ArrayList<>();
+
+    /**
+     * 重试相关配置
+     */
+    @NestedConfigurationProperty
+    private RetryConfiguration retryConfig;
+
+    /**
+     * SSL相关的配置
+     */
+    @NestedConfigurationProperty
+    private SSLConf sslConfig;
 
     /**
      * 设置的请求头参数
@@ -602,6 +617,39 @@ public class StandardApiConfiguration {
         this.conditionBody = conditionBody;
     }
 
+    /**
+     * 重试相关配置
+     * @return 重试相关配置
+     */
+    public RetryConfiguration getRetryConfig() {
+        return retryConfig;
+    }
+
+    /**
+     * 设置重试相关配置
+     * @param retryConfig 重试相关配置
+     */
+    public void setRetryConfig(RetryConfiguration retryConfig) {
+        this.retryConfig = retryConfig;
+    }
+
+    /**
+     * 获取SSL相关的配置
+     *
+     * @return SSL相关的配置
+     */
+    public SSLConf getSslConfig() {
+        return sslConfig;
+    }
+
+    /**
+     * 设置SSL相关的配置
+     *
+     * @param sslConfig SSL相关的配置
+     */
+    public void setSslConfig(SSLConf sslConfig) {
+        this.sslConfig = sslConfig;
+    }
 
     /**
      * 移除无效配置
