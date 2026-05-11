@@ -146,6 +146,9 @@ public @interface StdHttpClient {
                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             StandardApiConfiguration methodConfig = mergeConfig(mec, config);
+            if (methodConfig.getRetryConfig() != null) {
+                methodConfig.getRetryConfig().init();
+            }
             lifeCycleManager.methodMetaContentInit(mec, methodConfig);
             return methodConfig;
         }

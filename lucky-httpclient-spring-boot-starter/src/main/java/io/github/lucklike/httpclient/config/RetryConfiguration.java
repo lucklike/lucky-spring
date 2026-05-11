@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.config;
 
+import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import sun.net.ConnectionResetException;
 
@@ -24,6 +26,11 @@ import java.util.concurrent.TimeoutException;
  * @date 2025/9/17 01:04
  */
 public class RetryConfiguration {
+
+    /**
+     * 默认的重试表达式
+     */
+    public static final String DEFAULT_CONDITION = "#{($status$ >= 500 and $status$ < 600) or {408, 429}.contains($status$)}";
 
     /**
      * 是否开启重试功能
@@ -72,7 +79,7 @@ public class RetryConfiguration {
     /**
      * 重试表达式，当该表达式返回true时才有可能进行重试
      */
-    private String condition = "#{($status$ >= 500 and $status$ < 600) or {408, 429}.contains($status$)}";
+    private String condition;
 
     /**
      * 重试函数，指定一个函数让该函数来觉得是否需要重试
@@ -92,21 +99,7 @@ public class RetryConfiguration {
     /**
      * 指定需要重试的异常，出现这类异常时则需要进行重试
      */
-    private Class<? extends Throwable>[] exceptionClasses = new Class[]{
-            ConnectException.class,
-            UnknownHostException.class,
-            NoRouteToHostException.class,
-            SocketException.class,
-            SocketTimeoutException.class,
-            ConnectionResetException.class,
-            PortUnreachableException.class,
-            UnknownServiceException.class,
-            SSLHandshakeException.class,
-            SSLProtocolException.class,
-            SSLPeerUnverifiedException.class,
-            InterruptedIOException.class,
-            TimeoutException.class
-    };
+    private Class<? extends Throwable>[] exceptionClasses = new Class[]{ConnectException.class, UnknownHostException.class, NoRouteToHostException.class, SocketException.class, SocketTimeoutException.class, ConnectionResetException.class, PortUnreachableException.class, UnknownServiceException.class, SSLHandshakeException.class, SSLProtocolException.class, SSLPeerUnverifiedException.class, InterruptedIOException.class, TimeoutException.class};
 
     /**
      * 指定需要排除的异常类型，出现这类异常时不需要进行重试
@@ -420,5 +413,14 @@ public class RetryConfiguration {
      */
     public void setExExcludeModel(ExceptionModel exExcludeModel) {
         this.exExcludeModel = exExcludeModel;
+    }
+
+    /**
+     * 初始化配置
+     */
+    public void init() {
+        if (!StringUtils.hasText(condition) && normalStatus.length == 0 && exceptionStatus.length == 0) {
+            condition = DEFAULT_CONDITION;
+        }
     }
 }
