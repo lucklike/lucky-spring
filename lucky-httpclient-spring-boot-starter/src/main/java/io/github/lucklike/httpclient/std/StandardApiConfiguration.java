@@ -24,6 +24,11 @@ public class StandardApiConfiguration {
     private String url;
 
     /**
+     * 接口表述信息
+     */
+    private String desc;
+
+    /**
      * 请求方法，默认 POST
      */
     private RequestMethod method;
@@ -217,6 +222,24 @@ public class StandardApiConfiguration {
      */
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    /**
+     * 获取接口描述信息
+     *
+     * @return 接口描述信息
+     */
+    public String getDesc() {
+        return desc;
+    }
+
+    /**
+     * 设置接口描述信息
+     *
+     * @param desc 接口描述信息
+     */
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     /**

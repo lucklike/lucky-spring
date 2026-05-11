@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.discovery;
 
-import io.github.lucklike.httpclient.discovery.cloud.SpringCloudDomainNameGetter;
+import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +19,8 @@ public class ServerDiscoveryAutoConfiguration {
     static class SpringCloudAutoConfiguration {
 
         @Bean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME)
-        public SpringCloudDomainNameGetter springCloudDomainNameGetter() {
-            return new SpringCloudDomainNameGetter();
+        public SpringCloudBaseUrlGetter springCloudDomainNameGetter() {
+            return new SpringCloudBaseUrlGetter();
         }
     }
 

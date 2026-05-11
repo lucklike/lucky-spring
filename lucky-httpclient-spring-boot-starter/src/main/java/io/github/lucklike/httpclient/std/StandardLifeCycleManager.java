@@ -8,11 +8,9 @@ import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
-import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.io.Resource;
@@ -36,28 +34,17 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
     public String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
-        String url = apiConfig.getUrl();
-        if (!StringUtils.hasText(url)) {
-            throw new ConfigurationParserException(
-                    "@StdHttpClient('{0}')[{1}] Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{0}.url'",
-                    CommonFunctions.getApiConfigId(mc.getClassContext()),
-                    mc.getClassContext().getCurrentAnnotatedElement().getName()
-            );
-        }
-        return url;
+        return apiConfig.getUrl();
     }
 
     @Override
-    public String buildApiPath(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
-        if (!(apiConfig instanceof StandardHttpClientConfiguration)) {
-            return apiConfig.getUrl();
-        }
-        return "";
-    }
-
-
-    @Override
-    public void requestInit(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+        //设置超时时间
+        timeoutSetter(request, apiConfig);
+        // 设置Api信息
+        setApiInfo(mc, apiConfig);
+        // 设置URL的Path部分
+        setUrlPath(request, apiConfig);
         // 设置请求方法
         setRequestMethod(request, apiConfig);
         // 填充固定的请求参数
@@ -68,11 +55,6 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         fillRequestBodyParameter(mc, request, apiConfig);
     }
 
-
-    @Override
-    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
-        timeoutSetter(request, apiConfig);
-    }
 
     @Override
     public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
@@ -204,6 +186,30 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
         // 通用 Body
         setRequestBody(mc, request, apiConfig.getBody());
+    }
+
+    /**
+     * 设置API描述信息
+     *
+     * @param mc        方法上下文
+     * @param apiConfig 配置信息
+     */
+    private void setApiInfo(MethodContext mc, StandardApiConfiguration apiConfig) {
+        mc.getApiDescribe().setName(apiConfig.getDesc());
+    }
+
+    /**
+     * 设置URL的Path部分
+     *
+     * @param request   请求对象
+     * @param apiConfig 配置信息
+     */
+    protected void setUrlPath(Request request, StandardApiConfiguration apiConfig) {
+        if (!(apiConfig instanceof StandardHttpClientConfiguration)) {
+            if (StringUtils.hasText(apiConfig.getUrl())) {
+                request.setPath(apiConfig.getUrl());
+            }
+        }
     }
 
     /**

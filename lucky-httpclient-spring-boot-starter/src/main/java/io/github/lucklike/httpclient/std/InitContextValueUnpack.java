@@ -4,7 +4,6 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.util.BeanUtils;
 import com.luckyframework.httpclient.proxy.context.Context;
-import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import com.luckyframework.httpclient.proxy.context.ValueContext;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
@@ -35,9 +34,16 @@ public class InitContextValueUnpack implements ContextValueUnpack {
             return wrapperValue;
         }
 
-        // 尝试直接绑定整个 initParams
-        StandardApiConfiguration config = unpackContext.getRootVar(StdHttpClient.SimpleHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        // 获取初始化配置
+        StandardApiConfiguration config = unpackContext.getRootVar(StdHttpClient.StandardHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
         Map<String, Object> initParams = config.getInitParams();
+
+        // 初始化配置不存在时直接返回
+        if (ContainerUtils.isEmptyMap(initParams)) {
+            return wrapperValue;
+        }
+
+        // 尝试直接绑定整个 initParams
         spelInitBind(valueContext, wrapperValue, initParams);
 
         // 绑定@Init 注解中指定的配置

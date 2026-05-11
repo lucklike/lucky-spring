@@ -54,10 +54,10 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @ApiConfig
-@HttpRequest(func = "__get_http_server_path__")
+@HttpRequest
 @HttpClient(func = "__get_http_server_url__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
-@SpELImport(StdHttpClient.SimpleHttpClientFunctionAndCallback.class)
+@SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
 public @interface StdHttpClient {
 
     /**
@@ -95,9 +95,9 @@ public @interface StdHttpClient {
     ObjectGenerate lifecycleGenerate() default @ObjectGenerate(LifeCycleManager.class);
 
     /**
-     * 简单HTTP客户端实现相关的工具函数和回调函数
+     * 标准HTTP客户端实现相关的工具函数和回调函数
      */
-    class SimpleHttpClientFunctionAndCallback {
+    class StandardHttpClientFunctionAndCallback {
 
         // 存储标准客户端配置对象的变量名
         public static final String STANDARD_HTTP_CLIENT_CONFIG_NAME = "$StandardHttpClientConfiguration";
@@ -257,21 +257,6 @@ public @interface StdHttpClient {
         }
 
         /**
-         * 用于获取HTTP接口Path的函数
-         *
-         * @param mc               方法上下文
-         * @param apiConfig        当前HTTP客户端的配置
-         * @param lifeCycleManager 生命周期管理器对象
-         * @return HTTP接口Path
-         */
-        @FunctionAlias("__get_http_server_path__")
-        public static String getHttpServerPath(MethodContext mc,
-                                               @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                               @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
-            return lifeCycleManager.buildApiPath(mc, apiConfig);
-        }
-
-        /**
          * 获取响应元类型
          *
          * @param mc               方法上下文对象
@@ -314,25 +299,46 @@ public @interface StdHttpClient {
         private static StandardApiConfiguration mergeConfig(MethodMetaContext mec, StandardHttpClientConfiguration config) {
             String apiId = getApiId(mec);
             StandardApiConfiguration methodConfig = config.getMethodConfigs().get(apiId);
+
+            // 只有类配置，没有方法配置
             if (methodConfig == null) {
+                // 检查URL
+                if (!StringUtils.hasText(config.getUrl())) {
+                    throw new ConfigurationParserException(
+                            "@StdHttpClient('{0}')[{1}] Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{0}.url'",
+                            CommonFunctions.getApiConfigId(mec.getParentContext()),
+                            mec.getParentContext().getCurrentAnnotatedElement().getName()
+                    );
+                }
                 return config;
+            }
+
+            // 检查URL
+            if (!StringUtils.hasText(config.getUrl()) && !StringUtils.hasText(methodConfig.getUrl())) {
+                throw new ConfigurationParserException(
+                        "@StdHttpClient('{0}')[{1}] Missing the necessary configuration, at least one of the following configurations should be configured：'lucky.http-client.standard-client-configs.{0}.url' or 'lucky.http-client.standard-client-configs.{0}.{2}.url'",
+                        CommonFunctions.getApiConfigId(mec.getParentContext()),
+                        mec.getParentContext().getCurrentAnnotatedElement().getName(),
+                        apiId
+                );
             }
 
             StandardApiConfiguration apiConfig = new StandardApiConfiguration();
             apiConfig.setUrl(methodConfig.getUrl());
-            apiConfig.setMethod(nullReturnDefault(config.getMethod(), methodConfig.getMethod()));
-            apiConfig.setConnectTimeout(nullReturnDefault(config.getConnectTimeout(), methodConfig.getConnectTimeout()));
-            apiConfig.setReadTimeout(nullReturnDefault(config.getReadTimeout(), methodConfig.getReadTimeout()));
-            apiConfig.setWriteTimeout(nullReturnDefault(config.getWriteTimeout(), methodConfig.getWriteTimeout()));
-            apiConfig.setCallTimeout(nullReturnDefault(config.getCallTimeout(), methodConfig.getCallTimeout()));
-            apiConfig.setConnectionRequestTimeout(nullReturnDefault(config.getConnectionRequestTimeout(), methodConfig.getConnectionRequestTimeout()));
+            apiConfig.setDesc(blankReturnDefault(config.getDesc(), "") + blankReturnDefault(methodConfig.getDesc(), ""));
+            apiConfig.setMethod(nullReturnDefault(methodConfig.getMethod(), config.getMethod()));
+            apiConfig.setConnectTimeout(nullReturnDefault( methodConfig.getConnectTimeout(), config.getConnectTimeout()));
+            apiConfig.setReadTimeout(nullReturnDefault(methodConfig.getReadTimeout(),config.getReadTimeout()));
+            apiConfig.setWriteTimeout(nullReturnDefault(methodConfig.getWriteTimeout(), config.getWriteTimeout()));
+            apiConfig.setCallTimeout(nullReturnDefault(methodConfig.getCallTimeout(), config.getCallTimeout()));
+            apiConfig.setConnectionRequestTimeout(nullReturnDefault(methodConfig.getConnectionRequestTimeout(), config.getConnectionRequestTimeout()));
 
             apiConfig.setHeaderParams(mergeMap(config.getHeaderParams(), methodConfig.getHeaderParams()));
             apiConfig.setPathParams(mergeMap(config.getPathParams(), methodConfig.getPathParams()));
             apiConfig.setQueryParams(mergeMap(config.getQueryParams(), methodConfig.getQueryParams()));
             apiConfig.setFormParams(mergeMap(config.getFormParams(), methodConfig.getFormParams()));
             apiConfig.setMultipartFormParams(mergeMultipartFormData(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
-            apiConfig.setBody(blankReturnDefault(config.getBody(), methodConfig.getBody()));
+            apiConfig.setBody(blankReturnDefault(methodConfig.getBody(), config.getBody()));
 
             apiConfig.setConditionHeaderParams(mergeList(config.getConditionHeaderParams(), methodConfig.getConditionHeaderParams()));
             apiConfig.setConditionPathParams(mergeList(config.getConditionPathParams(), methodConfig.getConditionPathParams()));
@@ -345,8 +351,8 @@ public @interface StdHttpClient {
             apiConfig.setInitParams(mergeMap(config.getInitParams(), methodConfig.getInitParams()));
             apiConfig.setAdditionalParams(mergeMap(config.getAdditionalParams(), methodConfig.getAdditionalParams()));
 
-            apiConfig.setMetaType(blankReturnDefault(config.getMetaType(), methodConfig.getMetaType()));
-            apiConfig.setResultConvert(blankReturnDefault(config.getResultConvert(), methodConfig.getResultConvert()));
+            apiConfig.setMetaType(blankReturnDefault(methodConfig.getMetaType(), config.getMetaType()));
+            apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
 
             return apiConfig;
         }

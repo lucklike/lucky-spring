@@ -21,12 +21,12 @@ import java.lang.annotation.Target;
  * @date 2023/8/30 03:06
  * @see ServerAddressMeta
  * @see HttpClientComponent
- * @see CommonDomainNameGetter
+ * @see CommonBaseUrlGetter
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@ServerAddressMeta(getter = @ObjectGenerate(CommonDomainNameGetter.class))
+@ServerAddressMeta(getter = @ObjectGenerate(CommonBaseUrlGetter.class))
 @HttpClientComponent
 public @interface HttpClient {
 

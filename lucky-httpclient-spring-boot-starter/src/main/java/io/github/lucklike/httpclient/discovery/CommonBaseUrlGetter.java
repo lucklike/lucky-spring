@@ -1,10 +1,10 @@
 package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
-import com.luckyframework.httpclient.proxy.url.DomainNameGetter;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
-import io.github.lucklike.httpclient.discovery.cloud.SpringCloudDomainNameGetter;
+import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
 
 import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.autoInjectParamExecuteUrlFunction;
 import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME;
@@ -16,10 +16,10 @@ import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMA
  * @version 1.0.0
  * @date 2025/3/13 14:58
  */
-public class CommonDomainNameGetter implements DomainNameGetter {
+public class CommonBaseUrlGetter implements BaseURLGetter {
 
     @Override
-    public String getDomainName(DomainNameContext context) {
+    public String getBaseUrl(DomainNameContext context) {
         HttpClient httpClientAnn = context.toAnnotation(HttpClient.class);
 
         String url = context.parseExpression(httpClientAnn.url(), String.class);
@@ -48,8 +48,8 @@ public class CommonDomainNameGetter implements DomainNameGetter {
             return path;
         }
         return ApplicationContextUtils
-                .getBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME, SpringCloudDomainNameGetter.class)
-                .getDomainName(serviceName, path);
+                .getBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME, SpringCloudBaseUrlGetter.class)
+                .getBaseUrl(serviceName, path);
     }
 
 }

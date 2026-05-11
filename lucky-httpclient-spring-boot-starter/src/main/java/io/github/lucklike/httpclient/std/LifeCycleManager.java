@@ -26,15 +26,6 @@ public interface LifeCycleManager {
     String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
 
     /**
-     * 构建 Api 接口的 Path 部分
-     *
-     * @param mc        方法上下文对象
-     * @param apiConfig 配置信息
-     * @return Api 接口的 Path 部分
-     */
-    String buildApiPath(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
-
-    /**
      * 请求对象刚完成初始化时执行
      *
      * @param mc        方法上下文对象
