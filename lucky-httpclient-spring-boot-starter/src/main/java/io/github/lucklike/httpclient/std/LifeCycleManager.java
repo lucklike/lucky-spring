@@ -2,7 +2,9 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import org.springframework.core.ResolvableType;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_RESPONSE_BODY_$;
@@ -15,6 +17,26 @@ import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_RES
  * @date 2026/5/7 02:32
  */
 public interface LifeCycleManager {
+
+    /**
+     * 方法元信息上下文初始化成功时执行
+     *
+     * @param mec    方法元信息上下文初始化完成时执行
+     * @param config 配置信息
+     */
+    default void methodMetaContentInit(MethodMetaContext mec, StandardApiConfiguration config) {
+
+    }
+
+    /**
+     * 方法信息上下文初始化成功时执行
+     *
+     * @param mc     方法信息上下文初始化完成时执行
+     * @param config 配置信息
+     */
+    default void methodContentInit(MethodContext mc, StandardApiConfiguration config) {
+
+    }
 
     /**
      * 构建基本 Url

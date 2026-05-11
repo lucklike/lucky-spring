@@ -20,6 +20,7 @@ import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.RetryConf;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
@@ -65,9 +66,13 @@ public class StandardLifeCycleManager implements LifeCycleManager {
     }
 
     @Override
+    public void methodMetaContentInit(MethodMetaContext mec, StandardApiConfiguration config) {
+        // 重试相关配置
+        retrySetter(mec, config);
+    }
+
+    @Override
     public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
-        //设置超时时间
-        timeoutSetter(request, apiConfig);
         // 设置Api信息
         setApiInfo(mc, apiConfig);
         // 设置URL的Path部分
@@ -80,6 +85,8 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         fillConditionRequestParameter(mc, request, apiConfig);
         // 填充请求体参数
         fillRequestBodyParameter(mc, request, apiConfig);
+        //设置超时时间
+        timeoutSetter(request, apiConfig);
         // SSL参数设置
         sslSetter(mc, request, apiConfig);
     }
@@ -227,7 +234,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      */
     private void sslSetter(MethodContext context, Request request, StandardApiConfiguration apiConfig) {
         SSLConf ssl = apiConfig.getSslConfig();
-        if (Objects.equals(Boolean.TRUE, ssl.getEnable())) {
+        if (ssl != null && Objects.equals(Boolean.TRUE, ssl.getEnable())) {
 
             // HostnameVerifier
             HostnameVerifier hostnameVerifier = StringUtils.hasText(ssl.getHostnameVerifier()) ? context.parseExpression(ssl.getHostnameVerifier(), HostnameVerifier.class) : TrustAllHostnameVerifier.DEFAULT_INSTANCE;
@@ -262,9 +269,9 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param context   方法上下文实例
      * @param apiConfig 当前API配置
      */
-    private void retrySetter(MethodContext context, StandardApiConfiguration apiConfig) {
+    private void retrySetter(MethodMetaContext context, StandardApiConfiguration apiConfig) {
         RetryConfiguration retryConfig = apiConfig.getRetryConfig();
-        if (Objects.equals(Boolean.TRUE, retryConfig.isEnable())) {
+        if (retryConfig != null && Objects.equals(Boolean.TRUE, retryConfig.isEnable())) {
             SpELVariate contextVar = context.getContextVar();
 
             contextVar.addVariable(__$RETRY_SWITCH$__, true);

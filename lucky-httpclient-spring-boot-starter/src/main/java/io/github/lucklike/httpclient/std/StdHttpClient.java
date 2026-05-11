@@ -136,58 +136,32 @@ public @interface StdHttpClient {
          *
          * @param mec    方法元上下文
          * @param config 当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
          * @return 当前标准 API 的配置
          */
         @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, storeName = STANDARD_API_CONFIG_NAME)
-        public static StandardApiConfiguration createStandardApiConfig(
+        public static StandardApiConfiguration methodMetaContentInit(
                 MethodMetaContext mec,
-                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config
+                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
-            return mergeConfig(mec, config);
+            StandardApiConfiguration methodConfig = mergeConfig(mec, config);
+            lifeCycleManager.methodMetaContentInit(mec, methodConfig);
+            return methodConfig;
         }
 
         /**
-         * 创建{@link LifeCycleManager}对象
+         * 方法上下文初始化时执行
          *
-         * @param cc     类上下文
-         * @param config 当前HTTP客户端的配置
-         * @return {@link LifeCycleManager}对象
+         * @param mc    方法元上下文
+         * @param apiConfig 当前HTTP客户端的配置
+         * @param lifeCycleManager 生命周期管理器对象
          */
-        @NonNull
-        @SuppressWarnings("unchecked")
-        private static LifeCycleManager createLifeCycleManager(ClassContext cc, StandardHttpClientConfiguration config) {
-            // 优先从配置中进行初始化
-            if (config != null && config.getLifecycleManager() != null) {
-                GenerateEntry<LifeCycleManager> generate = config.getLifecycleManager();
-                return cc.generateObject(
-                        generate.getType() == null ? LifeCycleManager.class : generate.getType(),
-                        generate.getBeanName(),
-                        generate.getScope(),
-                        (Consumer<LifeCycleManager>) ClassUtils.newObject(generate.getConsumerClass())
-                );
-            }
-
-            // 从注解中进行初始化
-            StdHttpClient ann = cc.getMergedAnnotation(StdHttpClient.class);
-            ObjectGenerate generate = ann.lifecycleGenerate();
-
-            // 使用生成器对象
-            if (ObjectGenerateUtil.isEffectiveObjectGenerate(generate, LifeCycleManager.class)) {
-                return cc.generateObject(generate);
-            }
-
-            // 尝试从 Spring 容器中获取
-            if (StringUtils.hasText(ann.lifecycleBean())) {
-                return ApplicationContextUtils.getBean(ann.lifecycleBean(), LifeCycleManager.class);
-            }
-
-            // 最后使用 Class
-            if (ann.lifecycle() != LifeCycleManager.class) {
-                return cc.generateObject(ann.lifecycle(), Scope.SINGLETON);
-            }
-
-            // 没有配置生命周期管理器时直接报错
-            throw new ConfigurationParserException("@StdHttpClient('{}')[{}] Lifecycle manager configuration is missing", CommonFunctions.getApiConfigId(cc), cc.getCurrentAnnotatedElement().getName());
+        @Callback(lifecycle = Lifecycle.METHOD)
+        public static void methodContentInit(MethodContext mc,
+                                             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                                             @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            lifeCycleManager.methodContentInit(mc, apiConfig);
         }
 
         /**
@@ -289,6 +263,51 @@ public @interface StdHttpClient {
         }
 
         /**
+         * 创建{@link LifeCycleManager}对象
+         *
+         * @param cc     类上下文
+         * @param config 当前HTTP客户端的配置
+         * @return {@link LifeCycleManager}对象
+         */
+        @NonNull
+        @SuppressWarnings("unchecked")
+        private static LifeCycleManager createLifeCycleManager(ClassContext cc, StandardHttpClientConfiguration config) {
+            // 优先从配置中进行初始化
+            if (config != null && config.getLifecycleManager() != null) {
+                GenerateEntry<LifeCycleManager> generate = config.getLifecycleManager();
+                return cc.generateObject(
+                        generate.getType() == null ? LifeCycleManager.class : generate.getType(),
+                        generate.getBeanName(),
+                        generate.getScope(),
+                        (Consumer<LifeCycleManager>) ClassUtils.newObject(generate.getConsumerClass())
+                );
+            }
+
+            // 从注解中进行初始化
+            StdHttpClient ann = cc.getMergedAnnotation(StdHttpClient.class);
+            ObjectGenerate generate = ann.lifecycleGenerate();
+
+            // 使用生成器对象
+            if (ObjectGenerateUtil.isEffectiveObjectGenerate(generate, LifeCycleManager.class)) {
+                return cc.generateObject(generate);
+            }
+
+            // 尝试从 Spring 容器中获取
+            if (StringUtils.hasText(ann.lifecycleBean())) {
+                return ApplicationContextUtils.getBean(ann.lifecycleBean(), LifeCycleManager.class);
+            }
+
+            // 最后使用 Class
+            if (ann.lifecycle() != LifeCycleManager.class) {
+                return cc.generateObject(ann.lifecycle(), Scope.SINGLETON);
+            }
+
+            // 没有配置生命周期管理器时直接报错
+            throw new ConfigurationParserException("@StdHttpClient('{}')[{}] Lifecycle manager configuration is missing", CommonFunctions.getApiConfigId(cc), cc.getCurrentAnnotatedElement().getName());
+        }
+
+
+        /**
          * 合并配置
          *
          * @param mec    元方法上下文
@@ -327,8 +346,8 @@ public @interface StdHttpClient {
             apiConfig.setUrl(methodConfig.getUrl());
             apiConfig.setDesc(blankReturnDefault(config.getDesc(), "") + blankReturnDefault(methodConfig.getDesc(), ""));
             apiConfig.setMethod(nullReturnDefault(methodConfig.getMethod(), config.getMethod()));
-            apiConfig.setConnectTimeout(nullReturnDefault( methodConfig.getConnectTimeout(), config.getConnectTimeout()));
-            apiConfig.setReadTimeout(nullReturnDefault(methodConfig.getReadTimeout(),config.getReadTimeout()));
+            apiConfig.setConnectTimeout(nullReturnDefault(methodConfig.getConnectTimeout(), config.getConnectTimeout()));
+            apiConfig.setReadTimeout(nullReturnDefault(methodConfig.getReadTimeout(), config.getReadTimeout()));
             apiConfig.setWriteTimeout(nullReturnDefault(methodConfig.getWriteTimeout(), config.getWriteTimeout()));
             apiConfig.setCallTimeout(nullReturnDefault(methodConfig.getCallTimeout(), config.getCallTimeout()));
             apiConfig.setConnectionRequestTimeout(nullReturnDefault(methodConfig.getConnectionRequestTimeout(), config.getConnectionRequestTimeout()));
