@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.function;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.FontUtil;
 import com.luckyframework.httpclient.core.util.BeanUtils;
+import com.luckyframework.httpclient.core.util.SpELPropertyCopyConvert;
 import com.luckyframework.httpclient.proxy.context.Context;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;

@@ -137,7 +137,7 @@ public class StandardApiConfiguration {
     /**
      * 额外的自定义请求参数
      */
-    private Map<String, Object> additionalParams = new LinkedHashMap<>();
+    private AdditionalParams additionalParams = new AdditionalParams();
 
     /**
      * 转化元类型表达式
@@ -334,7 +334,7 @@ public class StandardApiConfiguration {
      *
      * @return 额外的自定义请求参数
      */
-    public Map<String, Object> getAdditionalParams() {
+    public AdditionalParams getAdditionalParams() {
         return additionalParams;
     }
 
@@ -343,7 +343,7 @@ public class StandardApiConfiguration {
      *
      * @param additionalParams 额外的自定义请求参数
      */
-    public void setAdditionalParams(Map<String, Object> additionalParams) {
+    public void setAdditionalParams(AdditionalParams additionalParams) {
         this.additionalParams = additionalParams;
     }
 

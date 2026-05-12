@@ -134,8 +134,8 @@ public @interface StdHttpClient {
         /**
          * 创建标准 API 配置对象
          *
-         * @param mec    方法元上下文
-         * @param config 当前HTTP客户端的配置
+         * @param mec              方法元上下文
+         * @param config           当前HTTP客户端的配置
          * @param lifeCycleManager 生命周期管理器对象
          * @return 当前标准 API 的配置
          */
@@ -156,8 +156,8 @@ public @interface StdHttpClient {
         /**
          * 方法上下文初始化时执行
          *
-         * @param mc    方法元上下文
-         * @param apiConfig 当前HTTP客户端的配置
+         * @param mc               方法元上下文
+         * @param apiConfig        当前HTTP客户端的配置
          * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.METHOD)
@@ -371,7 +371,7 @@ public @interface StdHttpClient {
             apiConfig.setConditionConvert(mergeList(config.getConditionConvert(), methodConfig.getConditionConvert()));
 
             apiConfig.setInitParams(mergeMap(config.getInitParams(), methodConfig.getInitParams()));
-            apiConfig.setAdditionalParams(mergeMap(config.getAdditionalParams(), methodConfig.getAdditionalParams()));
+            apiConfig.setAdditionalParams(mergeAdditionalParams(config.getAdditionalParams(), methodConfig.getAdditionalParams()));
 
             apiConfig.setMetaType(blankReturnDefault(methodConfig.getMetaType(), config.getMetaType()));
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
@@ -405,6 +405,20 @@ public @interface StdHttpClient {
             multipartFormData.setTxt(mergeMap(cf.getTxt(), mf.getTxt()));
             multipartFormData.setFile(mergeMap(cf.getFile(), mf.getFile()));
             return multipartFormData;
+        }
+
+        /**
+         * 合并额外参数
+         *
+         * @param cap 类级别的额外参数
+         * @param map 方法级别的额外参数
+         * @return 合并后的额外参数
+         */
+        private static AdditionalParams mergeAdditionalParams(AdditionalParams cap, AdditionalParams map) {
+            AdditionalParams additionalParams = new AdditionalParams();
+            additionalParams.putAll(cap);
+            additionalParams.putAll(map);
+            return additionalParams;
         }
     }
 }
