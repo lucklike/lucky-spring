@@ -59,7 +59,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
  * latency: 1000
  *
  * #各个方法的Mock配置
- * methods:
+ * method-configs:
  *     #login方法的Mock数据
  *     login:
  *         #方法级别开关
