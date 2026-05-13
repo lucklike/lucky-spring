@@ -38,7 +38,7 @@ public class MockResult {
      * 模拟响应体
      */
     @NestedConfigurationProperty
-    private MockBody body;
+    private MockBody body = new MockBody();
 
     /**
      * 带条件的模拟响应体
