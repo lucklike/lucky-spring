@@ -39,7 +39,7 @@ public class WhenMockResult {
      * 模拟响应体
      */
     @NestedConfigurationProperty
-    private MockBody body;
+    private MockBody body = new MockBody();
 
     /**
      * 获取模拟延时配置，单位毫秒

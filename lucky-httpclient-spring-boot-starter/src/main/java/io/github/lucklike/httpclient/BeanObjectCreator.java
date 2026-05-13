@@ -52,6 +52,9 @@ public class BeanObjectCreator extends ReflectObjectCreator {
     private <T> T createObjectByClass(Class<T> clazz) {
         return applicationContext
                 .getBeanProvider(clazz)
-                .getIfUnique(() -> super.doCreateObject(clazz));
+                .stream()
+                .filter(e -> e.getClass() == clazz)
+                .findFirst()
+                .orElseGet(() -> super.doCreateObject(clazz));
     }
 }

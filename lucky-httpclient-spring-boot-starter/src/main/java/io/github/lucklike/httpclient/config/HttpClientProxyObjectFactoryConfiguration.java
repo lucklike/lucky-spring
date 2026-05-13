@@ -5,7 +5,7 @@ import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.config.mock.MockConfiguration;
-import io.github.lucklike.httpclient.config.simple.SimpleHttpClientConfiguration;
+import io.github.lucklike.httpclient.std.StandardHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.LinkedHashMap;
@@ -181,9 +181,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private Map<String, MockConfiguration> mockConfigs = new LinkedHashMap<>();
 
     /**
-     * 全局简单HTTP配置集合
+     * 全局标准HTTP客户端配置集合
      */
-    private Map<String, SimpleHttpClientConfiguration> simpleClientConfigs = new LinkedHashMap<>();
+    private Map<String, StandardHttpClientConfiguration> standardClientConfigs = new LinkedHashMap<>();
 
 
     //------------------------------------------------------------------------------------------------
@@ -403,12 +403,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置全局简单HTTP配置集合
+     * 设置全局标准HTTP客户端配置集合
      *
-     * @param simpleClientConfigs 全局简单HTTP配置集合
+     * @param standardClientConfigs 全局标准HTTP客户端配置集合
      */
-    public void setSimpleClientConfigs(Map<String, SimpleHttpClientConfiguration> simpleClientConfigs) {
-        this.simpleClientConfigs = simpleClientConfigs;
+    public void setStandardClientConfigs(Map<String, StandardHttpClientConfiguration> standardClientConfigs) {
+        this.standardClientConfigs = standardClientConfigs;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -617,11 +617,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取全局简单HTTP配置集合
+     * 获取全局标准HTTP客户端配置集合
      *
-     * @return 全局简单HTTP配置集合
+     * @return 全局标准HTTP客户端配置集合
      */
-    public Map<String, SimpleHttpClientConfiguration> getSimpleClientConfigs() {
-        return simpleClientConfigs;
+    public Map<String, StandardHttpClientConfiguration> getStandardClientConfigs() {
+        return standardClientConfigs;
     }
 }

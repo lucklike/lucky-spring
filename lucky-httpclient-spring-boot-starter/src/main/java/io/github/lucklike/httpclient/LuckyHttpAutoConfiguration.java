@@ -102,6 +102,8 @@ import io.github.lucklike.httpclient.injection.WrapTypeHolder;
 import io.github.lucklike.httpclient.masker.BindingKeyMasker;
 import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
+import io.github.lucklike.httpclient.retry.ConfigurationBackoffWaitingBeforeRetryContext;
+import io.github.lucklike.httpclient.retry.ConfigurationRetryDeciderContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -654,59 +656,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         RetryConfiguration retryConfig = factoryConfig.getRetry();
         if (!retryConfig.isEnable() || retryConfig.getCount() < 0) {
             return;
-        }
-
-        // 基于配置的重试决策者实现类
-        class ConfigurationRetryDeciderContext extends RetryDeciderContext<Response> {
-
-            private final String condition;
-            private final String conditionFunc;
-            private final int[] normalStatus;
-            private final int[] exceptionStatus;
-            private final Class<? extends Throwable>[] exceptionClasses;
-            private final Class<? extends Throwable>[] excludeClasses;
-            private final ExceptionModel exCheckModel;
-            private final ExceptionModel exExcludeModel;
-
-            public ConfigurationRetryDeciderContext(RetryConfiguration retryConfig) {
-                this.condition = retryConfig.getCondition();
-                this.conditionFunc = retryConfig.getConditionFunc();
-                this.normalStatus = retryConfig.getNormalStatus();
-                this.exceptionStatus = retryConfig.getExceptionStatus();
-                this.exceptionClasses = retryConfig.getExceptionClasses();
-                this.excludeClasses = retryConfig.getExcludeClasses();
-                this.exCheckModel = retryConfig.getExCheckModel();
-                this.exExcludeModel = retryConfig.getExExcludeModel();
-            }
-
-            @Override
-            protected boolean doNeedRetry(TaskResult<Response> taskResult) {
-                boolean isRetryEx = exceptionCheck(taskResult, exceptionClasses, excludeClasses, exCheckModel, exExcludeModel);
-                if (isRetryEx) {
-                    return true;
-                }
-                if (taskResult.hasException()) {
-                    return false;
-                }
-                return retryExpressionCheck(taskResult, condition, conditionFunc)
-                        || httpStatusCheck(taskResult, normalStatus, exceptionStatus);
-
-            }
-        }
-
-        // 基于配置的重试等待器
-        class ConfigurationBackoffWaitingBeforeRetryContext extends RunBeforeRetryContext<Object> {
-
-            private final BackoffWaitBeforeRetry backoffWaitBeforeRetry;
-
-            public ConfigurationBackoffWaitingBeforeRetryContext(RetryConfiguration retryConfig) {
-                this.backoffWaitBeforeRetry = new BackoffWaitBeforeRetry(retryConfig.getWaitMillis(), retryConfig.getMultiplier(), retryConfig.getMaxWaitMillis(), retryConfig.getMinWaitMillis());
-            }
-
-            @Override
-            protected void doBeforeRetry(TaskResult<Object> taskResult) {
-                backoffWaitBeforeRetry.beforeRetry(taskResult);
-            }
         }
 
         RetryActuator retryActuator = new RetryActuator(

@@ -1,8 +1,8 @@
 package io.github.lucklike.httpclient.discovery.cloud;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
-import com.luckyframework.httpclient.proxy.url.DomainNameGetter;
 import io.github.lucklike.httpclient.discovery.HttpClient;
 import io.github.lucklike.httpclient.discovery.ServerDiscoveryConfigurationException;
 import io.github.lucklike.httpclient.discovery.ServiceInstanceNotFoundException;
@@ -17,23 +17,23 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
  * @version 1.0.0
  * @date 2025/3/13 14:58
  */
-public class SpringCloudDomainNameGetter implements DomainNameGetter {
+public class SpringCloudBaseUrlGetter implements BaseURLGetter {
 
     @Autowired
     private LoadBalancerClient loadBalancerClient;
 
     @Override
-    public String getDomainName(DomainNameContext context) throws Exception {
+    public String getBaseUrl(DomainNameContext context) throws Exception {
         // 获取注解实例并检验配置
         HttpClient httpclientAnn = context.toAnnotation(HttpClient.class);
 
         String serviceName = context.parseExpression(httpclientAnn.service(), String.class);
         String path = context.parseExpression(httpclientAnn.path(), String.class);
 
-        return getDomainName(serviceName, path);
+        return getBaseUrl(serviceName, path);
     }
 
-    public String getDomainName(String serviceName, String path) {
+    public String getBaseUrl(String serviceName, String path) {
         if (loadBalancerClient == null) {
             throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service information cannot be obtained");
         }
