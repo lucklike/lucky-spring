@@ -3,7 +3,6 @@ package io.github.lucklike.httpclient.std;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
-import com.luckyframework.httpclient.proxy.configapi.RetryConf;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -29,7 +28,7 @@ public class StandardApiConfiguration {
     /**
      * 接口表述信息
      */
-    private String desc;
+    private String description;
 
     /**
      * 请求方法，默认 POST
@@ -245,17 +244,17 @@ public class StandardApiConfiguration {
      *
      * @return 接口描述信息
      */
-    public String getDesc() {
-        return desc;
+    public String getDescription() {
+        return description;
     }
 
     /**
      * 设置接口描述信息
      *
-     * @param desc 接口描述信息
+     * @param description 接口描述信息
      */
-    public void setDesc(String desc) {
-        this.desc = desc;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**

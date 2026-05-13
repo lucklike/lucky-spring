@@ -49,7 +49,7 @@ public class RetryConfiguration {
     /**
      * 任务名称
      */
-    private String taskNameFormat = "[#{T(Thread).currentThread().getName()}][#{$req$.getUniqueId()}][#{$api$.name}]";
+    private String taskNameFormat = "[#{T(Thread).currentThread().getName()}][#{$req$.getUniqueId()}][#{$mec$.getMethodString()}]";
 
     /**
      * 最大重试次数，默认 3 次

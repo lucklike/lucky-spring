@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.ContentType;
 import com.luckyframework.httpclient.core.meta.Request;
@@ -13,16 +12,11 @@ import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryWrap;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.ConfigApi;
-import com.luckyframework.httpclient.proxy.configapi.ConfigApiBackoffWaitingBeforeRetryContext;
-import com.luckyframework.httpclient.proxy.configapi.ConfigApiHttpExceptionRetryDeciderContext;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
-import com.luckyframework.httpclient.proxy.configapi.RetryConf;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
-import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
@@ -297,7 +291,9 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param apiConfig 配置信息
      */
     private void setApiInfo(MethodContext mc, StandardApiConfiguration apiConfig) {
-        mc.getApiDescribe().setName(apiConfig.getDesc());
+        if (StringUtils.hasText(apiConfig.getDescription())) {
+            mc.getApiDescribe().setName(apiConfig.getDescription());
+        }
     }
 
     /**

@@ -7,7 +7,6 @@ import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
 import com.luckyframework.httpclient.proxy.annotations.RespConvert;
-import com.luckyframework.httpclient.proxy.configapi.Api;
 import com.luckyframework.httpclient.proxy.configapi.ApiConfig;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
@@ -45,6 +44,7 @@ import static com.luckyframework.common.ContainerUtils.mergeList;
 import static com.luckyframework.common.ContainerUtils.mergeMap;
 import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
+import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -347,7 +347,7 @@ public @interface StdHttpClient {
 
             StandardApiConfiguration apiConfig = new StandardApiConfiguration();
             apiConfig.setUrl(methodConfig.getUrl());
-            apiConfig.setDesc(blankReturnDefault(config.getDesc(), "") + blankReturnDefault(methodConfig.getDesc(), ""));
+            apiConfig.setDescription(blankReturnDefault(config.getDescription(), "") + blankReturnDefault(methodConfig.getDescription(), ""));
             apiConfig.setMethod(nullReturnDefault(methodConfig.getMethod(), config.getMethod()));
             apiConfig.setConnectTimeout(nullReturnDefault(methodConfig.getConnectTimeout(), config.getConnectTimeout()));
             apiConfig.setReadTimeout(nullReturnDefault(methodConfig.getReadTimeout(), config.getReadTimeout()));
@@ -381,16 +381,6 @@ public @interface StdHttpClient {
             return apiConfig;
         }
 
-        /**
-         * 获取配置APIID
-         *
-         * @param mc 方法上下文
-         * @return 配置APIID
-         */
-        private static String getApiId(MethodMetaContext mc) {
-            Api api = mc.getMergedAnnotation(Api.class);
-            return api == null ? mc.getCurrentAnnotatedElement().getName() : api.value();
-        }
 
         /**
          * 合并MultipartFormData配置
