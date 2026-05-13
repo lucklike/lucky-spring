@@ -137,6 +137,7 @@ public class StandardApiConfiguration {
     /**
      * 额外的自定义请求参数
      */
+    @NestedConfigurationProperty
     private AdditionalParams additionalParams = new AdditionalParams();
 
     /**
