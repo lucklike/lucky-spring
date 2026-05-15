@@ -4,8 +4,10 @@ import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.core.ResolvableType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -131,7 +133,8 @@ public class StandardApiConfiguration {
     /**
      * 初始化参数
      */
-    private Map<String, Object> initParams = new LinkedHashMap<>();
+    @NestedConfigurationProperty
+    private InitBindParams initBindParams = new InitBindParams();
 
     /**
      * 额外的自定义请求参数
@@ -140,9 +143,16 @@ public class StandardApiConfiguration {
     private AdditionalParams additionalParams = new AdditionalParams();
 
     /**
-     * 转化元类型表达式
+     * 转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
+     *
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     private String metaType;
+
+    /**
+     * 支持条件表达式的转化元类型表达式
+     */
+    private List<ConditionMetaType> conditionMetaType = new ArrayList<>();
 
     /**
      * 响应转换表达式
@@ -316,17 +326,17 @@ public class StandardApiConfiguration {
      *
      * @return 初始化参数
      */
-    public Map<String, Object> getInitParams() {
-        return initParams;
+    public InitBindParams getInitBindParams() {
+        return initBindParams;
     }
 
     /**
      * 设置初始化参数
      *
-     * @param initParams 初始化参数
+     * @param initBindParams 初始化参数
      */
-    public void setInitParams(Map<String, Object> initParams) {
-        this.initParams = initParams;
+    public void setInitBindParams(InitBindParams initBindParams) {
+        this.initBindParams = initBindParams;
     }
 
     /**
@@ -456,21 +466,41 @@ public class StandardApiConfiguration {
     }
 
     /**
-     * 获取转化元类型表达式
+     * 获取转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
      *
      * @return 转化元类型表达式
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     public String getMetaType() {
         return metaType;
     }
 
     /**
-     * 设置转化元类型表达式
+     * 设置转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
      *
      * @param metaType 转化元类型表达式
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     public void setMetaType(String metaType) {
         this.metaType = metaType;
+    }
+
+    /**
+     * 获取支持条件表达式的转化元类型表达式
+     *
+     * @return 支持条件表达式的转化元类型表达式
+     */
+    public List<ConditionMetaType> getConditionMetaType() {
+        return conditionMetaType;
+    }
+
+    /**
+     * 设置支持条件表达式的转化元类型表达式
+     *
+     * @param conditionMetaType 支持条件表达式的转化元类型表达式
+     */
+    public void setConditionMetaType(List<ConditionMetaType> conditionMetaType) {
+        this.conditionMetaType = conditionMetaType;
     }
 
     /**
@@ -619,6 +649,7 @@ public class StandardApiConfiguration {
 
     /**
      * 重试相关配置
+     *
      * @return 重试相关配置
      */
     public RetryConfiguration getRetryConfig() {
@@ -627,6 +658,7 @@ public class StandardApiConfiguration {
 
     /**
      * 设置重试相关配置
+     *
      * @param retryConfig 重试相关配置
      */
     public void setRetryConfig(RetryConfiguration retryConfig) {
@@ -662,5 +694,6 @@ public class StandardApiConfiguration {
         conditionMultipartFormParams.removeIf(config -> !config.effective());
         conditionBody.removeIf(config -> !config.effective());
         conditionConvert.removeIf(config -> !config.effective());
+        conditionMetaType.removeIf(config -> !config.effective());
     }
 }

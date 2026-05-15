@@ -88,6 +88,11 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
     public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+        for (ConditionMetaType conditionMetaType : apiConfig.getConditionMetaType()) {
+            if (mc.parseExpression(conditionMetaType.getCondition(), boolean.class)) {
+                return mc.parseExpression(conditionMetaType.getMetaType(),  ResolvableType.class);
+            }
+        }
         String metaType = apiConfig.getMetaType();
         if (StringUtils.hasText(metaType)) {
             return mc.parseExpression(metaType, ResolvableType.class);

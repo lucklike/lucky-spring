@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.std;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
+import com.luckyframework.httpclient.core.util.BeanUtils;
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
@@ -20,6 +21,7 @@ import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
+import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
@@ -105,6 +107,11 @@ public @interface StdHttpClient {
         public static final String STANDARD_API_CONFIG_NAME = "$StandardApiConfiguration";
         // 存储生命周期管理器对象变量名
         public static final String LIFE_CYCLE_MANAGER_NAME = "$LifeCycleManager";
+
+        static {
+            ContextValueUnpack.addParameterConvert(new StdInitBindParameterConvert());
+        }
+
 
         /**
          * 将当前Http客户端相关的配置加载到上下文中
@@ -332,7 +339,10 @@ public @interface StdHttpClient {
                             mec.getParentContext().getCurrentAnnotatedElement().getName()
                     );
                 }
-                return config;
+                StandardHttpClientConfiguration apiConfig = new StandardHttpClientConfiguration();
+                BeanUtils.copyProperties(config, apiConfig);
+                apiConfig.getAdditionalParams().setContext(mec);
+                return apiConfig;
             }
 
             // 检查URL
@@ -369,9 +379,10 @@ public @interface StdHttpClient {
             apiConfig.setConditionMultipartFormParams(mergeList(config.getConditionMultipartFormParams(), methodConfig.getConditionMultipartFormParams()));
             apiConfig.setConditionBody(mergeList(config.getConditionBody(), methodConfig.getConditionBody()));
             apiConfig.setConditionConvert(mergeList(config.getConditionConvert(), methodConfig.getConditionConvert()));
+            apiConfig.setConditionMetaType(mergeList(config.getConditionMetaType(), methodConfig.getConditionMetaType()));
 
-            apiConfig.setInitParams(mergeMap(config.getInitParams(), methodConfig.getInitParams()));
-            apiConfig.setAdditionalParams(mergeAdditionalParams(config.getAdditionalParams(), methodConfig.getAdditionalParams()));
+            apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
+            apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));
 
             apiConfig.setMetaType(blankReturnDefault(methodConfig.getMetaType(), config.getMetaType()));
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
@@ -381,6 +392,19 @@ public @interface StdHttpClient {
             return apiConfig;
         }
 
+        /**
+         * 合并初始化绑定参数
+         * @param cibp  Class 级别配置
+         * @param mibp Method 级别配置
+         * @return 合并后的配置
+         */
+        @SuppressWarnings("unchecked")
+        private static InitBindParams mergeInitBindParams(InitBindParams cibp, InitBindParams mibp) {
+            InitBindParams initBindParams = new InitBindParams();
+            initBindParams.setBindClasses(mergeList(cibp.getBindClasses(), mibp.getBindClasses()));
+            initBindParams.setBindParams(mergeMap(cibp.getBindParams(), mibp.getBindParams()));
+            return initBindParams;
+        }
 
         /**
          * 合并MultipartFormData配置
@@ -400,14 +424,16 @@ public @interface StdHttpClient {
         /**
          * 合并额外参数
          *
+         * @param mec 元方法上下文
          * @param cap 类级别的额外参数
          * @param map 方法级别的额外参数
          * @return 合并后的额外参数
          */
-        private static AdditionalParams mergeAdditionalParams(AdditionalParams cap, AdditionalParams map) {
+        private static AdditionalParams mergeAdditionalParams(MethodMetaContext mec, AdditionalParams cap, AdditionalParams map) {
             AdditionalParams additionalParams = new AdditionalParams();
             additionalParams.putAll(cap);
             additionalParams.putAll(map);
+            additionalParams.setContext(mec);
             return additionalParams;
         }
     }
