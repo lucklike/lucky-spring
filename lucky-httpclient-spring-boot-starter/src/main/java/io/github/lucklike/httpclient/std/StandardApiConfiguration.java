@@ -6,6 +6,7 @@ import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
+import io.github.lucklike.httpclient.config.mock.MockResult;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.ResolvableType;
 
@@ -129,7 +130,6 @@ public class StandardApiConfiguration {
     @NestedConfigurationProperty
     private List<ConditionBody> conditionBody = new ArrayList<>();
 
-
     /**
      * 初始化参数
      */
@@ -176,6 +176,12 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private SSLConf sslConfig;
+
+    /**
+     * Mock相关配置
+     */
+    @NestedConfigurationProperty
+    private MockResult mockConfig;
 
     /**
      * 设置的请求头参数
@@ -681,6 +687,24 @@ public class StandardApiConfiguration {
      */
     public void setSslConfig(SSLConf sslConfig) {
         this.sslConfig = sslConfig;
+    }
+
+    /**
+     * 获取模拟相关配置
+     *
+     * @return 模拟相关配置
+     */
+    public MockResult getMockConfig() {
+        return mockConfig;
+    }
+
+    /**
+     * 设置模拟相关配置
+     *
+     * @param mockConfig 模拟相关配置
+     */
+    public void setMockConfig(MockResult mockConfig) {
+        this.mockConfig = mockConfig;
     }
 
     /**

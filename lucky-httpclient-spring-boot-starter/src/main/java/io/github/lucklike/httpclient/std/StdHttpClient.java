@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
@@ -16,6 +17,12 @@ import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
+import com.luckyframework.httpclient.proxy.mock.Mock;
+import com.luckyframework.httpclient.proxy.mock.MockResponse;
+import com.luckyframework.httpclient.proxy.mock.config.MockBody;
+import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
+import com.luckyframework.httpclient.proxy.mock.config.MockConfiguration;
+import com.luckyframework.httpclient.proxy.mock.config.WhenMockResult;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
@@ -27,6 +34,7 @@ import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
+import io.github.lucklike.httpclient.config.mock.MockResult;
 import io.github.lucklike.httpclient.discovery.HttpClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AliasFor;
@@ -38,7 +46,11 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -58,6 +70,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @ApiConfig
 @HttpRequest
 @HttpClient(func = "__get_http_server_url__")
+@Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
 @SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
 public @interface StdHttpClient {
@@ -107,6 +120,8 @@ public @interface StdHttpClient {
         public static final String STANDARD_API_CONFIG_NAME = "$StandardApiConfiguration";
         // 存储生命周期管理器对象变量名
         public static final String LIFE_CYCLE_MANAGER_NAME = "$LifeCycleManager";
+        // 存储标准客户端 Mock 相关配置的变量名
+        public static final String STANDARD_MOCK_CONFIG = "$StandardMockConfiguration";
 
         static {
             ContextValueUnpack.addParameterConvert(new StdInitBindParameterConvert());
@@ -146,18 +161,21 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 当前标准 API 的配置
          */
-        @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, storeName = STANDARD_API_CONFIG_NAME)
-        public static StandardApiConfiguration methodMetaContentInit(
+        @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, unfold = true)
+        public static Map<String, Object> methodMetaContentInit(
                 MethodMetaContext mec,
                 @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
+            Map<String, Object> resultMap = new HashMap<>(2);
             StandardApiConfiguration methodConfig = mergeConfig(mec, config);
             if (methodConfig.getRetryConfig() != null) {
                 methodConfig.getRetryConfig().init();
             }
+            resultMap.put(STANDARD_API_CONFIG_NAME, methodConfig);
+            resultMap.put(STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
             lifeCycleManager.methodMetaContentInit(mec, methodConfig);
-            return methodConfig;
+            return resultMap;
         }
 
         /**
@@ -270,6 +288,42 @@ public @interface StdHttpClient {
                                            @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                            @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             return lifeCycleManager.resultConvert(mc, response, apiConfig);
+        }
+
+        /**
+         * 是否启用 Mock 功能
+         *
+         * @param mc 方法上下文
+         * @return 是否启用 Mock 文件
+         */
+        @FunctionAlias("__std_mock_enable__")
+        public static boolean stdMockEnable(MethodContext mc) {
+            MockConfiguration mockConfig = mc.getRootVar(STANDARD_MOCK_CONFIG, MockConfiguration.class);
+            return MockConfigFunction.mockEnable(mc, mockConfig);
+        }
+
+        /**
+         * 返回 Mock 结果
+         *
+         * @param mc         方法上下文
+         * @param mockConfig Mock 配置
+         * @return Mock 结果
+         * @throws InterruptedException 可能出现的异常
+         */
+        @FunctionAlias("__std_mock_result__")
+        public static MockResponse stdMockResult(MethodContext mc,
+                                                 @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig) throws InterruptedException {
+
+            // 将Mock配置转化为MockResponse对象
+            MockResponse mockResponse = MockConfigFunction.mockResult(mc, mockConfig);
+
+            // 设置特殊Mock响应头
+            mockResponse.header("Mock-Annotation", "@StdHttpClient");
+            mockResponse.header("Mock-Environment-Prefix", StringUtils.format("lucky.http-client.standard-client-configs.{}", CommonFunctions.getApiConfigId(mc.getClassContext())));
+            mockResponse.header("Mock-Environment-Property", CommonFunctions.getApiId(mc));
+
+            //return
+            return mockResponse;
         }
 
         /**
@@ -392,9 +446,78 @@ public @interface StdHttpClient {
             return apiConfig;
         }
 
+        @SuppressWarnings("unchecked")
+        private static MockConfiguration createMockConfiguration(MethodMetaContext mec, StandardHttpClientConfiguration stdConfig) {
+            MockResult classMockResult = stdConfig.getMockConfig();
+            String apiId = getApiId(mec);
+            StandardApiConfiguration methodConfig = stdConfig.getMethodConfigs().get(apiId);
+            MockResult methodMockResult = methodConfig == null ? null : methodConfig.getMockConfig();
+
+            // 未配置时返回 null
+            if (classMockResult == null && methodMockResult == null) {
+                return null;
+            }
+            MockConfiguration mockConfig = new MockConfiguration();
+
+            // 设置类级别配置
+            if (classMockResult != null) {
+                mockConfig.setEnable(classMockResult.isEnable());
+                mockConfig.setLatency(classMockResult.getLatency());
+            }
+
+            // 设置方法级别配置
+            if (methodMockResult != null) {
+                Map<String, com.luckyframework.httpclient.proxy.mock.config.MockResult> methodConfigs = new LinkedHashMap<>();
+                com.luckyframework.httpclient.proxy.mock.config.MockResult mMockConfig = new com.luckyframework.httpclient.proxy.mock.config.MockResult();
+                mMockConfig.setEnable(methodMockResult.isEnable());
+                mMockConfig.setLatency(methodMockResult.getLatency());
+                mMockConfig.setStatus(methodMockResult.getStatus());
+
+                boolean hasClassConfig = classMockResult != null;
+                if (hasClassConfig) {
+                    mMockConfig.setHeaders(mergeMap(classMockResult.getHeaders(), methodMockResult.getHeaders()));
+                    mMockConfig.setMatch(convertToWhenMockResults(mergeList(classMockResult.getMatch(), methodMockResult.getMatch())));
+
+                    // set mock body
+                    mMockConfig.setBody(convertToMockBody(nullReturnDefault(methodMockResult.getBody(), classMockResult.getBody())));
+                } else {
+                    mMockConfig.setHeaders(methodMockResult.getHeaders());
+                    mMockConfig.setMatch(convertToWhenMockResults(methodMockResult.getMatch()));
+
+                    // set mock body
+                    mMockConfig.setBody(convertToMockBody(methodMockResult.getBody()));
+                }
+
+                methodConfigs.put(apiId, mMockConfig);
+                mockConfig.setMethodConfigs(methodConfigs);
+            }
+            return mockConfig;
+
+        }
+
+        private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.config.mock.WhenMockResult > _whenMockResults) {
+            if (ContainerUtils.isEmptyCollection(_whenMockResults)) {
+                return Collections.emptyList();
+            }
+            List<WhenMockResult> listResult = new ArrayList<>(_whenMockResults.size());
+            for (io.github.lucklike.httpclient.config.mock.WhenMockResult whenMockResult : _whenMockResults) {
+                WhenMockResult when =  new WhenMockResult();
+                BeanUtils.copyProperties(whenMockResult,  when);
+                listResult.add(when);
+            }
+            return listResult;
+        }
+
+        private static MockBody convertToMockBody(io.github.lucklike.httpclient.config.mock.MockBody _mockBody) {
+            MockBody mockBody = new MockBody();
+            BeanUtils.copyProperties(_mockBody,  mockBody);
+            return mockBody;
+        }
+
         /**
          * 合并初始化绑定参数
-         * @param cibp  Class 级别配置
+         *
+         * @param cibp Class 级别配置
          * @param mibp Method 级别配置
          * @return 合并后的配置
          */
