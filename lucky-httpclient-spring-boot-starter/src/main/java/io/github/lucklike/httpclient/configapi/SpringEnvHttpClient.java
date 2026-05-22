@@ -3,7 +3,7 @@ package io.github.lucklike.httpclient.configapi;
 import com.luckyframework.httpclient.proxy.configapi.EnableConfigurationParser;
 import com.luckyframework.httpclient.proxy.interceptor.PriorityConstant;
 import com.luckyframework.reflect.Combination;
-import io.github.lucklike.httpclient.annotation.LuckyComponent;
+import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@LuckyComponent
+@HttpClientComponent
 @EnableConfigurationParser(source = "Spring Environment", sourceType = SPRING_ENV_CONFIG_SOURCE)
 @Combination({EnableConfigurationParser.class})
 public @interface SpringEnvHttpClient {
@@ -42,7 +42,7 @@ public @interface SpringEnvHttpClient {
     /**
      * 配置Bean的名称，同{@link Component#value()}
      */
-    @AliasFor(annotation = LuckyComponent.class, attribute = "name")
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "name")
     String name() default "";
 
     /**
@@ -54,6 +54,6 @@ public @interface SpringEnvHttpClient {
     /**
      * 代理模式
      */
-    @AliasFor(annotation = LuckyComponent.class, attribute = "proxyModel")
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "proxyModel")
     ProxyModel proxyModel() default ProxyModel.AUTO;
 }

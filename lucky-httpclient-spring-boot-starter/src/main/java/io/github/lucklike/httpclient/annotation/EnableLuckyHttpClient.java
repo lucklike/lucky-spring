@@ -17,7 +17,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
  * <pre>
  *     包括:
  *     1.基于扩展点{@link LuckyAutoInjectionBeanPostProcessor}实现的属性注入功能
- *     2.基于{@link LuckyComponent @LuckyComponent}注解的自动扫描与注册功能
+ *     2.基于{@link HttpClientComponent @HttpClientComponent}注解的自动扫描与注册功能
  *
  *     相当于以下两个注解的组合：
  *     {@link EnableLuckyAutoInjection @EnableLuckyAutoInjection} + {@link EnableLuckyHttpAutoScan @EnableLuckyHttpAutoScan}

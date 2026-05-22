@@ -2,7 +2,7 @@ package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ServerAddressMeta;
-import io.github.lucklike.httpclient.annotation.LuckyComponent;
+import io.github.lucklike.httpclient.annotation.HttpClientComponent;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
@@ -20,20 +20,20 @@ import java.lang.annotation.Target;
  * @version 1.0.0
  * @date 2023/8/30 03:06
  * @see ServerAddressMeta
- * @see LuckyComponent
+ * @see HttpClientComponent
  * @see CommonBaseUrlGetter
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @ServerAddressMeta(getter = @ObjectGenerate(CommonBaseUrlGetter.class))
-@LuckyComponent
+@HttpClientComponent
 public @interface HttpClient {
 
     /**
      * 配置Bean的名称，同{@link Component#value()}
      */
-    @AliasFor(annotation = LuckyComponent.class, attribute = "name")
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "name")
     String beanId() default "";
 
     /**
@@ -69,7 +69,7 @@ public @interface HttpClient {
     /**
      * 代理模式
      */
-    @AliasFor(annotation = LuckyComponent.class, attribute = "proxyModel")
+    @AliasFor(annotation = HttpClientComponent.class, attribute = "proxyModel")
     ProxyModel proxyModel() default ProxyModel.DEFAULT;
 
 }
