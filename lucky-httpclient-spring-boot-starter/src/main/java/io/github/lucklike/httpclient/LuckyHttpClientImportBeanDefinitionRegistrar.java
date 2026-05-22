@@ -5,7 +5,7 @@ import com.luckyframework.common.ScanUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.common.UnitUtils;
 import com.luckyframework.reflect.ClassUtils;
-import io.github.lucklike.httpclient.annotation.HttpClientComponent;
+import io.github.lucklike.httpclient.annotation.LuckyComponent;
 import io.github.lucklike.httpclient.annotation.LuckyHttpClientScan;
 import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
     /**
      * HTTP组件注解全类名
      */
-    private final String HTTP_CLIENT_COMPONENT = HttpClientComponent.class.getName();
+    private final String HTTP_COMPONENT = LuckyComponent.class.getName();
 
     /**
      * Spring组件注解全类名
@@ -87,10 +87,10 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
                     registry.registerBeanDefinition(beanName, definition);
-                    log.debug("[🍀] @HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
+                    log.debug("[🍀] @LuckyComponent [{}] '{}' is registered", beanName, beanClassName);
                     s.getAndIncrement();
                 } else {
-                    throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
+                    throw new BeanCreationException("There are multiple @LuckyComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
                 }
             }
         });
@@ -108,7 +108,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
      * @return 代理模型
      */
     private ProxyModel getProxyModel(AnnotationMetadata annotationMetadata) {
-        return (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_CLIENT_COMPONENT).get("proxyModel");
+        return (ProxyModel) annotationMetadata.getAnnotationAttributes(HTTP_COMPONENT).get("proxyModel");
     }
 
     /**
@@ -134,7 +134,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
      *     1.不能是注解类型
      *     2.不能是具体类型（必须是接口或者抽象类）
      *     3.必须是独立的
-     *     4.必须被{@link HttpClientComponent}注解标注
+     *     4.必须被{@link LuckyComponent}注解标注
      * </pre>
      *
      * @param annotationMetadata 注解元数据
@@ -144,6 +144,6 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         return !annotationMetadata.isAnnotation() &&
                 !annotationMetadata.isConcrete() &&
                 annotationMetadata.isIndependent() &&
-                annotationMetadata.isAnnotated(HTTP_CLIENT_COMPONENT);
+                annotationMetadata.isAnnotated(HTTP_COMPONENT);
     }
 }

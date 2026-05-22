@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Component
 @Inherited
-public @interface HttpClientComponent {
+public @interface LuckyComponent {
 
     /**
      * 配置Bean的名称，同{@link Component#value()}

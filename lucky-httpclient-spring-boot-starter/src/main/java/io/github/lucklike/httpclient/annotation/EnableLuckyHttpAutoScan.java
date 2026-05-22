@@ -17,7 +17,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
  * 开启HTTP组件自动扫描与注册功能
  * <pre>
  *     1.向Spring容器中注入一个自动配置类{@link LuckyHttpAutoConfiguration}，来完成重要组件的初始化工作
- *     2.向Spring容器中注入一个用于发现和注册HTTP组件Bean（{@link HttpClientComponent @HttpClientComponent}）的组件扫描器{@link LuckyHttpClientImportBeanDefinitionRegistrar}
+ *     2.向Spring容器中注入一个用于发现和注册HTTP组件Bean（{@link LuckyComponent @LuckyComponent}）的组件扫描器{@link LuckyHttpClientImportBeanDefinitionRegistrar}
  * </pre>
  *
  * @author fukang
