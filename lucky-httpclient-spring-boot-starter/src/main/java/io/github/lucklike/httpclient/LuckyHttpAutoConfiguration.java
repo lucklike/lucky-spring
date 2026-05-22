@@ -226,7 +226,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredSpace(factoryConfig);
-        registeredWapType(factoryConfig);
+        registeredWapType();
         registeredUniversalFunction(factory);
         registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -271,10 +271,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /**
      * 注册 WapType
-     *
-     * @param factoryConfig 工厂配置
      */
-    private void registeredWapType(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void registeredWapType() {
         ObjectProvider<WrapTypeHolder> beanProvider = applicationContext.getBeanProvider(WrapTypeHolder.class);
         beanProvider.stream().forEach(wth -> WrapType.registerWrapType(wth.getBaseType(), wth.wrapFunction()));
     }
@@ -964,9 +962,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void pluginSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 注册Spring容器中的插件
-        applicationContext.getBeanProvider(ProxyPlugin.class).forEach(factory::addPlugin);
-
         // 注册Spring容器中由@HttpPlugin注解声明的插件
         String[] annPluginBeanNames = applicationContext.getBeanNamesForAnnotation(HttpPlugin.class);
         for (String pluginBeanName : annPluginBeanNames) {
