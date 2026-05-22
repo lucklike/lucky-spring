@@ -1,10 +1,15 @@
 package io.github.lucklike.httpclient;
 
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.creator.ReflectObjectCreator;
 import com.luckyframework.reflect.ClassUtils;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 对象创建器，如果存在msg配置则使用{@link BeanFactory#getBean(String)}来生成对象
@@ -50,11 +55,27 @@ public class BeanObjectCreator extends ReflectObjectCreator {
      * @return Class的实例对象
      */
     private <T> T createObjectByClass(Class<T> clazz) {
-        return applicationContext
-                .getBeanProvider(clazz)
-                .stream()
-                .filter(e -> e.getClass() == clazz)
-                .findFirst()
-                .orElseGet(() -> super.doCreateObject(clazz));
+        String[] beanNames = applicationContext.getBeanNamesForType(clazz);
+        List<String> matchedBeanNames = new ArrayList<>();
+        List<T> mathBeans = new ArrayList<>();
+        for (String beanName : beanNames) {
+            T bean = applicationContext.getBean(beanName, clazz);
+            if (bean.getClass() == clazz) {
+                mathBeans.add(bean);
+                matchedBeanNames.add(beanName);
+            }
+        }
+
+        // Spring容器中不存在该类型的 Bean
+        if (ContainerUtils.isEmptyCollection(mathBeans)) {
+            return super.doCreateObject(clazz);
+        }
+
+        // Spring容器中有且只有一个符合的 Bean
+        if (mathBeans.size() == 1) {
+            return mathBeans.get(0);
+        }
+
+        throw new BeanCreationException("There are multiple Beans of type ['" + clazz.getSimpleName() + "'] in the Spring container: " + matchedBeanNames);
     }
 }
