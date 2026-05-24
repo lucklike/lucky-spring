@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.annotation;
 
 import org.springframework.core.annotation.AliasFor;
 
@@ -10,18 +10,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 查询类 SQL
+ *
  * @author fukang
  * @version 1.0.0
- * @date 2026/5/23 05:00
+ * @date 2026/5/25 02:31
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@SQL(sql = "", type =  SQLType.UPDATE)
-public @interface Update {
+@Column
+public @interface Id {
 
-    @AliasFor(annotation = SQL.class, attribute = "sql")
-    String value();
+    @AliasFor(annotation = Column.class, attribute = "value")
+    String value() default "";
 }

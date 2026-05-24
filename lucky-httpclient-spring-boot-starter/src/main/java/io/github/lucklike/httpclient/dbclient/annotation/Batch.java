@@ -1,4 +1,7 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.annotation;
+
+import io.github.lucklike.httpclient.dbclient.SQLType;
+import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -8,19 +11,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 定义 SQL 模板的注解
- *
+ * 查询类 SQL
  * @author fukang
  * @version 1.0.0
- * @date 2026/5/23 03:16
+ * @date 2026/5/23 05:00
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-public @interface SQL {
+@SQL(type = SQLType.BATCH)
+public @interface Batch {
 
-    String sql();
-
-    SQLType type();
+    @AliasFor(annotation = SQL.class, attribute = "sql")
+    String value();
 }

@@ -1,5 +1,6 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.annotation;
 
+import io.github.lucklike.httpclient.dbclient.SQLType;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
@@ -19,8 +20,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@SQL(sql = "", type =  SQLType.SELECT)
-public @interface Select {
+@SQL(type = SQLType.UPDATE)
+public @interface Delete {
 
     @AliasFor(annotation = SQL.class, attribute = "sql")
     String value();

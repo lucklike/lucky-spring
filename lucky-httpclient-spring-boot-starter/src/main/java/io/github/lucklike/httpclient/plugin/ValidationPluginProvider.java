@@ -27,11 +27,11 @@ public class ValidationPluginProvider extends ValidationPlugin {
 
     @Override
     protected Class<?>[] determineValidationGroups(ExecuteMeta executeMeta) {
-        return executeMeta.getMetaContext().getMergedAnnotationCheckParent(Validated.class).value();
+        return executeMeta.getMethodContext().getMergedAnnotationCheckParent(Validated.class).value();
     }
 
     @Override
     public boolean match(ExecuteMeta meta) {
-        return meta.getMetaContext().isAnnotatedCheckParent(Validated.class) && validationPlugin.match(meta);
+        return meta.getMethodContext().isAnnotatedCheckParent(Validated.class) && validationPlugin.match(meta);
     }
 }

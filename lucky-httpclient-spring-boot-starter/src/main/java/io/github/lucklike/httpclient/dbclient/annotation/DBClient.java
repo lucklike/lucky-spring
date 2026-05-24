@@ -1,9 +1,11 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.annotation;
 
 import com.luckyframework.httpclient.proxy.annotations.CustomizedProtocol;
 import com.luckyframework.httpclient.proxy.plugin.Plugin;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import io.github.lucklike.httpclient.annotation.LuckyComponent;
+import io.github.lucklike.httpclient.dbclient.plugin.JdbcOperationsPlugin;
+import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.lang.annotation.Documented;
@@ -27,7 +29,7 @@ import java.lang.annotation.Target;
 @LuckyComponent
 @CustomizedProtocol
 @SpELImport(SQLFunctions.class)
-@Plugin(pluginClass = NamedParameterJdbcTemplatePlugin.class)
+@Plugin(pluginClass = JdbcOperationsPlugin.class)
 public @interface DBClient {
 
     /**

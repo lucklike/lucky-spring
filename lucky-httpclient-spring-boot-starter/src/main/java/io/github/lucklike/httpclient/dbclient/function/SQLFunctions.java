@@ -1,7 +1,12 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.function;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
+import io.github.lucklike.httpclient.dbclient.annotation.SQL;
+import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
+import io.github.lucklike.httpclient.dbclient.executor.SQLWrapper;
+import io.github.lucklike.httpclient.dbclient.executor.SQLWrapperExecutor;
 
 /**
  * SQL并接相关的函数
@@ -29,6 +34,12 @@ public class SQLFunctions {
     @FunctionAlias(SQL_IN)
     public static String in(String sql, Object obj) {
         return sql(SQL_IN, sql, obj);
+    }
+
+    public static SQLExecutor sqlWrapper(MethodContext mc) {
+        SQL sqlAnn = mc.getMergedAnnotation(SQL.class);
+        SQLWrapper sqlWrapper = mc.getArgument(SQLWrapper.class);
+        return new SQLWrapperExecutor(mc, sqlWrapper);
     }
 
     private static String sql(String linkSymbol, String sql, Object obj) {
