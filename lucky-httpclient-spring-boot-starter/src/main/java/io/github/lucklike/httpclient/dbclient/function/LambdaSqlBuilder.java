@@ -6,6 +6,7 @@ import io.github.lucklike.httpclient.dbclient.SQLType;
 import io.github.lucklike.httpclient.dbclient.annotation.Table;
 import io.github.lucklike.httpclient.dbclient.executor.SFunction;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapper;
+import org.springframework.core.ResolvableType;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -73,12 +74,13 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     private static final String ASC = " ASC";
     private static final String DESC = " DESC";
 
-    public enum OrderType { ASC, DESC }
-    public enum JoinType { INNER, LEFT, RIGHT }
+    public enum OrderType {ASC, DESC}
+
+    public enum JoinType {INNER, LEFT, RIGHT}
 
     // ==================== 构造方法 ====================
 
-    private LambdaSqlBuilder(Class<T> entityClass) {
+    protected LambdaSqlBuilder(Class<T> entityClass) {
         this.entityClass = entityClass;
         this.selectBuilder = new StringBuilder();
         this.fromBuilder = new StringBuilder();
@@ -105,15 +107,15 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return new LambdaSqlBuilder<>(entityClass);
     }
 
-    public static <T> LambdaSqlBuilder<T> select(Class<T> entityClass){
+    public static <T> LambdaSqlBuilder<T> select(Class<T> entityClass) {
         return lambda(entityClass).select().from();
     }
 
-    public static <T> LambdaSqlBuilder<T> update(Class<T> entityClass){
+    public static <T> LambdaSqlBuilder<T> update(Class<T> entityClass) {
         return lambda(entityClass).update().from();
     }
 
-    public static <T> LambdaSqlBuilder<T> delete(Class<T> entityClass){
+    public static <T> LambdaSqlBuilder<T> delete(Class<T> entityClass) {
         return lambda(entityClass).delete().from();
     }
 
@@ -148,8 +150,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== SELECT 相关方法 ====================
 
-    @SafeVarargs
-    public final LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
+    public LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
         if (sqlType == SQLType.NON) setSqlType(SQLType.SELECT);
 
         if (selectBuilder.length() > 0) {
@@ -229,10 +230,17 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         String joinTableName = getTableName(joinClass);
         String joinKeyword;
         switch (type) {
-            case INNER: joinKeyword = INNER_JOIN; break;
-            case LEFT: joinKeyword = LEFT_JOIN; break;
-            case RIGHT: joinKeyword = RIGHT_JOIN; break;
-            default: joinKeyword = INNER_JOIN;
+            case INNER:
+                joinKeyword = INNER_JOIN;
+                break;
+            case LEFT:
+                joinKeyword = LEFT_JOIN;
+                break;
+            case RIGHT:
+                joinKeyword = RIGHT_JOIN;
+                break;
+            default:
+                joinKeyword = INNER_JOIN;
         }
         joinBuilder.append(joinKeyword).append(joinTableName);
         if (alias != null && !alias.isEmpty()) {
@@ -266,8 +274,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== INSERT 相关方法 ====================
 
-    @SafeVarargs
-    public final LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
+    public LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
         setSqlType(SQLType.UPDATE);
         insertIntoBuilder.append(getTableName());
 
@@ -426,8 +433,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return condition(getColumn(column), " NOT LIKE ?", "%" + value + "%");
     }
 
-    @SafeVarargs
-    public final <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
+    public  <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
         if (values == null || values.length == 0) return this;
         String placeholders = Arrays.stream(values).map(v -> "?").collect(Collectors.joining(", "));
         return condition(getColumn(column), " IN (" + placeholders + ")", (Object[]) values);
@@ -488,8 +494,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== 分组和排序 ====================
 
-    @SafeVarargs
-    public final LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
+    public LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
         if (groupByBuilder.length() > 0) {
             groupByBuilder.append(", ");
         }
@@ -688,7 +693,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     public interface QueryResult {
         String getSql();
+
         SQLType getSqlType();
+
         boolean isBatch();
     }
 
@@ -704,12 +711,23 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         }
 
         @Override
-        public String getSql() { return sql; }
+        public String getSql() {
+            return sql;
+        }
+
         @Override
-        public SQLType getSqlType() { return sqlType; }
+        public SQLType getSqlType() {
+            return sqlType;
+        }
+
         @Override
-        public boolean isBatch() { return false; }
-        public Object[] getParams() { return params; }
+        public boolean isBatch() {
+            return false;
+        }
+
+        public Object[] getParams() {
+            return params;
+        }
 
         @Override
         public String toString() {
@@ -729,12 +747,23 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         }
 
         @Override
-        public String getSql() { return sql; }
+        public String getSql() {
+            return sql;
+        }
+
         @Override
-        public SQLType getSqlType() { return sqlType; }
+        public SQLType getSqlType() {
+            return sqlType;
+        }
+
         @Override
-        public boolean isBatch() { return true; }
-        public List<Object[]> getBatchParams() { return new ArrayList<>(batchParams); }
+        public boolean isBatch() {
+            return true;
+        }
+
+        public List<Object[]> getBatchParams() {
+            return new ArrayList<>(batchParams);
+        }
 
         @Override
         public String toString() {

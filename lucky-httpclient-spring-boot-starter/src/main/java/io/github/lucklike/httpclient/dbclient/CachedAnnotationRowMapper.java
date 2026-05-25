@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient;
 
+import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -67,7 +68,7 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         // 处理当前类的字段
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
-            Column column = field.getAnnotation(Column.class);
+            Column column = AnnotationUtils.findMergedAnnotation(field, Column.class);
             if (column != null) {
                 String columnName;
                 if (StringUtils.hasText(column.value())) {

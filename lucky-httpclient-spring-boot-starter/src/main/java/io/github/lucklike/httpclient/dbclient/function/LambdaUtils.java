@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
+import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import io.github.lucklike.httpclient.dbclient.executor.SFunction;
 
@@ -43,10 +44,8 @@ public class LambdaUtils {
 
     /**
      * 从 SFunction 中提取字段名
-     * 优先从 @Column 注解中获取，如果没有则使用默认规则
      */
     public static <T, R> String getFieldName(SFunction<T, R> function) {
-        // 获取实现方法名作为缓存 key
         SerializedLambda lambda = resolveLambda(function);
         String implMethodName = lambda.getImplMethodName();
         String implClassName = lambda.getImplClass().replace("/", ".");
@@ -55,17 +54,11 @@ public class LambdaUtils {
 
         return FIELD_NAME_CACHE.computeIfAbsent(cacheKey, key -> {
             try {
-                Class<?> entityClass = Class.forName(implClassName);
                 String fieldName = resolveFieldName(implMethodName);
-
-                // 尝试从 @Column 注解获取字段名映射
-                String columnFieldName = resolveFieldNameFromColumn(entityClass, fieldName);
-                if (columnFieldName != null) {
-                    return columnFieldName;
-                }
-
                 // 验证字段是否存在
+                Class<?> entityClass = Class.forName(implClassName);
                 Map<String, Field> fieldMap = getFieldMap(entityClass);
+
                 if (fieldMap.containsKey(fieldName)) {
                     return fieldName;
                 }
@@ -105,7 +98,7 @@ public class LambdaUtils {
 
     /**
      * 获取字段对应的数据库列名
-     * 优先使用 @Column 注解的值，没有则使用默认驼峰转下划线
+     * 优先使用 @Column 注解的值，没有则使用字段名
      */
     public static <T, R> String getColumnName(Class<T> entityClass, SFunction<T, R> function) {
         String fieldName = getFieldName(function);
@@ -131,13 +124,13 @@ public class LambdaUtils {
             for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
                 String fieldName = entry.getKey();
                 Field field = entry.getValue();
-                Column column = field.getAnnotation(Column.class);
+                Column column = AnnotationUtils.findMergedAnnotation(field, Column.class);
 
                 if (column != null && !column.value().isEmpty()) {
                     // 使用 @Column 注解的值
                     map.put(fieldName, column.value());
                 } else {
-                    // 默认驼峰转下划线
+                    // 使用字段名
                     map.put(fieldName, fieldName);
                 }
             }
@@ -197,37 +190,9 @@ public class LambdaUtils {
     }
 
     /**
-     * 从 @Column 注解中解析字段名
-     * 如果 @Column 注解的值与字段名不同，说明有特殊映射
-     */
-    private static String resolveFieldNameFromColumn(Class<?> entityClass, String defaultFieldName) {
-        Map<String, Field> fieldMap = getFieldMap(entityClass);
-
-        // 直接匹配
-        if (fieldMap.containsKey(defaultFieldName)) {
-            return defaultFieldName;
-        }
-
-        // 通过 @Column 注解匹配
-        for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
-            Field field = entry.getValue();
-            Column column = field.getAnnotation(Column.class);
-            if (column != null && !column.value().isEmpty()) {
-                // 检查注解值是否匹配默认字段名本身
-                if (column.value().equalsIgnoreCase(defaultFieldName)) {
-                    return entry.getKey();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * 解析 SerializedLambda
      */
     private static SerializedLambda resolveLambda(SFunction<?, ?> function) {
-        // 使用实现方法签名作为缓存键
         String cacheKey = function.getClass().getName() + "@" + System.identityHashCode(function);
 
         return LAMBDA_CACHE.computeIfAbsent(cacheKey, key -> {
