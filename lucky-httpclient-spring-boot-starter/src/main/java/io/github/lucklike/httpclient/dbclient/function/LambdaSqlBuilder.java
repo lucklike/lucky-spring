@@ -102,27 +102,11 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         this.isBuilt = false;
         this.sqlType = SQLType.NON;
     }
-
-    public static <T> LambdaSqlBuilder<T> lambda(Class<T> entityClass) {
-        return new LambdaSqlBuilder<>(entityClass);
-    }
-
-    public static <T> LambdaSqlBuilder<T> select(Class<T> entityClass) {
-        return lambda(entityClass).select().from();
-    }
-
-    public static <T> LambdaSqlBuilder<T> update(Class<T> entityClass) {
-        return lambda(entityClass).update().from();
-    }
-
-    public static <T> LambdaSqlBuilder<T> delete(Class<T> entityClass) {
-        return lambda(entityClass).delete().from();
-    }
-
+    
 
     // ==================== 表名和列名辅助方法 ====================
 
-    public LambdaSqlBuilder<T> tableName(String tableName) {
+    protected LambdaSqlBuilder<T> tableName(String tableName) {
         this.tableName = tableName;
         return this;
     }
@@ -150,7 +134,8 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== SELECT 相关方法 ====================
 
-    public LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
+    @SafeVarargs
+    protected final LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
         if (sqlType == SQLType.NON) setSqlType(SQLType.SELECT);
 
         if (selectBuilder.length() > 0) {
@@ -168,7 +153,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> select(String expression) {
+    protected LambdaSqlBuilder<T> select(String expression) {
         if (sqlType == SQLType.NON) setSqlType(SQLType.SELECT);
 
         if (selectBuilder.length() > 0) {
@@ -178,15 +163,15 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> selectCount() {
+    protected LambdaSqlBuilder<T> selectCount() {
         return select("COUNT(*)");
     }
 
-    public LambdaSqlBuilder<T> selectCount(SFunction<T, ?> column) {
+    protected LambdaSqlBuilder<T> selectCount(SFunction<T, ?> column) {
         return select("COUNT(" + getColumn(column) + ")");
     }
 
-    public LambdaSqlBuilder<T> selectDistinct(SFunction<T, ?>... columns) {
+    protected LambdaSqlBuilder<T> selectDistinct(SFunction<T, ?>... columns) {
         select(columns);
         String current = selectBuilder.toString();
         selectBuilder.setLength(0);
@@ -196,17 +181,17 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== FROM 相关方法 ====================
 
-    public LambdaSqlBuilder<T> from() {
+    protected LambdaSqlBuilder<T> from() {
         fromBuilder.append(getTableName());
         return this;
     }
 
-    public LambdaSqlBuilder<T> from(String alias) {
+    protected LambdaSqlBuilder<T> from(String alias) {
         fromBuilder.append(getTableName()).append(AS).append(alias);
         return this;
     }
 
-    public LambdaSqlBuilder<T> from(String tableName, String alias) {
+    protected LambdaSqlBuilder<T> from(String tableName, String alias) {
         fromBuilder.append(tableName);
         if (alias != null && !alias.isEmpty()) {
             fromBuilder.append(AS).append(alias);
@@ -214,7 +199,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> from(LambdaSqlBuilder<?> subQuery, String alias) {
+    protected LambdaSqlBuilder<T> from(LambdaSqlBuilder<?> subQuery, String alias) {
         fromBuilder.append("(").append(subQuery.buildSql()).append(")");
         if (alias != null && !alias.isEmpty()) {
             fromBuilder.append(AS).append(alias);
@@ -226,7 +211,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== JOIN 相关方法 ====================
 
-    public <E> LambdaSqlBuilder<T> join(JoinType type, Class<E> joinClass, String alias) {
+    protected <E> LambdaSqlBuilder<T> join(JoinType type, Class<E> joinClass, String alias) {
         String joinTableName = getTableName(joinClass);
         String joinKeyword;
         switch (type) {
@@ -249,24 +234,24 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public <E> LambdaSqlBuilder<T> innerJoin(Class<E> joinClass, String alias) {
+    protected <E> LambdaSqlBuilder<T> innerJoin(Class<E> joinClass, String alias) {
         return join(JoinType.INNER, joinClass, alias);
     }
 
-    public <E> LambdaSqlBuilder<T> leftJoin(Class<E> joinClass, String alias) {
+    protected <E> LambdaSqlBuilder<T> leftJoin(Class<E> joinClass, String alias) {
         return join(JoinType.LEFT, joinClass, alias);
     }
 
-    public <E> LambdaSqlBuilder<T> rightJoin(Class<E> joinClass, String alias) {
+    protected <E> LambdaSqlBuilder<T> rightJoin(Class<E> joinClass, String alias) {
         return join(JoinType.RIGHT, joinClass, alias);
     }
 
-    public LambdaSqlBuilder<T> on(String condition) {
+    protected LambdaSqlBuilder<T> on(String condition) {
         joinBuilder.append(ON).append(condition);
         return this;
     }
 
-    public <E> LambdaSqlBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
+    protected <E> LambdaSqlBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
         joinBuilder.append(ON).append(getColumn(leftColumn)).append(" = ")
                 .append(LambdaUtils.getColumnName(null, rightColumn));
         return this;
@@ -274,7 +259,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== INSERT 相关方法 ====================
 
-    public LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
+    protected LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
         setSqlType(SQLType.UPDATE);
         insertIntoBuilder.append(getTableName());
 
@@ -287,7 +272,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> values(Object... values) {
+    protected LambdaSqlBuilder<T> values(Object... values) {
         insertValuesBuilder.append("(");
         for (int i = 0; i < values.length; i++) {
             if (i > 0) insertValuesBuilder.append(", ");
@@ -298,7 +283,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> valuesBatch(List<Object[]> batchValues) {
+    protected LambdaSqlBuilder<T> valuesBatch(List<Object[]> batchValues) {
         if (batchValues == null || batchValues.isEmpty()) return this;
 
         this.useBatch = true;
@@ -321,12 +306,12 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== UPDATE 相关方法 ====================
 
-    public LambdaSqlBuilder<T> update() {
+    protected LambdaSqlBuilder<T> update() {
         setSqlType(SQLType.UPDATE);
         return this;
     }
 
-    public <R> LambdaSqlBuilder<T> set(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> set(SFunction<T, R> column, Object value) {
         if (setBuilder.length() > 0) {
             setBuilder.append(", ");
         }
@@ -335,7 +320,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> set(String column, Object value) {
+    protected LambdaSqlBuilder<T> set(String column, Object value) {
         if (setBuilder.length() > 0) {
             setBuilder.append(", ");
         }
@@ -346,14 +331,14 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== DELETE 相关方法 ====================
 
-    public LambdaSqlBuilder<T> delete() {
+    protected LambdaSqlBuilder<T> delete() {
         setSqlType(SQLType.UPDATE);
         return this;
     }
 
     // ==================== WHERE 条件方法 ====================
 
-    public LambdaSqlBuilder<T> where(String condition, Object... values) {
+    protected LambdaSqlBuilder<T> where(String condition, Object... values) {
         if (!hasWhere) {
             whereBuilder.append(WHERE);
             hasWhere = true;
@@ -370,7 +355,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
+    protected LambdaSqlBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
         if (!hasWhere) {
             whereBuilder.append(WHERE);
             hasWhere = true;
@@ -393,73 +378,73 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     }
 
     // 基础条件方法
-    public <R> LambdaSqlBuilder<T> eq(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> eq(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " = ?", value);
     }
 
-    public <R> LambdaSqlBuilder<T> ne(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> ne(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " <> ?", value);
     }
 
-    public <R> LambdaSqlBuilder<T> gt(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> gt(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " > ?", value);
     }
 
-    public <R> LambdaSqlBuilder<T> ge(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> ge(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " >= ?", value);
     }
 
-    public <R> LambdaSqlBuilder<T> lt(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> lt(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " < ?", value);
     }
 
-    public <R> LambdaSqlBuilder<T> le(SFunction<T, R> column, Object value) {
+    protected <R> LambdaSqlBuilder<T> le(SFunction<T, R> column, Object value) {
         return condition(getColumn(column), " <= ?", value);
     }
 
-    public LambdaSqlBuilder<T> like(SFunction<T, ?> column, String value) {
+    protected LambdaSqlBuilder<T> like(SFunction<T, ?> column, String value) {
         return condition(getColumn(column), " LIKE ?", "%" + value + "%");
     }
 
-    public LambdaSqlBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
+    protected LambdaSqlBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
         return condition(getColumn(column), " LIKE ?", "%" + value);
     }
 
-    public LambdaSqlBuilder<T> likeRight(SFunction<T, ?> column, String value) {
+    protected LambdaSqlBuilder<T> likeRight(SFunction<T, ?> column, String value) {
         return condition(getColumn(column), " LIKE ?", value + "%");
     }
 
-    public LambdaSqlBuilder<T> notLike(SFunction<T, ?> column, String value) {
+    protected LambdaSqlBuilder<T> notLike(SFunction<T, ?> column, String value) {
         return condition(getColumn(column), " NOT LIKE ?", "%" + value + "%");
     }
 
-    public  <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
+    protected  <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
         if (values == null || values.length == 0) return this;
         String placeholders = Arrays.stream(values).map(v -> "?").collect(Collectors.joining(", "));
         return condition(getColumn(column), " IN (" + placeholders + ")", (Object[]) values);
     }
 
-    public <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    protected <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
         if (values == null || values.isEmpty()) return this;
         String placeholders = values.stream().map(v -> "?").collect(Collectors.joining(", "));
         return condition(getColumn(column), " IN (" + placeholders + ")", values.toArray());
     }
 
-    public LambdaSqlBuilder<T> isNull(SFunction<T, ?> column) {
+    protected LambdaSqlBuilder<T> isNull(SFunction<T, ?> column) {
         return condition(getColumn(column), " IS NULL");
     }
 
-    public LambdaSqlBuilder<T> isNotNull(SFunction<T, ?> column) {
+    protected LambdaSqlBuilder<T> isNotNull(SFunction<T, ?> column) {
         return condition(getColumn(column), " IS NOT NULL");
     }
 
-    public LambdaSqlBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
+    protected LambdaSqlBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
         condition(getColumn(column), " BETWEEN ? AND ?", value1);
         params.add(value2);
         return this;
     }
 
-    public LambdaSqlBuilder<T> or() {
+    protected LambdaSqlBuilder<T> or() {
         if (hasWhere) {
             whereBuilder.append(OR);
             needAndPrefix = false;
@@ -467,7 +452,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> and() {
+    protected LambdaSqlBuilder<T> and() {
         if (hasWhere) {
             whereBuilder.append(AND);
             needAndPrefix = false;
@@ -494,7 +479,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== 分组和排序 ====================
 
-    public LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
+    protected LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
         if (groupByBuilder.length() > 0) {
             groupByBuilder.append(", ");
         }
@@ -505,7 +490,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> having(String condition, Object... values) {
+    protected LambdaSqlBuilder<T> having(String condition, Object... values) {
         havingBuilder.append(condition);
         if (values != null) {
             Collections.addAll(params, values);
@@ -513,7 +498,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> orderBy(SFunction<T, ?> column, OrderType orderType) {
+    protected LambdaSqlBuilder<T> orderBy(SFunction<T, ?> column, OrderType orderType) {
         if (orderByBuilder.length() > 0) {
             orderByBuilder.append(", ");
         }
@@ -522,28 +507,28 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    public LambdaSqlBuilder<T> orderByAsc(SFunction<T, ?> column) {
+    protected LambdaSqlBuilder<T> orderByAsc(SFunction<T, ?> column) {
         return orderBy(column, OrderType.ASC);
     }
 
-    public LambdaSqlBuilder<T> orderByDesc(SFunction<T, ?> column) {
+    protected LambdaSqlBuilder<T> orderByDesc(SFunction<T, ?> column) {
         return orderBy(column, OrderType.DESC);
     }
 
-    public LambdaSqlBuilder<T> limit(int limit) {
+    protected LambdaSqlBuilder<T> limit(int limit) {
         limitBuilder.append("?");
         params.add(limit);
         return this;
     }
 
-    public LambdaSqlBuilder<T> limit(int offset, int limit) {
+    protected LambdaSqlBuilder<T> limit(int offset, int limit) {
         limitBuilder.append("? OFFSET ?");
         params.add(limit);
         params.add(offset);
         return this;
     }
 
-    public LambdaSqlBuilder<T> offset(int offset) {
+    protected LambdaSqlBuilder<T> offset(int offset) {
         limitBuilder.append("OFFSET ?");
         params.add(offset);
         return this;
@@ -630,7 +615,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return sql.toString();
     }
 
-    public QueryResult build() {
+    protected QueryResult build() {
         if (isBuilt) {
             throw new IllegalStateException("SQL already built");
         }
@@ -646,7 +631,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     }
 
     // 调试方法
-    public LambdaSqlBuilder<T> print() {
+    protected LambdaSqlBuilder<T> print() {
         System.out.println("SQL Type: " + sqlType);
         System.out.println("SQL: " + buildSql());
         System.out.println("Params: " + params);
@@ -691,7 +676,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     // ==================== 查询结果类 ====================
 
-    public interface QueryResult {
+    protected interface QueryResult {
         String getSql();
 
         SQLType getSqlType();
@@ -699,12 +684,12 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         boolean isBatch();
     }
 
-    public static class SingleQueryResult implements QueryResult {
+    protected static class SingleQueryResult implements QueryResult {
         private final String sql;
         private final Object[] params;
         private final SQLType sqlType;
 
-        public SingleQueryResult(String sql, Object[] params, SQLType sqlType) {
+        protected SingleQueryResult(String sql, Object[] params, SQLType sqlType) {
             this.sql = sql;
             this.params = params;
             this.sqlType = sqlType;
@@ -725,7 +710,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
             return false;
         }
 
-        public Object[] getParams() {
+        protected Object[] getParams() {
             return params;
         }
 
@@ -735,12 +720,12 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         }
     }
 
-    public static class BatchQueryResult implements QueryResult {
+    protected static class BatchQueryResult implements QueryResult {
         private final String sql;
         private final List<Object[]> batchParams;
         private final SQLType sqlType;
 
-        public BatchQueryResult(String sql, List<Object[]> batchParams, SQLType sqlType) {
+        protected BatchQueryResult(String sql, List<Object[]> batchParams, SQLType sqlType) {
             this.sql = sql;
             this.batchParams = batchParams;
             this.sqlType = sqlType;
@@ -761,7 +746,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
             return true;
         }
 
-        public List<Object[]> getBatchParams() {
+        protected List<Object[]> getBatchParams() {
             return new ArrayList<>(batchParams);
         }
 

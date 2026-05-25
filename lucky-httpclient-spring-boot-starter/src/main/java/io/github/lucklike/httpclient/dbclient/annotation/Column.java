@@ -19,4 +19,6 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface Column {
     String value() default "";
+
+    boolean exist() default true;
 }

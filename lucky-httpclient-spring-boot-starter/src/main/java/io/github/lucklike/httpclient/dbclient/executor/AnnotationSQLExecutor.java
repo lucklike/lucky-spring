@@ -1,16 +1,21 @@
 package io.github.lucklike.httpclient.dbclient.executor;
 
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.FontUtil;
+import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import io.github.lucklike.httpclient.dbclient.FlatBeanSqlParameterSource;
 import io.github.lucklike.httpclient.dbclient.SQLType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +27,8 @@ import java.util.Map;
  * @date 2026/5/25 00:10
  */
 public class AnnotationSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
+
+    private static final Logger logger = LoggerFactory.getLogger(AnnotationSQLExecutor.class);
 
     private final String sqlTemp;
     private final SqlParameterSource sqlParamSource;
@@ -91,10 +98,13 @@ public class AnnotationSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
     public Object execute() {
         switch (getSqlType()) {
             case SELECT:
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return query(sqlTemp, sqlParamSource);
             case UPDATE:
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return update(sqlTemp, sqlParamSource);
             default:
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, Arrays.toString(batchSqlParamSource))));
                 return batchUpdate(sqlTemp, batchSqlParamSource);
         }
     }

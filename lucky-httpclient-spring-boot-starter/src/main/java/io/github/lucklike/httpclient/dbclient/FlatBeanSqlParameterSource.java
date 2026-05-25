@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient;
 
+import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.common.FlatBean;
 import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
@@ -101,5 +102,10 @@ public class FlatBeanSqlParameterSource extends AbstractSqlParameterSource {
             });
         }
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return flatBean.getBean().toString();
     }
 }

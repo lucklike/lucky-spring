@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.dbclient.executor;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.dbclient.CachedAnnotationRowMapper;
 import io.github.lucklike.httpclient.dbclient.SQLType;
@@ -88,6 +89,12 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
     protected Object query(String sqlTemp, Object[] sqlArgs) {
         JdbcTemplate jdbcTemplate = getJdbcTemplate();
         ResolvableType resultType = methodContext.getResultResolvableType();
+
+        // 简单基本类型
+        if (ClassUtils.isSimpleBaseType(resultType.toClass())) {
+            return jdbcTemplate.queryForObject(sqlTemp, resultType.toClass(), sqlArgs);
+        }
+
         RowMapper<?> rowMapper = createRowMapper();
 
         // 集合类型
@@ -114,6 +121,12 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
      */
     protected Object query(String sqlTemp, SqlParameterSource sqlParamSource) {
         ResolvableType resultType = methodContext.getResultResolvableType();
+
+        // 简单基本类型
+        if (ClassUtils.isSimpleBaseType(resultType.toClass())) {
+            return namedParameterJdbcTemplate.queryForObject(sqlTemp, sqlParamSource, resultType.toClass());
+        }
+
         RowMapper<?> rowMapper = createRowMapper();
 
         // 集合类型
