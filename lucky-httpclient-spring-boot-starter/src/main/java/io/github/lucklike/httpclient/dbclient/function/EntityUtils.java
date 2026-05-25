@@ -25,6 +25,6 @@ public class EntityUtils {
         if (tableAnn != null && StringUtils.hasText(tableAnn.value())) {
             return tableAnn.value();
         }
-        return clazz.getSimpleName();
+        return clazz.getSimpleName().toLowerCase();
     }
 }

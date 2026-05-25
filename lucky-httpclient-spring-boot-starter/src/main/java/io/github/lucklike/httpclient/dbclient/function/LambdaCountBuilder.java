@@ -18,7 +18,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     @Override
-    public <E> LambdaCountBuilder<T> join(JoinType type, Class<E> joinClass, String alias) {
+    public <E> LambdaCountBuilder<T> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
         super.join(type, joinClass, alias);
         return this;
     }
@@ -125,8 +125,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
         return this;
     }
 
-    @SafeVarargs
     @Override
+    @SafeVarargs
     public final <R> LambdaCountBuilder<T> in(SFunction<T, R> column, R... values) {
         super.in(column, values);
         return this;
@@ -170,7 +170,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
 
 
     @Override
-    public LambdaCountBuilder<T> orderBy(SFunction<T, ?> column, OrderType orderType) {
+    public LambdaCountBuilder<T> orderBy(SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
         super.orderBy(column, orderType);
         return this;
     }

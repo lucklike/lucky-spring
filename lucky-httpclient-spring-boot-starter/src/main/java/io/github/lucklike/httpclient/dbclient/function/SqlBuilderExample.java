@@ -103,7 +103,7 @@ public class SqlBuilderExample {
         SqlBuilder.QueryResult query4 = SqlBuilder.builder()
                 .select("*")
                 .from("user")
-                .in("id", (Collection<?>) subQuery.getParamsList()) // 实际使用需要调整
+                .in("id", subQuery.getParams()) // 实际使用需要调整
                 .build();
 
         // 更实用的子查询 - EXISTS

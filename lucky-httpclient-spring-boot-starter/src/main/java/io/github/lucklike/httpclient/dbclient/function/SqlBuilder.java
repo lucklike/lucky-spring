@@ -13,27 +13,26 @@ import java.util.stream.Collectors;
  * 支持SQL类型标识
  *
  * @author fukang
- * @version 2.0.0
+ * @version 3.0.0
  * @date 2026/5/25
  */
 public class SqlBuilder implements SQLWrapper {
 
-    // SQL 各部分的构建器
-    private final StringBuilder selectBuilder;
-    private final StringBuilder fromBuilder;
-    private final StringBuilder joinBuilder;
-    private final StringBuilder setBuilder;
-    private final StringBuilder whereBuilder;
-    private final StringBuilder groupByBuilder;
-    private final StringBuilder havingBuilder;
-    private final StringBuilder orderByBuilder;
-    private final StringBuilder limitBuilder;
-    private final StringBuilder insertIntoBuilder;
-    private final StringBuilder insertColumnsBuilder;
-    private final StringBuilder insertValuesBuilder;
+    // SQL 各部分的构建器 - 使用带参数的片段
+    private final List<SqlFragment> selectFragments;
+    private final List<SqlFragment> fromFragments;
+    private final List<SqlFragment> joinFragments;
+    private final List<SqlFragment> setFragments;
+    private final List<SqlFragment> whereFragments;
+    private final List<SqlFragment> groupByFragments;
+    private final List<SqlFragment> havingFragments;
+    private final List<SqlFragment> orderByFragments;
+    private final List<SqlFragment> limitFragments;
+    private final List<SqlFragment> insertIntoFragments;
+    private final List<SqlFragment> insertColumnsFragments;
+    private final List<SqlFragment> insertValuesFragments;
 
-    // 参数存储
-    private final List<Object> params;
+    // 批量参数存储
     private final List<Object[]> batchParams;
 
     // 状态
@@ -64,7 +63,6 @@ public class SqlBuilder implements SQLWrapper {
     private static final String GROUP_BY = " GROUP BY ";
     private static final String HAVING = " HAVING ";
     private static final String LIMIT = " LIMIT ";
-    private static final String OFFSET = " OFFSET ";
     private static final String INNER_JOIN = " INNER JOIN ";
     private static final String LEFT_JOIN = " LEFT JOIN ";
     private static final String RIGHT_JOIN = " RIGHT JOIN ";
@@ -75,22 +73,47 @@ public class SqlBuilder implements SQLWrapper {
     public enum OrderType { ASC, DESC }
     public enum JoinType { INNER, LEFT, RIGHT }
 
+    /**
+     * SQL片段，包含SQL文本和对应的参数
+     */
+    private static class SqlFragment {
+        final String sql;
+        final List<Object> params;
+
+        SqlFragment(String sql, Object... params) {
+            this.sql = sql;
+            this.params = params == null ? Collections.emptyList() : Arrays.asList(params);
+        }
+
+        SqlFragment(String sql, List<Object> params) {
+            this.sql = sql;
+            this.params = params == null ? Collections.emptyList() : new ArrayList<>(params);
+        }
+
+        String getSql() {
+            return sql;
+        }
+
+        List<Object> getParams() {
+            return params;
+        }
+    }
+
     // ==================== 构造方法 ====================
 
     private SqlBuilder() {
-        this.selectBuilder = new StringBuilder();
-        this.fromBuilder = new StringBuilder();
-        this.joinBuilder = new StringBuilder();
-        this.setBuilder = new StringBuilder();
-        this.whereBuilder = new StringBuilder();
-        this.groupByBuilder = new StringBuilder();
-        this.havingBuilder = new StringBuilder();
-        this.orderByBuilder = new StringBuilder();
-        this.limitBuilder = new StringBuilder();
-        this.insertIntoBuilder = new StringBuilder();
-        this.insertColumnsBuilder = new StringBuilder();
-        this.insertValuesBuilder = new StringBuilder();
-        this.params = new ArrayList<>();
+        this.selectFragments = new ArrayList<>();
+        this.fromFragments = new ArrayList<>();
+        this.joinFragments = new ArrayList<>();
+        this.setFragments = new ArrayList<>();
+        this.whereFragments = new ArrayList<>();
+        this.groupByFragments = new ArrayList<>();
+        this.havingFragments = new ArrayList<>();
+        this.orderByFragments = new ArrayList<>();
+        this.limitFragments = new ArrayList<>();
+        this.insertIntoFragments = new ArrayList<>();
+        this.insertColumnsFragments = new ArrayList<>();
+        this.insertValuesFragments = new ArrayList<>();
         this.batchParams = new ArrayList<>();
         this.useBatch = false;
         this.isBuilt = false;
@@ -104,28 +127,50 @@ public class SqlBuilder implements SQLWrapper {
         return new SqlBuilder();
     }
 
+    // ==================== 辅助方法 ====================
+
+    private void addFragment(List<SqlFragment> fragments, String sql, Object... values) {
+        fragments.add(new SqlFragment(sql, values));
+    }
+
+    private void addFragmentWithPrefix(List<SqlFragment> fragments, String prefix, String sql, Object... values) {
+        if (fragments.isEmpty()) {
+            fragments.add(new SqlFragment(prefix + sql, values));
+        } else {
+            fragments.add(new SqlFragment(sql, values));
+        }
+    }
+
     // ==================== SELECT 相关方法 ====================
 
     public SqlBuilder select(String... columns) {
         setSqlType(SQLType.SELECT);
 
-        if (selectBuilder.length() > 0) {
-            selectBuilder.append(", ");
+        String sql;
+        if (columns == null || columns.length == 0) {
+            sql = "*";
+        } else {
+            sql = String.join(", ", columns);
         }
 
-        if (columns == null || columns.length == 0) {
-            selectBuilder.append("*");
+        if (selectFragments.isEmpty()) {
+            selectFragments.add(new SqlFragment(sql));
         } else {
-            selectBuilder.append(String.join(", ", columns));
+            selectFragments.add(new SqlFragment(", " + sql));
         }
         return this;
     }
 
     public SqlBuilder selectDistinct(String... columns) {
-        select(columns);
-        String current = selectBuilder.toString();
-        selectBuilder.setLength(0);
-        selectBuilder.append("DISTINCT ").append(current);
+        String sql;
+        if (columns == null || columns.length == 0) {
+            sql = "DISTINCT *";
+        } else {
+            sql = "DISTINCT " + String.join(", ", columns);
+        }
+
+        selectFragments.clear();
+        selectFragments.add(new SqlFragment(sql));
         return this;
     }
 
@@ -140,21 +185,22 @@ public class SqlBuilder implements SQLWrapper {
     // ==================== FROM 相关方法 ====================
 
     public SqlBuilder from(String table) {
-        fromBuilder.append(table);
+        addFragment(fromFragments, table);
         return this;
     }
 
     public SqlBuilder from(String table, String alias) {
-        fromBuilder.append(table).append(AS).append(alias);
+        addFragment(fromFragments, table + AS + alias);
         return this;
     }
 
     public SqlBuilder from(SqlBuilder subQuery, String alias) {
-        fromBuilder.append("(").append(subQuery.getSqlTemp()).append(")");
+        String sql = "(" + subQuery.getSqlTemp() + ")";
         if (alias != null && !alias.isEmpty()) {
-            fromBuilder.append(AS).append(alias);
+            sql += AS + alias;
         }
-        params.addAll(subQuery.getParamsList());
+        List<Object> subParams = subQuery.getAllParams();
+        fromFragments.add(new SqlFragment(sql, subParams));
         return this;
     }
 
@@ -168,10 +214,11 @@ public class SqlBuilder implements SQLWrapper {
             case RIGHT: joinKeyword = RIGHT_JOIN; break;
             default: joinKeyword = INNER_JOIN;
         }
-        joinBuilder.append(joinKeyword).append(table);
+        String sql = joinKeyword + table;
         if (alias != null && !alias.isEmpty()) {
-            joinBuilder.append(AS).append(alias);
+            sql += AS + alias;
         }
+        addFragment(joinFragments, sql);
         return this;
     }
 
@@ -187,8 +234,8 @@ public class SqlBuilder implements SQLWrapper {
         return join(JoinType.RIGHT, table, alias);
     }
 
-    public SqlBuilder on(String condition) {
-        joinBuilder.append(ON).append(condition);
+    public SqlBuilder on(String condition, Object... values) {
+        addFragment(joinFragments, ON + condition, values);
         return this;
     }
 
@@ -196,22 +243,31 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder insertInto(String table, String... columns) {
         setSqlType(SQLType.UPDATE);
-        insertIntoBuilder.append(table);
+        insertIntoFragments.clear();
+        insertIntoFragments.add(new SqlFragment(table));
 
         if (columns != null && columns.length > 0) {
-            insertColumnsBuilder.append("(").append(String.join(", ", columns)).append(")");
+            insertColumnsFragments.clear();
+            insertColumnsFragments.add(new SqlFragment("(" + String.join(", ", columns) + ")"));
         }
         return this;
     }
 
     public SqlBuilder values(Object... values) {
-        insertValuesBuilder.append("(");
+        StringBuilder sb = new StringBuilder("(");
+        List<Object> params = new ArrayList<>();
         for (int i = 0; i < values.length; i++) {
-            if (i > 0) insertValuesBuilder.append(", ");
-            insertValuesBuilder.append("?");
+            if (i > 0) sb.append(", ");
+            sb.append("?");
             params.add(values[i]);
         }
-        insertValuesBuilder.append(")");
+        sb.append(")");
+
+        if (insertValuesFragments.isEmpty()) {
+            insertValuesFragments.add(new SqlFragment(sb.toString(), params));
+        } else {
+            insertValuesFragments.add(new SqlFragment(", " + sb.toString(), params));
+        }
         return this;
     }
 
@@ -222,16 +278,19 @@ public class SqlBuilder implements SQLWrapper {
 
         this.useBatch = true;
         setSqlType(SQLType.BATCH);
+        insertValuesFragments.clear();
 
         for (int i = 0; i < batchValues.size(); i++) {
-            if (i > 0) insertValuesBuilder.append(", ");
-            insertValuesBuilder.append("(");
+            StringBuilder sb = new StringBuilder();
+            if (i > 0) sb.append(", ");
+            sb.append("(");
             Object[] values = batchValues.get(i);
             for (int j = 0; j < values.length; j++) {
-                if (j > 0) insertValuesBuilder.append(", ");
-                insertValuesBuilder.append("?");
+                if (j > 0) sb.append(", ");
+                sb.append("?");
             }
-            insertValuesBuilder.append(")");
+            sb.append(")");
+            insertValuesFragments.add(new SqlFragment(sb.toString()));
         }
 
         this.batchParams.addAll(batchValues);
@@ -245,10 +304,14 @@ public class SqlBuilder implements SQLWrapper {
 
         this.useBatch = true;
         setSqlType(SQLType.BATCH);
+        insertValuesFragments.clear();
 
         for (int i = 0; i < batchValues.size(); i++) {
-            if (i > 0) insertValuesBuilder.append(", ");
-            insertValuesBuilder.append(valueTemplate);
+            if (i > 0) {
+                insertValuesFragments.add(new SqlFragment(", " + valueTemplate));
+            } else {
+                insertValuesFragments.add(new SqlFragment(valueTemplate));
+            }
         }
 
         this.batchParams.addAll(batchValues);
@@ -259,26 +322,23 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder update(String table) {
         setSqlType(SQLType.UPDATE);
-        fromBuilder.append(table);
+        fromFragments.clear();
+        addFragment(fromFragments, table);
         return this;
     }
 
     public SqlBuilder set(String column, Object value) {
-        if (setBuilder.length() > 0) {
-            setBuilder.append(", ");
+        if (setFragments.isEmpty()) {
+            addFragment(setFragments, column + " = ?", value);
+        } else {
+            addFragment(setFragments, ", " + column + " = ?", value);
         }
-        setBuilder.append(column).append(" = ?");
-        params.add(value);
         return this;
     }
 
     public SqlBuilder set(Map<String, Object> columnValues) {
         for (Map.Entry<String, Object> entry : columnValues.entrySet()) {
-            if (setBuilder.length() > 0) {
-                setBuilder.append(", ");
-            }
-            setBuilder.append(entry.getKey()).append(" = ?");
-            params.add(entry.getValue());
+            set(entry.getKey(), entry.getValue());
         }
         return this;
     }
@@ -301,7 +361,8 @@ public class SqlBuilder implements SQLWrapper {
     public SqlBuilder deleteFrom(String table) {
         setSqlType(SQLType.UPDATE);
         this.isDeleteStatement = true;
-        fromBuilder.append(table);
+        fromFragments.clear();
+        addFragment(fromFragments, table);
         return this;
     }
 
@@ -323,293 +384,258 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder where(String condition, Object... values) {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            addFragment(whereFragments, AND + condition, values);
+        } else {
+            addFragment(whereFragments, condition, values);
+            needAndPrefix = true;
         }
-        whereBuilder.append(condition);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        needAndPrefix = true;
         return this;
     }
 
     public SqlBuilder eq(String column, Object value) {
-        return condition(column, " = ?", value);
+        return condition(column + " = ?", value);
     }
 
     public SqlBuilder ne(String column, Object value) {
-        return condition(column, " <> ?", value);
+        return condition(column + " <> ?", value);
     }
 
     public SqlBuilder gt(String column, Object value) {
-        return condition(column, " > ?", value);
+        return condition(column + " > ?", value);
     }
 
     public SqlBuilder ge(String column, Object value) {
-        return condition(column, " >= ?", value);
+        return condition(column + " >= ?", value);
     }
 
     public SqlBuilder lt(String column, Object value) {
-        return condition(column, " < ?", value);
+        return condition(column + " < ?", value);
     }
 
     public SqlBuilder le(String column, Object value) {
-        return condition(column, " <= ?", value);
+        return condition(column + " <= ?", value);
     }
 
     public SqlBuilder like(String column, String value) {
-        return condition(column, " LIKE ?", "%" + value + "%");
+        return condition(column + " LIKE ?", "%" + value + "%");
     }
 
     public SqlBuilder likeLeft(String column, String value) {
-        return condition(column, " LIKE ?", "%" + value);
+        return condition(column + " LIKE ?", "%" + value);
     }
 
     public SqlBuilder likeRight(String column, String value) {
-        return condition(column, " LIKE ?", value + "%");
+        return condition(column + " LIKE ?", value + "%");
     }
 
     public SqlBuilder notLike(String column, String value) {
-        return condition(column, " NOT LIKE ?", "%" + value + "%");
+        return condition(column + " NOT LIKE ?", "%" + value + "%");
     }
 
     public SqlBuilder in(String column, Object... values) {
         if (values == null || values.length == 0) return this;
         String placeholders = Arrays.stream(values).map(v -> "?").collect(Collectors.joining(", "));
-        return condition(column, " IN (" + placeholders + ")", values);
+        return condition(column + " IN (" + placeholders + ")", values);
     }
 
     public SqlBuilder in(String column, Collection<?> values) {
         if (values == null || values.isEmpty()) return this;
         String placeholders = values.stream().map(v -> "?").collect(Collectors.joining(", "));
-        return condition(column, " IN (" + placeholders + ")", values.toArray());
+        return condition(column + " IN (" + placeholders + ")", values.toArray());
     }
 
     public SqlBuilder notIn(String column, Object... values) {
         if (values == null || values.length == 0) return this;
         String placeholders = Arrays.stream(values).map(v -> "?").collect(Collectors.joining(", "));
-        return condition(column, " NOT IN (" + placeholders + ")", values);
+        return condition(column + " NOT IN (" + placeholders + ")", values);
     }
 
     public SqlBuilder between(String column, Object value1, Object value2) {
-        condition(column, " BETWEEN ? AND ?", value1);
-        params.add(value2);
+        condition(column + " BETWEEN ? AND ?", value1);
         return this;
     }
 
     public SqlBuilder isNull(String column) {
-        return condition(column, " IS NULL");
+        return condition(column + " IS NULL");
     }
 
     public SqlBuilder isNotNull(String column) {
-        return condition(column, " IS NOT NULL");
+        return condition(column + " IS NOT NULL");
     }
 
     public SqlBuilder exists(SqlBuilder subQuery) {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
+        String sql = "EXISTS (" + subQuery.getSqlTemp() + ")";
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            whereFragments.add(new SqlFragment(AND + sql, subQuery.getAllParams()));
+        } else {
+            whereFragments.add(new SqlFragment(sql, subQuery.getAllParams()));
+            needAndPrefix = true;
         }
-        whereBuilder.append("EXISTS (");
-        whereBuilder.append(subQuery.getSqlTemp());
-        whereBuilder.append(")");
-        params.addAll(subQuery.getParamsList());
-        needAndPrefix = true;
         return this;
     }
 
     public SqlBuilder notExists(SqlBuilder subQuery) {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
+        String sql = "NOT EXISTS (" + subQuery.getSqlTemp() + ")";
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            whereFragments.add(new SqlFragment(AND + sql, subQuery.getAllParams()));
+        } else {
+            whereFragments.add(new SqlFragment(sql, subQuery.getAllParams()));
+            needAndPrefix = true;
         }
-        whereBuilder.append("NOT EXISTS (");
-        whereBuilder.append(subQuery.getSqlTemp());
-        whereBuilder.append(")");
-        params.addAll(subQuery.getParamsList());
-        needAndPrefix = true;
         return this;
     }
 
     public SqlBuilder whereSql(String sqlFragment, Object... values) {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            addFragment(whereFragments, AND + sqlFragment, values);
+        } else {
+            addFragment(whereFragments, sqlFragment, values);
+            needAndPrefix = true;
         }
-        whereBuilder.append(sqlFragment);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        needAndPrefix = true;
         return this;
     }
 
     public SqlBuilder or() {
-        if (hasWhere) {
-            whereBuilder.append(OR);
+        if (hasWhere && !whereFragments.isEmpty()) {
+            // 标记下一个条件使用 OR
             needAndPrefix = false;
+            // 修改最后一个片段的前缀逻辑比较复杂，这里简单处理：添加一个 OR 标记片段
+            whereFragments.add(new SqlFragment(OR));
         }
         return this;
     }
 
     public SqlBuilder and() {
-        if (hasWhere) {
-            whereBuilder.append(AND);
+        if (hasWhere && !whereFragments.isEmpty()) {
             needAndPrefix = false;
+            whereFragments.add(new SqlFragment(AND));
         }
         return this;
     }
 
     public SqlBuilder bracketStart() {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            whereFragments.add(new SqlFragment(AND + "("));
+        } else {
+            whereFragments.add(new SqlFragment("("));
         }
-        whereBuilder.append("(");
         needAndPrefix = false;
         return this;
     }
 
     public SqlBuilder bracketEnd() {
-        whereBuilder.append(")");
+        whereFragments.add(new SqlFragment(")"));
         needAndPrefix = true;
         return this;
     }
 
-    private SqlBuilder condition(String column, String operator, Object... values) {
+    private SqlBuilder condition(String conditionSql, Object... values) {
         if (!hasWhere) {
-            whereBuilder.append(WHERE);
+            whereFragments.clear();
             hasWhere = true;
             needAndPrefix = false;
         }
         if (needAndPrefix) {
-            whereBuilder.append(AND);
+            addFragment(whereFragments, AND + conditionSql, values);
+        } else {
+            addFragment(whereFragments, conditionSql, values);
+            needAndPrefix = true;
         }
-        whereBuilder.append(column).append(operator);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        needAndPrefix = true;
         return this;
     }
 
     // ==================== 分组和排序 ====================
 
     public SqlBuilder groupBy(String... columns) {
-        if (groupByBuilder.length() > 0) {
-            groupByBuilder.append(", ");
+        String sql = String.join(", ", columns);
+        if (groupByFragments.isEmpty()) {
+            addFragment(groupByFragments, sql);
+        } else {
+            addFragment(groupByFragments, ", " + sql);
         }
-        groupByBuilder.append(String.join(", ", columns));
         return this;
     }
 
     public SqlBuilder having(String condition, Object... values) {
-        havingBuilder.append(condition);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
+        addFragment(havingFragments, condition, values);
         return this;
     }
 
     public SqlBuilder orderBy(String column, OrderType orderType) {
-        if (orderByBuilder.length() > 0) {
-            orderByBuilder.append(", ");
+        String sql = column + (orderType == OrderType.DESC ? DESC : ASC);
+        if (orderByFragments.isEmpty()) {
+            addFragment(orderByFragments, sql);
+        } else {
+            addFragment(orderByFragments, ", " + sql);
         }
-        orderByBuilder.append(column);
-        orderByBuilder.append(orderType == OrderType.DESC ? DESC : ASC);
         return this;
     }
 
     public SqlBuilder orderBy(Map<String, OrderType> orderMap) {
         for (Map.Entry<String, OrderType> entry : orderMap.entrySet()) {
-            if (orderByBuilder.length() > 0) {
-                orderByBuilder.append(", ");
-            }
-            orderByBuilder.append(entry.getKey());
-            orderByBuilder.append(entry.getValue() == OrderType.DESC ? DESC : ASC);
+            orderBy(entry.getKey(), entry.getValue());
         }
         return this;
     }
 
     public SqlBuilder limit(int limit) {
-        limitBuilder.append("?");
-        params.add(limit);
+        limitFragments.clear();
+        addFragment(limitFragments, "?", limit);
         return this;
     }
 
     public SqlBuilder limit(int offset, int limit) {
-        limitBuilder.append("? OFFSET ?");
-        params.add(limit);
-        params.add(offset);
+        limitFragments.clear();
+        addFragment(limitFragments, "? OFFSET ?", limit, offset);
         return this;
     }
 
     public SqlBuilder offset(int offset) {
-        limitBuilder.append("OFFSET ?");
-        params.add(offset);
+        limitFragments.clear();
+        addFragment(limitFragments, "OFFSET ?", offset);
         return this;
     }
 
     // ==================== 其他方法 ====================
 
-    public SqlBuilder append(String sqlFragment, Object... values) {
-        // 智能追加，根据当前 SQL 类型决定追加到哪里
-        if (sqlType == SQLType.SELECT) {
-            // 对于 SELECT，简单追加到末尾（用户需自行确保语法正确）
-            // 这里简单处理，直接追加到主 SQL
-            if (fromBuilder.length() == 0 && joinBuilder.length() == 0 && whereBuilder.length() == 0) {
-                // 可能是在 SELECT 阶段，暂时不做处理
-            }
-        }
-        // 默认追加到末尾
-        if (whereBuilder.length() > 0) {
-            whereBuilder.append(" ").append(sqlFragment);
-        } else if (fromBuilder.length() > 0) {
-            fromBuilder.append(" ").append(sqlFragment);
-        } else {
-            // 简单追加，可能导致问题，建议直接使用具体方法
-        }
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        return this;
-    }
-
     public SqlBuilder clear() {
-        selectBuilder.setLength(0);
-        fromBuilder.setLength(0);
-        joinBuilder.setLength(0);
-        setBuilder.setLength(0);
-        whereBuilder.setLength(0);
-        groupByBuilder.setLength(0);
-        havingBuilder.setLength(0);
-        orderByBuilder.setLength(0);
-        limitBuilder.setLength(0);
-        insertIntoBuilder.setLength(0);
-        insertColumnsBuilder.setLength(0);
-        insertValuesBuilder.setLength(0);
-        params.clear();
+        selectFragments.clear();
+        fromFragments.clear();
+        joinFragments.clear();
+        setFragments.clear();
+        whereFragments.clear();
+        groupByFragments.clear();
+        havingFragments.clear();
+        orderByFragments.clear();
+        limitFragments.clear();
+        insertIntoFragments.clear();
+        insertColumnsFragments.clear();
+        insertValuesFragments.clear();
         batchParams.clear();
         useBatch = false;
         isBuilt = false;
@@ -622,19 +648,18 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder copy() {
         SqlBuilder copy = new SqlBuilder();
-        copy.selectBuilder.append(this.selectBuilder);
-        copy.fromBuilder.append(this.fromBuilder);
-        copy.joinBuilder.append(this.joinBuilder);
-        copy.setBuilder.append(this.setBuilder);
-        copy.whereBuilder.append(this.whereBuilder);
-        copy.groupByBuilder.append(this.groupByBuilder);
-        copy.havingBuilder.append(this.havingBuilder);
-        copy.orderByBuilder.append(this.orderByBuilder);
-        copy.limitBuilder.append(this.limitBuilder);
-        copy.insertIntoBuilder.append(this.insertIntoBuilder);
-        copy.insertColumnsBuilder.append(this.insertColumnsBuilder);
-        copy.insertValuesBuilder.append(this.insertValuesBuilder);
-        copy.params.addAll(this.params);
+        copy.selectFragments.addAll(this.selectFragments);
+        copy.fromFragments.addAll(this.fromFragments);
+        copy.joinFragments.addAll(this.joinFragments);
+        copy.setFragments.addAll(this.setFragments);
+        copy.whereFragments.addAll(this.whereFragments);
+        copy.groupByFragments.addAll(this.groupByFragments);
+        copy.havingFragments.addAll(this.havingFragments);
+        copy.orderByFragments.addAll(this.orderByFragments);
+        copy.limitFragments.addAll(this.limitFragments);
+        copy.insertIntoFragments.addAll(this.insertIntoFragments);
+        copy.insertColumnsFragments.addAll(this.insertColumnsFragments);
+        copy.insertValuesFragments.addAll(this.insertValuesFragments);
         for (Object[] batch : this.batchParams) {
             copy.batchParams.add(batch.clone());
         }
@@ -664,6 +689,62 @@ public class SqlBuilder implements SQLWrapper {
         return this;
     }
 
+    /**
+     * 获取所有参数（按顺序）
+     */
+    private List<Object> getAllParams() {
+        List<Object> allParams = new ArrayList<>();
+
+        // SELECT 参数
+        for (SqlFragment fragment : selectFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // FROM 参数
+        for (SqlFragment fragment : fromFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // JOIN 参数
+        for (SqlFragment fragment : joinFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // SET 参数
+        for (SqlFragment fragment : setFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // WHERE 参数
+        for (SqlFragment fragment : whereFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // GROUP BY 参数
+        for (SqlFragment fragment : groupByFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // HAVING 参数
+        for (SqlFragment fragment : havingFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // ORDER BY 参数
+        for (SqlFragment fragment : orderByFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // LIMIT 参数
+        for (SqlFragment fragment : limitFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        // INSERT 参数
+        for (SqlFragment fragment : insertIntoFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        for (SqlFragment fragment : insertColumnsFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+        for (SqlFragment fragment : insertValuesFragments) {
+            allParams.addAll(fragment.getParams());
+        }
+
+        return allParams;
+    }
+
     // ==================== 构建 SQL ====================
 
     private String buildSql() {
@@ -671,63 +752,111 @@ public class SqlBuilder implements SQLWrapper {
 
         // 构建 SELECT 语句
         if (sqlType == SQLType.SELECT) {
-            if (selectBuilder.length() == 0) {
-                selectBuilder.append("*");
-            }
-            sql.append(SELECT).append(selectBuilder);
-
-            if (fromBuilder.length() > 0) {
-                sql.append(FROM).append(fromBuilder);
-            }
-
-            if (joinBuilder.length() > 0) {
-                sql.append(joinBuilder);
+            if (selectFragments.isEmpty()) {
+                sql.append(SELECT).append("*");
+            } else {
+                sql.append(SELECT);
+                for (int i = 0; i < selectFragments.size(); i++) {
+                    sql.append(selectFragments.get(i).getSql());
+                }
             }
 
-            if (whereBuilder.length() > 0) {
-                sql.append(whereBuilder);
+            if (!fromFragments.isEmpty()) {
+                sql.append(FROM);
+                for (SqlFragment fragment : fromFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (groupByBuilder.length() > 0) {
-                sql.append(GROUP_BY).append(groupByBuilder);
+            if (!joinFragments.isEmpty()) {
+                for (SqlFragment fragment : joinFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (havingBuilder.length() > 0) {
-                sql.append(HAVING).append(havingBuilder);
+            if (!whereFragments.isEmpty()) {
+                sql.append(WHERE);
+                for (SqlFragment fragment : whereFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (orderByBuilder.length() > 0) {
-                sql.append(ORDER_BY).append(orderByBuilder);
+            if (!groupByFragments.isEmpty()) {
+                sql.append(GROUP_BY);
+                for (SqlFragment fragment : groupByFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (limitBuilder.length() > 0) {
-                sql.append(LIMIT).append(limitBuilder);
+            if (!havingFragments.isEmpty()) {
+                sql.append(HAVING);
+                for (SqlFragment fragment : havingFragments) {
+                    sql.append(fragment.getSql());
+                }
+            }
+
+            if (!orderByFragments.isEmpty()) {
+                sql.append(ORDER_BY);
+                for (SqlFragment fragment : orderByFragments) {
+                    sql.append(fragment.getSql());
+                }
+            }
+
+            if (!limitFragments.isEmpty()) {
+                sql.append(LIMIT);
+                for (SqlFragment fragment : limitFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
         }
 
         // 构建 INSERT 语句
-        else if (insertIntoBuilder.length() > 0) {
-            sql.append(INSERT_INTO).append(insertIntoBuilder);
-            if (insertColumnsBuilder.length() > 0) {
-                sql.append(" ").append(insertColumnsBuilder);
+        else if (!insertIntoFragments.isEmpty()) {
+            sql.append(INSERT_INTO);
+            for (SqlFragment fragment : insertIntoFragments) {
+                sql.append(fragment.getSql());
             }
-            if (insertValuesBuilder.length() > 0) {
-                sql.append(VALUES).append(insertValuesBuilder);
+
+            if (!insertColumnsFragments.isEmpty()) {
+                sql.append(" ");
+                for (SqlFragment fragment : insertColumnsFragments) {
+                    sql.append(fragment.getSql());
+                }
+            }
+
+            if (!insertValuesFragments.isEmpty()) {
+                sql.append(VALUES);
+                for (SqlFragment fragment : insertValuesFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
         }
 
         // 构建 UPDATE 语句
         else if (sqlType == SQLType.UPDATE && !isDeleteStatement) {
-            if (fromBuilder.length() > 0 && setBuilder.length() > 0) {
-                sql.append(UPDATE).append(fromBuilder);
-                sql.append(SET).append(setBuilder);
-
-                if (whereBuilder.length() > 0) {
-                    sql.append(whereBuilder);
+            if (!fromFragments.isEmpty()) {
+                sql.append(UPDATE);
+                for (SqlFragment fragment : fromFragments) {
+                    sql.append(fragment.getSql());
                 }
 
-                if (limitBuilder.length() > 0) {
-                    sql.append(LIMIT).append(limitBuilder);
+                sql.append(SET);
+                for (SqlFragment fragment : setFragments) {
+                    sql.append(fragment.getSql());
+                }
+
+                if (!whereFragments.isEmpty()) {
+                    sql.append(WHERE);
+                    for (SqlFragment fragment : whereFragments) {
+                        sql.append(fragment.getSql());
+                    }
+                }
+
+                if (!limitFragments.isEmpty()) {
+                    sql.append(LIMIT);
+                    for (SqlFragment fragment : limitFragments) {
+                        sql.append(fragment.getSql());
+                    }
                 }
             }
         }
@@ -735,16 +864,25 @@ public class SqlBuilder implements SQLWrapper {
         // 构建 DELETE 语句
         else if (sqlType == SQLType.UPDATE && isDeleteStatement) {
             sql.append(DELETE_FROM);
-            if (fromBuilder.length() > 0) {
-                sql.append(fromBuilder);
+
+            if (!fromFragments.isEmpty()) {
+                for (SqlFragment fragment : fromFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (whereBuilder.length() > 0) {
-                sql.append(whereBuilder);
+            if (!whereFragments.isEmpty()) {
+                sql.append(WHERE);
+                for (SqlFragment fragment : whereFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
 
-            if (limitBuilder.length() > 0) {
-                sql.append(LIMIT).append(limitBuilder);
+            if (!limitFragments.isEmpty()) {
+                sql.append(LIMIT);
+                for (SqlFragment fragment : limitFragments) {
+                    sql.append(fragment.getSql());
+                }
             }
         }
 
@@ -758,18 +896,19 @@ public class SqlBuilder implements SQLWrapper {
         isBuilt = true;
 
         String sql = buildSql();
+        List<Object> allParams = getAllParams();
 
         if (useBatch) {
             return new BatchQueryResult(sql, batchParams, sqlType);
         } else {
-            return new SingleQueryResult(sql, params.toArray(), sqlType);
+            return new SingleQueryResult(sql, allParams.toArray(), sqlType);
         }
     }
 
     public SqlBuilder print() {
         System.out.println("SQL Type: " + sqlType);
         System.out.println("SQL: " + buildSql());
-        System.out.println("Params: " + params);
+        System.out.println("Params: " + getAllParams());
         if (useBatch) {
             System.out.println("Batch Params: ");
             for (int i = 0; i < batchParams.size(); i++) {
@@ -793,11 +932,7 @@ public class SqlBuilder implements SQLWrapper {
 
     @Override
     public Object[] getParams() {
-        return params.toArray();
-    }
-
-    public List<Object> getParamsList() {
-        return params;
+        return getAllParams().toArray();
     }
 
     @Override

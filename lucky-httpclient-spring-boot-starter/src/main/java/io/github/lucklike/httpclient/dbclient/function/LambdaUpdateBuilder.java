@@ -9,7 +9,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
 
     LambdaUpdateBuilder(Class<T> clazz) {
         super(clazz);
-        update().from();
+        update();
     }
 
     @Override
@@ -96,8 +96,9 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
         return this;
     }
 
-    @SafeVarargs
+
     @Override
+    @SafeVarargs
     public final <R> LambdaUpdateBuilder<T> in(SFunction<T, R> column, R... values) {
         super.in(column, values);
         return this;

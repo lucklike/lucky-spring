@@ -1,108 +1,48 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import com.luckyframework.common.StringUtils;
-import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.dbclient.SQLType;
-import io.github.lucklike.httpclient.dbclient.annotation.Table;
 import io.github.lucklike.httpclient.dbclient.executor.SFunction;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapper;
-import org.springframework.core.ResolvableType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
- * 基于 Lambda 表达式的 SQL 构建器 - 优化版
- * 支持任意顺序调用，自动处理 SQL 语句结构
+ * 基于 Lambda 表达式的 SQL 构建器
+ * 使用 SqlBuilder 作为底层实现，支持任意顺序调用
  *
  * @author fukang
- * @version 2.0.0
+ * @version 3.0.0
  * @date 2026/5/25
  */
 public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     private final Class<T> entityClass;
     private String tableName;
-    private SQLType sqlType;
-    private boolean useBatch;
+    private final SqlBuilder sqlBuilder;
     private boolean isBuilt;
 
-    // SQL 各部分的构建器
-    private final StringBuilder selectBuilder;
-    private final StringBuilder fromBuilder;
-    private final StringBuilder joinBuilder;
-    private final StringBuilder setBuilder;
-    private final StringBuilder whereBuilder;
-    private final StringBuilder groupByBuilder;
-    private final StringBuilder havingBuilder;
-    private final StringBuilder orderByBuilder;
-    private final StringBuilder limitBuilder;
-    private final StringBuilder insertIntoBuilder;
-    private final StringBuilder insertColumnsBuilder;
-    private final StringBuilder insertValuesBuilder;
-
-    // 参数存储
-    private final List<Object> params;
-    private final List<Object[]> batchParams;
-
-    // WHERE 条件状态
-    private boolean hasWhere;
-    private boolean needAndPrefix;
-
-    // SQL关键字
-    private static final String SELECT = "SELECT ";
-    private static final String FROM = " FROM ";
-    private static final String WHERE = " WHERE ";
-    private static final String AND = " AND ";
-    private static final String OR = " OR ";
-    private static final String ON = " ON ";
-    private static final String INSERT_INTO = "INSERT INTO ";
-    private static final String VALUES = " VALUES ";
-    private static final String UPDATE = "UPDATE ";
-    private static final String SET = " SET ";
-    private static final String DELETE = "DELETE FROM ";
-    private static final String ORDER_BY = " ORDER BY ";
-    private static final String GROUP_BY = " GROUP BY ";
-    private static final String HAVING = " HAVING ";
-    private static final String LIMIT = " LIMIT ";
-    private static final String OFFSET = " OFFSET ";
-    private static final String INNER_JOIN = " INNER JOIN ";
-    private static final String LEFT_JOIN = " LEFT JOIN ";
-    private static final String RIGHT_JOIN = " RIGHT JOIN ";
-    private static final String AS = " AS ";
-    private static final String ASC = " ASC";
-    private static final String DESC = " DESC";
-
-    public enum OrderType {ASC, DESC}
-
-    public enum JoinType {INNER, LEFT, RIGHT}
+    // 用于 WHERE 条件的嵌套构建状态
+    private boolean inNestedCondition;
+    private List<Object> nestedParams;
 
     // ==================== 构造方法 ====================
 
     protected LambdaSqlBuilder(Class<T> entityClass) {
         this.entityClass = entityClass;
-        this.selectBuilder = new StringBuilder();
-        this.fromBuilder = new StringBuilder();
-        this.joinBuilder = new StringBuilder();
-        this.setBuilder = new StringBuilder();
-        this.whereBuilder = new StringBuilder();
-        this.groupByBuilder = new StringBuilder();
-        this.havingBuilder = new StringBuilder();
-        this.orderByBuilder = new StringBuilder();
-        this.limitBuilder = new StringBuilder();
-        this.insertIntoBuilder = new StringBuilder();
-        this.insertColumnsBuilder = new StringBuilder();
-        this.insertValuesBuilder = new StringBuilder();
-        this.params = new ArrayList<>();
-        this.batchParams = new ArrayList<>();
-        this.hasWhere = false;
-        this.needAndPrefix = false;
-        this.useBatch = false;
+        this.sqlBuilder = SqlBuilder.builder();
         this.isBuilt = false;
-        this.sqlType = SQLType.NON;
+        this.inNestedCondition = false;
+        this.nestedParams = new ArrayList<>();
     }
-    
+
+    public static <T> LambdaSqlBuilder<T> of(Class<T> entityClass) {
+        return new LambdaSqlBuilder<>(entityClass);
+    }
 
     // ==================== 表名和列名辅助方法 ====================
 
@@ -113,19 +53,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     private String getTableName() {
         if (tableName != null) return tableName;
-        Table tableAnn = AnnotationUtils.findMergedAnnotation(entityClass, Table.class);
-        if (tableAnn != null && StringUtils.hasText(tableAnn.value())) {
-            return tableAnn.value();
-        }
-        return entityClass.getSimpleName().toLowerCase();
-    }
-
-    private String getTableName(Class<?> entityClass) {
-        Table tableAnn = AnnotationUtils.findMergedAnnotation(entityClass, Table.class);
-        if (tableAnn != null && StringUtils.hasText(tableAnn.value())) {
-            return tableAnn.value();
-        }
-        return entityClass.getSimpleName().toLowerCase();
+        return EntityUtils.getTableName(entityClass);
     }
 
     private <R> String getColumn(SFunction<T, R> function) {
@@ -136,511 +64,422 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     @SafeVarargs
     protected final LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
-        if (sqlType == SQLType.NON) setSqlType(SQLType.SELECT);
-
-        if (selectBuilder.length() > 0) {
-            selectBuilder.append(", ");
-        }
-
         if (columns == null || columns.length == 0) {
-            selectBuilder.append("*");
+            sqlBuilder.select();
         } else {
-            String columnStr = Arrays.stream(columns)
+            String[] columnNames = Arrays.stream(columns)
                     .map(this::getColumn)
-                    .collect(Collectors.joining(", "));
-            selectBuilder.append(columnStr);
+                    .toArray(String[]::new);
+            sqlBuilder.select(columnNames);
         }
         return this;
     }
 
     protected LambdaSqlBuilder<T> select(String expression) {
-        if (sqlType == SQLType.NON) setSqlType(SQLType.SELECT);
-
-        if (selectBuilder.length() > 0) {
-            selectBuilder.append(", ");
-        }
-        selectBuilder.append(expression);
+        sqlBuilder.select(expression);
         return this;
     }
 
     protected LambdaSqlBuilder<T> selectCount() {
-        return select("COUNT(*)");
+        sqlBuilder.count();
+        return this;
     }
 
     protected LambdaSqlBuilder<T> selectCount(SFunction<T, ?> column) {
-        return select("COUNT(" + getColumn(column) + ")");
+        sqlBuilder.count(getColumn(column));
+        return this;
     }
 
-    protected LambdaSqlBuilder<T> selectDistinct(SFunction<T, ?>... columns) {
-        select(columns);
-        String current = selectBuilder.toString();
-        selectBuilder.setLength(0);
-        selectBuilder.append("DISTINCT ").append(current);
+    @SafeVarargs
+    protected final LambdaSqlBuilder<T> selectDistinct(SFunction<T, ?>... columns) {
+        if (columns == null || columns.length == 0) {
+            sqlBuilder.selectDistinct();
+        } else {
+            String[] columnNames = Arrays.stream(columns)
+                    .map(this::getColumn)
+                    .toArray(String[]::new);
+            sqlBuilder.selectDistinct(columnNames);
+        }
         return this;
     }
 
     // ==================== FROM 相关方法 ====================
 
     protected LambdaSqlBuilder<T> from() {
-        fromBuilder.append(getTableName());
+        sqlBuilder.from(getTableName());
         return this;
     }
 
     protected LambdaSqlBuilder<T> from(String alias) {
-        fromBuilder.append(getTableName()).append(AS).append(alias);
+        sqlBuilder.from(getTableName(), alias);
         return this;
     }
 
     protected LambdaSqlBuilder<T> from(String tableName, String alias) {
-        fromBuilder.append(tableName);
-        if (alias != null && !alias.isEmpty()) {
-            fromBuilder.append(AS).append(alias);
-        }
+        sqlBuilder.from(tableName, alias);
         return this;
     }
 
     protected LambdaSqlBuilder<T> from(LambdaSqlBuilder<?> subQuery, String alias) {
-        fromBuilder.append("(").append(subQuery.buildSql()).append(")");
-        if (alias != null && !alias.isEmpty()) {
-            fromBuilder.append(AS).append(alias);
+        // 先构建子查询获取 SQL 和参数
+        SqlBuilder.QueryResult subResult = subQuery.buildInternal();
+        String subSql = subResult.getSql();
+        Object[] subParams = subResult instanceof SqlBuilder.SingleQueryResult
+                ? ((SqlBuilder.SingleQueryResult) subResult).getParams()
+                : new Object[0];
+
+        // 构建子查询片段
+        SqlBuilder tempBuilder = SqlBuilder.builder();
+        tempBuilder.from(subSql, alias);
+        // 手动添加子查询参数
+        for (Object param : subParams) {
+            tempBuilder.where("1=1", param); // 技巧：通过 where 添加参数
         }
-        // 注意：这里不能直接添加参数，因为 subQuery 的参数需要合并到主查询
-        // 参数会在 build() 时统一处理
+
         return this;
     }
 
     // ==================== JOIN 相关方法 ====================
 
-    protected <E> LambdaSqlBuilder<T> join(JoinType type, Class<E> joinClass, String alias) {
-        String joinTableName = getTableName(joinClass);
-        String joinKeyword;
-        switch (type) {
-            case INNER:
-                joinKeyword = INNER_JOIN;
-                break;
-            case LEFT:
-                joinKeyword = LEFT_JOIN;
-                break;
-            case RIGHT:
-                joinKeyword = RIGHT_JOIN;
-                break;
-            default:
-                joinKeyword = INNER_JOIN;
-        }
-        joinBuilder.append(joinKeyword).append(joinTableName);
-        if (alias != null && !alias.isEmpty()) {
-            joinBuilder.append(AS).append(alias);
-        }
+    protected <E> LambdaSqlBuilder<T> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
+        String joinTableName = EntityUtils.getTableName(joinClass);
+        sqlBuilder.join(
+                type,
+                joinTableName,
+                alias
+        );
         return this;
     }
 
     protected <E> LambdaSqlBuilder<T> innerJoin(Class<E> joinClass, String alias) {
-        return join(JoinType.INNER, joinClass, alias);
+        return join(SqlBuilder.JoinType.INNER, joinClass, alias);
     }
 
     protected <E> LambdaSqlBuilder<T> leftJoin(Class<E> joinClass, String alias) {
-        return join(JoinType.LEFT, joinClass, alias);
+        return join(SqlBuilder.JoinType.LEFT, joinClass, alias);
     }
 
     protected <E> LambdaSqlBuilder<T> rightJoin(Class<E> joinClass, String alias) {
-        return join(JoinType.RIGHT, joinClass, alias);
+        return join(SqlBuilder.JoinType.RIGHT, joinClass, alias);
     }
 
     protected LambdaSqlBuilder<T> on(String condition) {
-        joinBuilder.append(ON).append(condition);
+        sqlBuilder.on(condition);
         return this;
     }
 
     protected <E> LambdaSqlBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
-        joinBuilder.append(ON).append(getColumn(leftColumn)).append(" = ")
-                .append(LambdaUtils.getColumnName(null, rightColumn));
+        String condition = getColumn(leftColumn) + " = " + LambdaUtils.getColumnName(null, rightColumn);
+        sqlBuilder.on(condition);
         return this;
     }
 
     // ==================== INSERT 相关方法 ====================
 
-    protected LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
-        setSqlType(SQLType.UPDATE);
-        insertIntoBuilder.append(getTableName());
-
-        if (columns != null && columns.length > 0) {
-            String columnStr = Arrays.stream(columns)
+    @SafeVarargs
+    protected final LambdaSqlBuilder<T> insertInto(SFunction<T, ?>... columns) {
+        if (columns == null || columns.length == 0) {
+            sqlBuilder.insertInto(getTableName());
+        } else {
+            String[] columnNames = Arrays.stream(columns)
                     .map(this::getColumn)
-                    .collect(Collectors.joining(", "));
-            insertColumnsBuilder.append("(").append(columnStr).append(")");
+                    .toArray(String[]::new);
+            sqlBuilder.insertInto(getTableName(), columnNames);
         }
         return this;
     }
 
     protected LambdaSqlBuilder<T> values(Object... values) {
-        insertValuesBuilder.append("(");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) insertValuesBuilder.append(", ");
-            insertValuesBuilder.append("?");
-            params.add(values[i]);
-        }
-        insertValuesBuilder.append(")");
+        sqlBuilder.values(values);
         return this;
     }
 
     protected LambdaSqlBuilder<T> valuesBatch(List<Object[]> batchValues) {
-        if (batchValues == null || batchValues.isEmpty()) return this;
-
-        this.useBatch = true;
-        setSqlType(SQLType.BATCH);
-
-        for (int i = 0; i < batchValues.size(); i++) {
-            if (i > 0) insertValuesBuilder.append(", ");
-            insertValuesBuilder.append("(");
-            Object[] values = batchValues.get(i);
-            for (int j = 0; j < values.length; j++) {
-                if (j > 0) insertValuesBuilder.append(", ");
-                insertValuesBuilder.append("?");
-            }
-            insertValuesBuilder.append(")");
-        }
-
-        this.batchParams.addAll(batchValues);
+        sqlBuilder.valuesBatch(batchValues);
         return this;
     }
 
     // ==================== UPDATE 相关方法 ====================
 
     protected LambdaSqlBuilder<T> update() {
-        setSqlType(SQLType.UPDATE);
+        sqlBuilder.update(getTableName());
         return this;
     }
 
     protected <R> LambdaSqlBuilder<T> set(SFunction<T, R> column, Object value) {
-        if (setBuilder.length() > 0) {
-            setBuilder.append(", ");
-        }
-        setBuilder.append(getColumn(column)).append(" = ?");
-        params.add(value);
+        sqlBuilder.set(getColumn(column), value);
         return this;
     }
 
     protected LambdaSqlBuilder<T> set(String column, Object value) {
-        if (setBuilder.length() > 0) {
-            setBuilder.append(", ");
-        }
-        setBuilder.append(column).append(" = ?");
-        params.add(value);
+        sqlBuilder.set(column, value);
+        return this;
+    }
+
+    protected LambdaSqlBuilder<T> set(Map<String, Object> columnValues) {
+        sqlBuilder.set(columnValues);
         return this;
     }
 
     // ==================== DELETE 相关方法 ====================
 
     protected LambdaSqlBuilder<T> delete() {
-        setSqlType(SQLType.UPDATE);
+        sqlBuilder.delete();
+        sqlBuilder.from(getTableName());
+        return this;
+    }
+
+    protected LambdaSqlBuilder<T> deleteFrom() {
+        sqlBuilder.deleteFrom(getTableName());
         return this;
     }
 
     // ==================== WHERE 条件方法 ====================
 
     protected LambdaSqlBuilder<T> where(String condition, Object... values) {
-        if (!hasWhere) {
-            whereBuilder.append(WHERE);
-            hasWhere = true;
-            needAndPrefix = false;
-        }
-        if (needAndPrefix) {
-            whereBuilder.append(AND);
-        }
-        whereBuilder.append(condition);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        needAndPrefix = true;
+        sqlBuilder.where(condition, values);
         return this;
     }
 
     protected LambdaSqlBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
-        if (!hasWhere) {
-            whereBuilder.append(WHERE);
-            hasWhere = true;
-            needAndPrefix = false;
-        }
-        if (needAndPrefix) {
-            whereBuilder.append(AND);
-        }
-        whereBuilder.append("(");
-        boolean oldNeedAndPrefix = this.needAndPrefix;
-        boolean oldHasWhere = this.hasWhere;
-        this.needAndPrefix = false;
-        this.hasWhere = true;
+        sqlBuilder.bracketStart();
+
+        // 保存当前状态
+        boolean oldInNested = this.inNestedCondition;
+        List<Object> oldNestedParams = this.nestedParams;
+
+        // 设置嵌套状态
+        this.inNestedCondition = true;
+        this.nestedParams = new ArrayList<>();
+
+        // 执行嵌套条件构建
         conditionBuilder.accept(this);
-        this.needAndPrefix = oldNeedAndPrefix;
-        this.hasWhere = oldHasWhere;
-        whereBuilder.append(")");
-        needAndPrefix = true;
+
+        // 恢复状态
+        this.inNestedCondition = oldInNested;
+        this.nestedParams = oldNestedParams;
+
+        sqlBuilder.bracketEnd();
         return this;
     }
 
     // 基础条件方法
     protected <R> LambdaSqlBuilder<T> eq(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " = ?", value);
+        if (inNestedCondition) {
+            sqlBuilder.eq(getColumn(column), value);
+        } else {
+            sqlBuilder.eq(getColumn(column), value);
+        }
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> ne(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " <> ?", value);
+        sqlBuilder.ne(getColumn(column), value);
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> gt(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " > ?", value);
+        sqlBuilder.gt(getColumn(column), value);
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> ge(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " >= ?", value);
+        sqlBuilder.ge(getColumn(column), value);
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> lt(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " < ?", value);
+        sqlBuilder.lt(getColumn(column), value);
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> le(SFunction<T, R> column, Object value) {
-        return condition(getColumn(column), " <= ?", value);
+        sqlBuilder.le(getColumn(column), value);
+        return this;
     }
 
     protected LambdaSqlBuilder<T> like(SFunction<T, ?> column, String value) {
-        return condition(getColumn(column), " LIKE ?", "%" + value + "%");
+        sqlBuilder.like(getColumn(column), value);
+        return this;
     }
 
     protected LambdaSqlBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
-        return condition(getColumn(column), " LIKE ?", "%" + value);
+        sqlBuilder.likeLeft(getColumn(column), value);
+        return this;
     }
 
     protected LambdaSqlBuilder<T> likeRight(SFunction<T, ?> column, String value) {
-        return condition(getColumn(column), " LIKE ?", value + "%");
+        sqlBuilder.likeRight(getColumn(column), value);
+        return this;
     }
 
     protected LambdaSqlBuilder<T> notLike(SFunction<T, ?> column, String value) {
-        return condition(getColumn(column), " NOT LIKE ?", "%" + value + "%");
+        sqlBuilder.notLike(getColumn(column), value);
+        return this;
     }
 
-    protected  <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
-        if (values == null || values.length == 0) return this;
-        String placeholders = Arrays.stream(values).map(v -> "?").collect(Collectors.joining(", "));
-        return condition(getColumn(column), " IN (" + placeholders + ")", (Object[]) values);
+    protected <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
+        sqlBuilder.in(getColumn(column), values);
+        return this;
     }
 
     protected <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
-        if (values == null || values.isEmpty()) return this;
-        String placeholders = values.stream().map(v -> "?").collect(Collectors.joining(", "));
-        return condition(getColumn(column), " IN (" + placeholders + ")", values.toArray());
+        sqlBuilder.in(getColumn(column), values);
+        return this;
+    }
+
+    @SafeVarargs
+    protected final <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, R... values) {
+        sqlBuilder.notIn(getColumn(column), values);
+        return this;
     }
 
     protected LambdaSqlBuilder<T> isNull(SFunction<T, ?> column) {
-        return condition(getColumn(column), " IS NULL");
+        sqlBuilder.isNull(getColumn(column));
+        return this;
     }
 
     protected LambdaSqlBuilder<T> isNotNull(SFunction<T, ?> column) {
-        return condition(getColumn(column), " IS NOT NULL");
+        sqlBuilder.isNotNull(getColumn(column));
+        return this;
     }
 
     protected LambdaSqlBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
-        condition(getColumn(column), " BETWEEN ? AND ?", value1);
-        params.add(value2);
+        sqlBuilder.between(getColumn(column), value1, value2);
         return this;
     }
 
     protected LambdaSqlBuilder<T> or() {
-        if (hasWhere) {
-            whereBuilder.append(OR);
-            needAndPrefix = false;
-        }
+        sqlBuilder.or();
         return this;
     }
 
     protected LambdaSqlBuilder<T> and() {
-        if (hasWhere) {
-            whereBuilder.append(AND);
-            needAndPrefix = false;
-        }
+        sqlBuilder.and();
         return this;
     }
 
-    private LambdaSqlBuilder<T> condition(String column, String operator, Object... values) {
-        if (!hasWhere) {
-            whereBuilder.append(WHERE);
-            hasWhere = true;
-            needAndPrefix = false;
-        }
-        if (needAndPrefix) {
-            whereBuilder.append(AND);
-        }
-        whereBuilder.append(column).append(operator);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
-        needAndPrefix = true;
+    // 子查询条件
+    protected LambdaSqlBuilder<T> exists(LambdaSqlBuilder<?> subQuery) {
+        SqlBuilder subBuilder = SqlBuilder.builder();
+        // 构建子查询
+        SqlBuilder.QueryResult subResult = subQuery.buildInternal();
+        subBuilder.exists(convertToSqlBuilder(subQuery));
+        return this;
+    }
+
+    protected LambdaSqlBuilder<T> notExists(LambdaSqlBuilder<?> subQuery) {
+        SqlBuilder subBuilder = SqlBuilder.builder();
+        subBuilder.notExists(convertToSqlBuilder(subQuery));
         return this;
     }
 
     // ==================== 分组和排序 ====================
 
-    protected LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
-        if (groupByBuilder.length() > 0) {
-            groupByBuilder.append(", ");
-        }
-        String columnStr = Arrays.stream(columns)
+    @SafeVarargs
+    protected final LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
+        String[] columnNames = Arrays.stream(columns)
                 .map(this::getColumn)
-                .collect(Collectors.joining(", "));
-        groupByBuilder.append(columnStr);
+                .toArray(String[]::new);
+        sqlBuilder.groupBy(columnNames);
         return this;
     }
 
     protected LambdaSqlBuilder<T> having(String condition, Object... values) {
-        havingBuilder.append(condition);
-        if (values != null) {
-            Collections.addAll(params, values);
-        }
+        sqlBuilder.having(condition, values);
         return this;
     }
 
-    protected LambdaSqlBuilder<T> orderBy(SFunction<T, ?> column, OrderType orderType) {
-        if (orderByBuilder.length() > 0) {
-            orderByBuilder.append(", ");
-        }
-        orderByBuilder.append(getColumn(column));
-        orderByBuilder.append(orderType == OrderType.DESC ? DESC : ASC);
+    protected LambdaSqlBuilder<T> orderBy(SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+        sqlBuilder.orderBy(getColumn(column), orderType);
         return this;
     }
 
     protected LambdaSqlBuilder<T> orderByAsc(SFunction<T, ?> column) {
-        return orderBy(column, OrderType.ASC);
+        return orderBy(column, SqlBuilder.OrderType.ASC);
     }
 
     protected LambdaSqlBuilder<T> orderByDesc(SFunction<T, ?> column) {
-        return orderBy(column, OrderType.DESC);
+        return orderBy(column, SqlBuilder.OrderType.DESC);
     }
 
     protected LambdaSqlBuilder<T> limit(int limit) {
-        limitBuilder.append("?");
-        params.add(limit);
+        sqlBuilder.limit(limit);
         return this;
     }
 
     protected LambdaSqlBuilder<T> limit(int offset, int limit) {
-        limitBuilder.append("? OFFSET ?");
-        params.add(limit);
-        params.add(offset);
+        sqlBuilder.limit(offset, limit);
         return this;
     }
 
     protected LambdaSqlBuilder<T> offset(int offset) {
-        limitBuilder.append("OFFSET ?");
-        params.add(offset);
+        sqlBuilder.offset(offset);
         return this;
     }
 
-    // ==================== 构建 SQL ====================
+    // ==================== 辅助方法 ====================
 
-    private String buildSql() {
-        StringBuilder sql = new StringBuilder();
+    private SqlBuilder convertToSqlBuilder(LambdaSqlBuilder<?> lambdaBuilder) {
+        SqlBuilder.QueryResult result = lambdaBuilder.buildInternal();
+        SqlBuilder builder = SqlBuilder.builder();
 
-        // 构建 SELECT 语句
-        if (sqlType == SQLType.SELECT) {
-            if (selectBuilder.length() == 0) {
-                selectBuilder.append("*");
-            }
-            sql.append(SELECT).append(selectBuilder);
-
-            if (fromBuilder.length() > 0) {
-                sql.append(FROM).append(fromBuilder);
-            }
-
-            if (joinBuilder.length() > 0) {
-                sql.append(joinBuilder);
-            }
-
-            if (whereBuilder.length() > 0) {
-                sql.append(whereBuilder);
-            }
-
-            if (groupByBuilder.length() > 0) {
-                sql.append(GROUP_BY).append(groupByBuilder);
-            }
-
-            if (havingBuilder.length() > 0) {
-                sql.append(HAVING).append(havingBuilder);
-            }
-
-            if (orderByBuilder.length() > 0) {
-                sql.append(ORDER_BY).append(orderByBuilder);
-            }
-
-            if (limitBuilder.length() > 0) {
-                sql.append(LIMIT).append(limitBuilder);
-            }
+        // 根据 SQL 类型设置构建器
+        if (result.getSqlType() == SQLType.SELECT) {
+            // 这里需要解析 SQL 来设置，简化处理：直接使用原始 SQL
+            // 更好的做法是让 LambdaSqlBuilder 直接暴露 SqlBuilder
+            builder.select("*");
+            builder.from("(" + result.getSql() + ")");
         }
 
-        // 构建 INSERT 语句
-        else if (insertIntoBuilder.length() > 0) {
-            sql.append(INSERT_INTO).append(insertIntoBuilder);
-            if (insertColumnsBuilder.length() > 0) {
-                sql.append(" ").append(insertColumnsBuilder);
-            }
-            if (insertValuesBuilder.length() > 0) {
-                sql.append(VALUES).append(insertValuesBuilder);
-            }
-        }
-
-        // 构建 UPDATE 语句
-        else if (sqlType == SQLType.UPDATE) {
-            if (setBuilder.length() > 0) {
-                sql.append(UPDATE).append(getTableName());
-                sql.append(SET).append(setBuilder);
-
-                if (whereBuilder.length() > 0) {
-                    sql.append(whereBuilder);
-                }
-
-                if (limitBuilder.length() > 0) {
-                    sql.append(LIMIT).append(limitBuilder);
-                }
-            }
-            // DELETE 语句
-            else if (whereBuilder.length() > 0 || limitBuilder.length() > 0) {
-                sql.append(DELETE).append(getTableName());
-                if (whereBuilder.length() > 0) {
-                    sql.append(whereBuilder);
-                }
-                if (limitBuilder.length() > 0) {
-                    sql.append(LIMIT).append(limitBuilder);
-                }
-            }
-        }
-
-        return sql.toString();
+        return builder;
     }
 
+    /**
+     * 内部构建方法，不改变 isBuilt 状态
+     */
+    private SqlBuilder.QueryResult buildInternal() {
+        return sqlBuilder.build();
+    }
+
+    /**
+     * 构建查询结果
+     */
     protected QueryResult build() {
         if (isBuilt) {
             throw new IllegalStateException("SQL already built");
         }
         isBuilt = true;
 
-        String sql = buildSql();
+        SqlBuilder.QueryResult result = sqlBuilder.build();
 
-        if (useBatch) {
-            return new BatchQueryResult(sql, batchParams, sqlType);
+        if (result.isBatch()) {
+            return new BatchQueryResult(
+                    result.getSql(),
+                    result instanceof SqlBuilder.BatchQueryResult
+                            ? ((SqlBuilder.BatchQueryResult) result).getBatchParams()
+                            : null,
+                    result.getSqlType()
+            );
         } else {
-            return new SingleQueryResult(sql, params.toArray(), sqlType);
+            return new SingleQueryResult(
+                    result.getSql(),
+                    result instanceof SqlBuilder.SingleQueryResult
+                            ? ((SqlBuilder.SingleQueryResult) result).getParams()
+                            : new Object[0],
+                    result.getSqlType()
+            );
         }
     }
 
-    // 调试方法
     protected LambdaSqlBuilder<T> print() {
-        System.out.println("SQL Type: " + sqlType);
-        System.out.println("SQL: " + buildSql());
-        System.out.println("Params: " + params);
-        if (useBatch) {
-            System.out.println("Batch Params: ");
-            for (int i = 0; i < batchParams.size(); i++) {
-                System.out.println("  Row " + (i + 1) + ": " + Arrays.toString(batchParams.get(i)));
-            }
-        }
+        sqlBuilder.print();
+        return this;
+    }
+
+    protected LambdaSqlBuilder<T> clear() {
+        sqlBuilder.clear();
+        isBuilt = false;
         return this;
     }
 
@@ -648,30 +487,22 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     @Override
     public String getSqlTemp() {
-        return buildSql();
+        return sqlBuilder.getSqlTemp();
     }
 
     @Override
     public SQLType getType() {
-        return sqlType;
+        return sqlBuilder.getType();
     }
 
     @Override
     public Object[] getParams() {
-        return params.toArray();
+        return sqlBuilder.getParams();
     }
 
     @Override
     public List<Object[]> getBatchParams() {
-        return useBatch ? new ArrayList<>(batchParams) : null;
-    }
-
-    private void setSqlType(SQLType type) {
-        if (this.sqlType == SQLType.BATCH && type != SQLType.BATCH) return;
-        if (this.sqlType == SQLType.UPDATE && type == SQLType.SELECT) return;
-        if (this.sqlType == SQLType.NON) {
-            this.sqlType = type;
-        }
+        return sqlBuilder.getBatchParams();
     }
 
     // ==================== 查询结果类 ====================
@@ -716,7 +547,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
         @Override
         public String toString() {
-            return "SingleQueryResult{sqlType=" + sqlType + ", sql='" + sql + "', params=" + Arrays.toString(params) + "}";
+            return "SingleQueryResult{sqlType=" + sqlType +
+                    ", sql='" + sql + '\'' +
+                    ", params=" + Arrays.toString(params) + "}";
         }
     }
 
@@ -747,12 +580,14 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         }
 
         protected List<Object[]> getBatchParams() {
-            return new ArrayList<>(batchParams);
+            return batchParams;
         }
 
         @Override
         public String toString() {
-            return "BatchQueryResult{sqlType=" + sqlType + ", sql='" + sql + "', batchParams.size=" + batchParams.size() + "}";
+            return "BatchQueryResult{sqlType=" + sqlType +
+                    ", sql='" + sql + '\'' +
+                    ", batchParams.size=" + (batchParams != null ? batchParams.size() : 0) + "}";
         }
     }
 }

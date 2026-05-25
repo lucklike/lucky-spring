@@ -83,8 +83,8 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
         return this;
     }
 
-    @SafeVarargs
     @Override
+    @SafeVarargs
     public final <R> LambdaDeleteBuilder<T> in(SFunction<T, R> column, R... values) {
         super.in(column, values);
         return this;

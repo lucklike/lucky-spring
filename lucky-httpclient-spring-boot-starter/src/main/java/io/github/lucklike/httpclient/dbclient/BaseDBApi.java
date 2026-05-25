@@ -21,6 +21,7 @@ public interface BaseDBApi<E> {
     String SQL_SELECT_BY_ID = "#{selectById($mc$)}";
     String SQL_DELETE_BY_ID = "#{deleteById($mc$)}";
     String SQL_UPDATE_BY_ID = "#{updateById($mc$)}";
+    String SQL_INSERT_SQL = "#{insertSql($mc$)}";
 
     /**
      * 执行COUNT类型的SQL返回结果
@@ -97,4 +98,13 @@ public interface BaseDBApi<E> {
      */
     @SQL(executor = SQL_UPDATE_BY_ID)
     int updateById(@NonNull E entity);
+
+    /**
+     * 插入一条数据
+     *
+     * @param entity 数据实体
+     * @return 影响行数
+     */
+    @SQL(executor = SQL_INSERT_SQL)
+    int insert(@NonNull E entity);
 }

@@ -16,7 +16,11 @@ import org.springframework.core.ResolvableType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * SQL并接相关的函数
@@ -46,6 +50,16 @@ public class SQLFunctions {
         return sql(SQL_IN, sql, obj);
     }
 
+    private static String sql(String linkSymbol, String sql, Object obj) {
+        if (obj == null) {
+            return "";
+        }
+        if (obj instanceof String && !StringUtils.hasText((String) obj)) {
+            return "";
+        }
+        return String.format(" %s %s", linkSymbol, sql);
+    }
+
     public static SQLExecutor lambdaSql(MethodContext mc) {
         return new SQLWrapperExecutor(mc, Objects.requireNonNull(mc.getArgument(SQLWrapper.class)));
     }
@@ -65,9 +79,52 @@ public class SQLFunctions {
     public static SQLExecutor updateById(MethodContext mc) {
         Object entity = mc.getArguments()[0];
         Class<?> entityClass = entity.getClass();
-        boolean hasId = false;
+        final AtomicBoolean hasId = new  AtomicBoolean(false);
         SqlBuilder sqlBuilder = SqlBuilder.builder().update(EntityUtils.getTableName(entityClass));
-        for (Field field : ClassUtils.getAllFields(entityClass)) {
+
+        columnHandler(entity, co -> {
+            if (co.getValue() != null) {
+                if (co.isId()) {
+                    sqlBuilder.eq(co.getName(), co.getValue());
+                    hasId.set(true);
+                } else {
+                    sqlBuilder.set(co.getName(), co.getValue());
+                }
+            }
+        });
+
+        if (!hasId.get()) {
+            throw new IllegalArgumentException("The ID attribute was not found in class '" + ClassUtils.getClassName(entityClass) + "'");
+        }
+
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+    public static SQLExecutor insertSql(MethodContext mc) {
+        Object entity = mc.getArguments()[0];
+        Class<?> entityClass = entity.getClass();
+
+        List<String> columnNames = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+
+        columnHandler(entity, co -> {
+            if (co.getValue() != null) {
+                columnNames.add(co.getName());
+                values.add(co.getValue());
+            }
+        });
+
+        SqlBuilder sqlBuilder = SqlBuilder
+                .builder()
+                .insertInto(EntityUtils.getTableName(entityClass), columnNames.toArray(new String[0]))
+                .values(values.toArray(new Object[0]));
+
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+
+    private static void columnHandler(Object entity, Consumer<ColumnInfo> consumer) {
+        for (Field field : ClassUtils.getAllFields(entity.getClass())) {
             if (Modifier.isStatic(field.getModifiers())) {
                 continue;
             }
@@ -76,34 +133,40 @@ public class SQLFunctions {
                 continue;
             }
 
+            ColumnInfo columnInfo;
             Object fieldValue = FieldUtils.getValue(entity, field);
-            if (fieldValue == null) {
-                continue;
-            }
-
             String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
             if (AnnotationUtils.isAnnotated(field, Id.class)) {
-                sqlBuilder.eq(columnName, fieldValue);
-                hasId = true;
+                columnInfo = new ColumnInfo(columnName, fieldValue, true);
             } else {
-                sqlBuilder.set(columnName, fieldValue);
+                columnInfo = new ColumnInfo(columnName, fieldValue, false);
             }
-        }
-        if (!hasId) {
-            throw new IllegalArgumentException("The ID attribute was not found in class '" + ClassUtils.getClassName(entityClass) + "'");
-        }
 
-        return new SQLWrapperExecutor(mc, sqlBuilder);
+            consumer.accept(columnInfo);
+        }
     }
 
+    static class ColumnInfo {
+        private final String name;
+        private final Object value;
+        private final boolean isId;
 
-    private static String sql(String linkSymbol, String sql, Object obj) {
-        if (obj == null) {
-            return "";
+        private ColumnInfo(String name, Object value, boolean isId) {
+            this.name = name;
+            this.value = value;
+            this.isId = isId;
         }
-        if (obj instanceof String && !StringUtils.hasText((String) obj)) {
-            return "";
+
+        public String getName() {
+            return name;
         }
-        return String.format(" %s %s", linkSymbol, sql);
+
+        public Object getValue() {
+            return value;
+        }
+
+        public boolean isId() {
+            return isId;
+        }
     }
 }
