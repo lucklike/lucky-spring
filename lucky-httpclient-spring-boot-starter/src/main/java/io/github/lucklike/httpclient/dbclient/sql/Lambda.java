@@ -1,7 +1,6 @@
-package io.github.lucklike.httpclient.dbclient.function;
+package io.github.lucklike.httpclient.dbclient.sql;
 
 import com.luckyframework.common.ContainerUtils;
-import io.github.lucklike.httpclient.dbclient.executor.SFunction;
 
 public abstract class Lambda {
 

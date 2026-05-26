@@ -4,7 +4,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.plugin.ProxyDecorator;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import io.github.lucklike.httpclient.dbclient.SQLType;
+import io.github.lucklike.httpclient.dbclient.sql.SQLType;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.executor.AnnotationSQLExecutor;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;

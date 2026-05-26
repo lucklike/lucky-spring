@@ -10,17 +10,21 @@ import io.github.lucklike.httpclient.dbclient.BaseDBApi;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
-import io.github.lucklike.httpclient.dbclient.executor.SQLWrapper;
+import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapperExecutor;
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import org.springframework.core.ResolvableType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * SQL并接相关的函数
@@ -70,6 +74,19 @@ public class SQLFunctions {
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 
+    public static SQLExecutor selectByEntity(MethodContext mc) {
+        Object entity = mc.getArguments()[0];
+        Class<?> entityClass = entity.getClass();
+
+        SqlBuilder sqlBuilder = SqlBuilder.builder().select().from(EntityUtils.getTableName(entityClass));
+        columnHandler(entity, co -> {
+            if (co.getValue() != null) {
+                sqlBuilder.eq(co.getName(), co.getValue());
+            }
+        });
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
     public static SQLExecutor deleteById(MethodContext mc) {
         Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
         SqlBuilder sqlBuilder = SqlBuilder.builder().delete().from(EntityUtils.getTableName(entityClass)).eq(EntityUtils.getIdColumn(entityClass), mc.getArguments()[0]);
@@ -79,7 +96,7 @@ public class SQLFunctions {
     public static SQLExecutor updateById(MethodContext mc) {
         Object entity = mc.getArguments()[0];
         Class<?> entityClass = entity.getClass();
-        final AtomicBoolean hasId = new  AtomicBoolean(false);
+        final AtomicBoolean hasId = new AtomicBoolean(false);
         SqlBuilder sqlBuilder = SqlBuilder.builder().update(EntityUtils.getTableName(entityClass));
 
         columnHandler(entity, co -> {
@@ -119,6 +136,46 @@ public class SQLFunctions {
                 .insertInto(EntityUtils.getTableName(entityClass), columnNames.toArray(new String[0]))
                 .values(values.toArray(new Object[0]));
 
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+    public static SQLExecutor batchInsertSql(MethodContext mc) {
+        Class<?> entityClass = mc.getParameterContexts()[0].getType().getGeneric(0).toClass();
+        Collection<?> entityObject = (Collection<?>) mc.getArguments()[0];
+
+        List<String> columnNames = new ArrayList<>();
+        List<List<Object>> valuesList = new ArrayList<>();
+
+        for (Field field : ClassUtils.getAllFields(entityClass)) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
+            if (columnAnn != null && !columnAnn.exist()) {
+                continue;
+            }
+
+            String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
+            columnNames.add(columnName);
+            int i = 1;
+            for (Object entity : entityObject) {
+                List<Object> values;
+                if (valuesList.size() < i) {
+                    values = new ArrayList<>();
+                    valuesList.add(values);
+                } else {
+                    values =  valuesList.get(i - 1);
+                }
+                values.add(FieldUtils.getValue(entity, field));
+                i++;
+            }
+        }
+
+        SqlBuilder sqlBuilder = SqlBuilder.builder()
+                .insertInto(EntityUtils.getTableName(entityClass), columnNames.toArray(new String[0]))
+                .valuesBatch(valuesList.stream()
+                .map(list -> list.toArray(new Object[0]))
+                .collect(Collectors.toList()));
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 

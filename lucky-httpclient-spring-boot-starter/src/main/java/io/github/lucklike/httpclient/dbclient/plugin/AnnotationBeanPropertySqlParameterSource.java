@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.plugin;
 
 /**
  *

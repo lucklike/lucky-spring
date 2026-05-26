@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.annotation;
 
-import io.github.lucklike.httpclient.dbclient.SQLType;
+import io.github.lucklike.httpclient.dbclient.sql.SQLType;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
 
 import java.lang.annotation.Documented;

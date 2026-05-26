@@ -3,7 +3,7 @@ package io.github.lucklike.httpclient.dbclient.executor;
 import com.luckyframework.common.FontUtil;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
-import io.github.lucklike.httpclient.dbclient.function.SqlBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

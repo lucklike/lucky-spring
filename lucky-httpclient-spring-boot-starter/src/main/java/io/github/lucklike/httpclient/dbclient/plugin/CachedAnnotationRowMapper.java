@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.dbclient;
+package io.github.lucklike.httpclient.dbclient.plugin;
 
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;

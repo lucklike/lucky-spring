@@ -1,7 +1,4 @@
-package io.github.lucklike.httpclient.dbclient.function;
-
-import io.github.lucklike.httpclient.dbclient.SQLType;
-import io.github.lucklike.httpclient.dbclient.executor.SQLWrapper;
+package io.github.lucklike.httpclient.dbclient.sql;
 
 import java.util.*;
 import java.util.stream.Collectors;

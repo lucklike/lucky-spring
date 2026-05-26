@@ -1,13 +1,14 @@
 package io.github.lucklike.httpclient.dbclient;
 
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
-import io.github.lucklike.httpclient.dbclient.function.LambdaCountBuilder;
-import io.github.lucklike.httpclient.dbclient.function.LambdaDeleteBuilder;
-import io.github.lucklike.httpclient.dbclient.function.LambdaQueryBuilder;
-import io.github.lucklike.httpclient.dbclient.function.LambdaUpdateBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.LambdaCountBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.LambdaDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.LambdaQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.LambdaUpdateBuilder;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -19,9 +20,11 @@ public interface BaseDBApi<E> {
 
     String SQL_LAMBDA = "#{lambdaSql($mc$)}";
     String SQL_SELECT_BY_ID = "#{selectById($mc$)}";
+    String SQL_SELECT_BY_ENTITY = "#{selectByEntity($mc$)}";
     String SQL_DELETE_BY_ID = "#{deleteById($mc$)}";
     String SQL_UPDATE_BY_ID = "#{updateById($mc$)}";
     String SQL_INSERT_SQL = "#{insertSql($mc$)}";
+    String SQL_BATCH_INSERT_SQL = "#{batchInsertSql($mc$)}";
 
     /**
      * 执行COUNT类型的SQL返回结果
@@ -53,6 +56,16 @@ public interface BaseDBApi<E> {
     List<E> selectList(LambdaQueryBuilder<E> queryBuilder);
 
     /**
+     * 使用实体类对象作为条件进行查询（将非空属性值作为条件使用 AND 进行拼接）
+     *
+     * @param queryEntity 查询实体类对象
+     * @return 查询结果
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_ENTITY)
+    List<E> selectList(@NonNull E queryEntity);
+
+    /**
      * 执行UPDATE类型的SQL返回结果
      *
      * @param updateBuilder UPDATE查询条件
@@ -69,7 +82,6 @@ public interface BaseDBApi<E> {
      */
     @SQL(executor = SQL_LAMBDA)
     int delete(LambdaDeleteBuilder<E> deleteBuilder);
-
 
     /**
      * 使用ID字段进行查询
@@ -107,4 +119,15 @@ public interface BaseDBApi<E> {
      */
     @SQL(executor = SQL_INSERT_SQL)
     int insert(@NonNull E entity);
+
+
+    /**
+     * 批量INSERT
+     *
+     * @param entities 要插入的实体集合
+     * @return 影响行数
+     */
+    @SQL(executor = SQL_BATCH_INSERT_SQL)
+    int[] batchInsert(@NonNull Collection<E> entities);
+
 }
