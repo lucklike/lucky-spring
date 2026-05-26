@@ -2,14 +2,20 @@ package io.github.lucklike.httpclient.dbclient.plugin;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.plugin.ExecuteMeta;
 import com.luckyframework.httpclient.proxy.plugin.ProxyDecorator;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
+import com.luckyframework.reflect.MethodUtils;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.executor.AnnotationSQLExecutor;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
+import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.sql.SQLException;
 
 /**
@@ -23,8 +29,34 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
 
     @Override
     public Object decorate(ProxyDecorator decorator) throws Throwable {
-        // 构建方法上下文
-        MethodContext mc = decorator.getMeta().getMethodContext();
+        ExecuteMeta meta = decorator.getMeta();
+        MethodContext mc = meta.getMethodContext();
+        Method method = meta.getMethod();
+        MethodProxy methodProxy = meta.getMethodProxy();
+        Object[] args = meta.getArgs();
+        Object proxy = meta.getProxy();
+
+
+        // 接口的default方法
+        if (method.isDefault()) {
+            return MethodUtils.invokeDefault(proxy, method, args);
+        }
+
+        // hashCode方法
+        if (ReflectionUtils.isHashCodeMethod(method)) {
+            return proxy.getClass().hashCode();
+        }
+
+        // toString方法
+        if (ReflectionUtils.isToStringMethod(method)) {
+            return meta.getTargetClass().getName() + proxy.getClass().getSimpleName();
+        }
+
+        // 非抽象方法
+        if (!Modifier.isAbstract(method.getModifiers())) {
+            return methodProxy != null ? methodProxy.invokeSuper(proxy, args) : MethodUtils.invoke(proxy, method, args);
+        }
+
 
         // 参数列表中存在 SQL 执行器时直接使用参数列表中的执行器
         SQLExecutor argExecutor = mc.getArgument(SQLExecutor.class);
