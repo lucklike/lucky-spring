@@ -29,6 +29,8 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
 
     @Override
     public Object decorate(ProxyDecorator decorator) throws Throwable {
+
+        // 获取方法元信息
         ExecuteMeta meta = decorator.getMeta();
         MethodContext mc = meta.getMethodContext();
         Method method = meta.getMethod();
@@ -56,7 +58,6 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
         if (!Modifier.isAbstract(method.getModifiers())) {
             return methodProxy != null ? methodProxy.invokeSuper(proxy, args) : MethodUtils.invoke(proxy, method, args);
         }
-
 
         // 参数列表中存在 SQL 执行器时直接使用参数列表中的执行器
         SQLExecutor argExecutor = mc.getArgument(SQLExecutor.class);

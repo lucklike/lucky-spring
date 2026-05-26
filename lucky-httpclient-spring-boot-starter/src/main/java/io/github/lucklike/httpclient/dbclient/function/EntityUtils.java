@@ -10,14 +10,14 @@ import java.lang.reflect.Field;
 
 public class EntityUtils {
 
-    public static String getIdColumn(Class<?> clazz) {
+    public static String getIdColumn(Class<?> clazz, String notIdErrorMsg) {
         for (Field field : ClassUtils.getAllFields(clazz)) {
             Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
             if (idAnn != null) {
                 return StringUtils.hasText(idAnn.value()) ? idAnn.value() : field.getName();
             }
         }
-        throw new IllegalArgumentException("The ID attribute was not found in class '" + ClassUtils.getClassName(clazz) + "'");
+        throw new IllegalArgumentException(notIdErrorMsg);
     }
 
     public static String getTableName(Class<?> clazz) {
