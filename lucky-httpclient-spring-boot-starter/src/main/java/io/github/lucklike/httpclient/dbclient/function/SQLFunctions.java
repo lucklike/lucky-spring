@@ -111,13 +111,24 @@ public class SQLFunctions {
     /**
      * 根据主键ID查询实体
      * <p>自动从方法返回值类型中获取实体类，从参数中获取主键值，构建SELECT语句</p>
+     * <p><b>注意：</b>主键ID值不能为null，否则会抛出异常</p>
      *
      * @param mc 方法上下文对象，包含返回值类型和参数信息
      * @return SQL执行器，用于执行根据ID查询的SQL语句
+     * @throws IllegalArgumentException 如果主键ID为null或实体中没有@Id字段时抛出此异常
      */
     public static SQLExecutor selectById(MethodContext mc) {
+        // 获取主键值
+        Object idValue = mc.getArguments()[0];
+        if (idValue == null) {
+            throw new IllegalArgumentException("Primary key ID value cannot be null in selectById operation");
+        }
+
         Class<?> entityClass = mc.getResultResolvableType().toClass();
-        SqlBuilder sqlBuilder = SqlBuilder.builder().select().from(EntityUtils.getTableName(entityClass)).eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, selectById requires at least one @Id field"), mc.getArguments()[0]);
+        SqlBuilder sqlBuilder = SqlBuilder.builder()
+                .select()
+                .from(EntityUtils.getTableName(entityClass))
+                .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, selectById requires at least one @Id field"), idValue);
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 
@@ -149,39 +160,76 @@ public class SQLFunctions {
      * @return SQL执行器，用于执行根据ID删除的SQL语句
      */
     public static SQLExecutor deleteById(MethodContext mc) {
+        // 获取主键值
+        Object idValue = mc.getArguments()[0];
+        if (idValue == null) {
+            throw new IllegalArgumentException("Primary key ID value cannot be null in deleteById operation");
+        }
+
         Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
-        SqlBuilder sqlBuilder = SqlBuilder.builder().delete().from(EntityUtils.getTableName(entityClass)).eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, deleteById requires at least one @Id field"), mc.getArguments()[0]);
+        SqlBuilder sqlBuilder = SqlBuilder.builder()
+                .delete()
+                .from(EntityUtils.getTableName(entityClass))
+                .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, deleteById requires at least one @Id field"), idValue);
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 
     /**
      * 根据主键ID更新实体
      * <p>遍历实体对象的所有字段，将@Id注解的字段作为WHERE条件，其他非空字段作为SET子句构建UPDATE语句</p>
-     * <p><b>注意：</b>实体中必须至少有一个字段标注了@Id注解，否则会抛出异常</p>
+     * <p><b>注意：</b></p>
+     * <ul>
+     *     <li>实体中必须至少有一个字段标注了@Id注解</li>
+     *     <li>ID字段的值不能为null</li>
+     * </ul>
      *
      * @param mc 方法上下文对象，包含实体参数信息
      * @return SQL执行器，用于执行根据ID更新的SQL语句
-     * @throws IllegalArgumentException 如果实体中没有@Id字段时抛出此异常
+     * @throws IllegalArgumentException 如果实体中没有@Id字段或所有ID字段的值都为null时抛出此异常
      */
     public static SQLExecutor updateById(MethodContext mc) {
         Object entity = mc.getArguments()[0];
         Class<?> entityClass = entity.getClass();
-        final AtomicBoolean hasId = new AtomicBoolean(false);
+
+        // 分别记录是否有ID字段、是否有有效的ID值
+        final AtomicBoolean hasIdField = new AtomicBoolean(false);
+        final AtomicBoolean hasValidIdValue = new AtomicBoolean(false);
+        // 记录第一个ID字段的名称，用于错误提示
+        final String[] idFieldName = new String[1];
+
         SqlBuilder sqlBuilder = SqlBuilder.builder().update(EntityUtils.getTableName(entityClass));
 
         columnHandler(entity, co -> {
-            if (co.getValue() != null) {
-                if (co.isId()) {
-                    sqlBuilder.eq(co.getName(), co.getValue());
-                    hasId.set(true);
-                } else {
-                    sqlBuilder.set(co.getName(), co.getValue());
+            if (co.isId()) {
+                hasIdField.set(true);
+                if (idFieldName[0] == null) {
+                    idFieldName[0] = co.getName();
                 }
+                if (co.getValue() != null) {
+                    sqlBuilder.eq(co.getName(), co.getValue());
+                    hasValidIdValue.set(true);
+                }
+            } else if (co.getValue() != null) {
+                sqlBuilder.set(co.getName(), co.getValue());
             }
         });
 
-        if (!hasId.get()) {
-            throw new IllegalArgumentException("Entity [" + entityClass.getName() + "] has no @Id field defined, updateById requires at least one @Id field");
+        // 情况1：没有ID字段
+        if (!hasIdField.get()) {
+            throw new IllegalArgumentException(
+                    String.format("Entity [%s] has no @Id field defined, updateById requires at least one @Id field",
+                            entityClass.getName())
+            );
+        }
+
+        // 情况2：有ID字段但值都为null
+        if (!hasValidIdValue.get()) {
+            throw new IllegalArgumentException(
+                    String.format("Entity [%s] has @Id field(s) but all ID values are null, " +
+                                    "cannot execute updateById operation. Please ensure at least one ID field has a non-null value. " +
+                                    "First ID field name: [%s]",
+                            entityClass.getName(), idFieldName[0])
+            );
         }
 
         return new SQLWrapperExecutor(mc, sqlBuilder);

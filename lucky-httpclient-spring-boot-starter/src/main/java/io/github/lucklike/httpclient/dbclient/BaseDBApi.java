@@ -157,7 +157,6 @@ public interface BaseDBApi<E> {
     @SQL(executor = SQL_INSERT_SQL)
     int insert(@NonNull E entity);
 
-
     /**
      * 批量INSERT
      *
@@ -175,6 +174,19 @@ public interface BaseDBApi<E> {
      */
     @SQL(executor = SQL_BATCH_UPDATE_BY_ID)
     int[] _batchUpdateById_(@NonNull Collection<E> entities);
+
+    /**
+     * 数据存在就更新，不存在就插入
+     *
+     * @param entity 实体对象
+     * @return 影响行数
+     */
+    default int saveOrUpdate(@NonNull E entity) {
+        E e = selectById(entity);
+        return e == null
+                ? insert(entity)
+                : updateById(entity);
+    }
 
     /**
      * 批量INSERT，每次批量操作1000条
