@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.common.TempPair;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.AnnotationUtils;
@@ -112,7 +113,7 @@ public class SQLFunctions {
         });
 
         if (!hasId.get()) {
-            throw new IllegalArgumentException("The ID attribute was not found in class '" + ClassUtils.getClassName(entityClass) + "'");
+            throw new IllegalArgumentException("Entity [" + entityClass.getName() + "] has no @Id field defined, updateById requires at least one @Id field");
         }
 
         return new SQLWrapperExecutor(mc, sqlBuilder);
@@ -181,6 +182,94 @@ public class SQLFunctions {
 
 
         return new SQLWrapperExecutor(mc, SimpleSqlBuilder.ofBatch(sql, batchParams));
+    }
+
+    public static SQLExecutor batchUpdateById(MethodContext mc) {
+        // 获取实体类型和集合
+        Class<?> entityClass = mc.getParameterContexts()[0].getType().getGeneric(0).toClass();
+        Collection<?> entityList = (Collection<?>) mc.getArguments()[0];
+        if (entityList == null || entityList.isEmpty()) {
+            throw new IllegalArgumentException("Batch update entity collection must not be null or empty");
+        }
+
+        // 找出所有带有 @Column 且 exist() 为 true 的字段，并区分 ID 字段和普通字段
+        List<Field> idFields = new ArrayList<>();
+        List<Field> normalFields = new ArrayList<>();
+
+        for (Field field : ClassUtils.getAllFields(entityClass)) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
+            if (columnAnn != null && !columnAnn.exist()) {
+                continue;
+            }
+            // 判断是否为 ID 字段
+            Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
+            if (idAnn != null) {
+                idFields.add(field);
+            } else {
+                normalFields.add(field);
+            }
+        }
+
+        if (idFields.isEmpty()) {
+            throw new IllegalArgumentException("Entity [" + entityClass.getName() + "] has no @Id field defined, batchUpdateById requires at least one @Id field");
+        }
+
+        // 构建列名（用于 SET 和 WHERE）
+        String tableName = EntityUtils.getTableName(entityClass);
+        List<String> setColumns = new ArrayList<>();
+        List<String> whereColumns = new ArrayList<>();
+
+        for (Field field : normalFields) {
+            String columnName = getColumnName(field);
+            setColumns.add(columnName + " = ?");
+        }
+        for (Field field : idFields) {
+            String columnName = getColumnName(field);
+            whereColumns.add(columnName + " = ?");
+        }
+
+        if (setColumns.isEmpty()) {
+            throw new IllegalArgumentException("Entity [" + entityClass.getName() + "] has no updatable column except @Id fields");
+        }
+
+        String sqlTemplate = "UPDATE %s SET %s WHERE %s";
+        String setClause = String.join(", ", setColumns);
+        String whereClause = String.join(" AND ", whereColumns);
+        String finalSql = String.format(sqlTemplate, tableName, setClause, whereClause);
+
+        // 准备批量参数：每条记录按顺序包含 [普通字段值, ID字段值]
+        List<Object[]> batchParams = new ArrayList<>();
+        for (Object entity : entityList) {
+            List<Object> paramList = new ArrayList<>();
+            // SET 部分的值
+            for (Field field : normalFields) {
+                paramList.add(FieldUtils.getValue(entity, field));
+            }
+            // WHERE 部分的值
+            for (Field field : idFields) {
+                paramList.add(FieldUtils.getValue(entity, field));
+            }
+            batchParams.add(paramList.toArray());
+        }
+
+        return new SQLWrapperExecutor(mc, SimpleSqlBuilder.ofBatch(finalSql, batchParams));
+    }
+
+    // 辅助方法：获取字段对应的列名
+    private static String getColumnName(Field field) {
+        Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
+        if (columnAnn != null && StringUtils.hasText(columnAnn.value())) {
+            return columnAnn.value();
+        }
+        // 如果 @Id 本身有 value，也会通过 @AliasFor 传递到 @Column.value()
+        Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
+        if (idAnn != null && StringUtils.hasText(idAnn.value())) {
+            return idAnn.value();
+        }
+        return field.getName();
     }
 
 

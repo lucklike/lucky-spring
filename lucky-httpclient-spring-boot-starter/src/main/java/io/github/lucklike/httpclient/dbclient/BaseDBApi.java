@@ -28,6 +28,7 @@ public interface BaseDBApi<E> {
     String SQL_UPDATE_BY_ID = "#{updateById($mc$)}";
     String SQL_INSERT_SQL = "#{insertSql($mc$)}";
     String SQL_BATCH_INSERT_SQL = "#{batchInsertSql($mc$)}";
+    String SQL_BATCH_UPDATE_BY_ID = "#{batchUpdateById($mc$)}";
 
     /**
      * 执行COUNT类型的SQL返回结果
@@ -134,13 +135,21 @@ public interface BaseDBApi<E> {
     int[] _batchInsert_(@NonNull Collection<E> entities);
 
     /**
+     * 批量UPDATE
+     * @param entities 要更新的实体集合
+     * @return 影响行数
+     */
+    @SQL(executor = SQL_BATCH_UPDATE_BY_ID)
+    int[] _batchUpdateById_(@NonNull Collection<E> entities);
+
+    /**
      * 批量INSERT，每次批量操作1000条
      *
      * @param entities 要插入的实体数组
      * @return 影响行数
      */
     default int[] batchInsert(@NonNull E[] entities) {
-        return batchInsert(Arrays.asList(entities), 1000);
+        return batchInsert(Arrays.asList(entities));
     }
 
     /**
@@ -185,5 +194,59 @@ public interface BaseDBApi<E> {
         }
         return result.stream().mapToInt(Integer::intValue).toArray();
     }
+
+    /**
+     * 批量INSERT，每次批量操作1000条
+     *
+     * @param entities 要插入的实体数组
+     * @return 影响行数
+     */
+    default int[] batchUpdateById(@NonNull E[] entities) {
+        return batchUpdateById(Arrays.asList(entities));
+    }
+
+    /**
+     * 批量INSERT
+     *
+     * @param entities  要插入的实体数组
+     * @param batchSize 每次批量操作的条数
+     * @return 影响行数
+     */
+    default int[] batchUpdateById(@NonNull E[] entities, int batchSize) {
+        return batchUpdateById(Arrays.asList(entities), batchSize);
+    }
+
+    /**
+     * 批量INSERT，每次批量操作1000条
+     *
+     * @param entities 要插入的实体集合
+     * @return 影响行数
+     */
+    default int[] batchUpdateById(@NonNull Collection<E> entities) {
+        return batchUpdateById(entities, 1000);
+    }
+
+    /**
+     * 批量UPDATE，指定每次批量操作的条数
+     *
+     * @param entities  要插入的实体集合
+     * @param batchSize 每次批量操作的条数
+     * @return 影响行数
+     */
+    default int[] batchUpdateById(@NonNull Collection<E> entities, int batchSize) {
+        if (ContainerUtils.isEmptyCollection(entities)) {
+            return new int[0];
+        }
+
+        List<Integer> result = new ArrayList<>();
+        for (List<E> partitionList : ContainerUtils.partition(entities, batchSize)) {
+            int[] ints = _batchUpdateById_(partitionList);
+            for (int i : ints) {
+                result.add(i);
+            }
+        }
+        return result.stream().mapToInt(Integer::intValue).toArray();
+    }
+
 
 }
