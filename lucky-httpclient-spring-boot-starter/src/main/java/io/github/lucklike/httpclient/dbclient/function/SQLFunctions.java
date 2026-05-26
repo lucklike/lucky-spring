@@ -12,6 +12,7 @@ import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
 import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapperExecutor;
+import io.github.lucklike.httpclient.dbclient.sql.SimpleSqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import org.springframework.core.ResolvableType;
 
@@ -146,6 +147,8 @@ public class SQLFunctions {
         List<String> columnNames = new ArrayList<>();
         List<List<Object>> valuesList = new ArrayList<>();
 
+        String sqlTemp = "INSERT INTO %s (%s) VALUES (%s)";
+
         for (Field field : ClassUtils.getAllFields(entityClass)) {
             if (Modifier.isStatic(field.getModifiers())) {
                 continue;
@@ -170,13 +173,14 @@ public class SQLFunctions {
                 i++;
             }
         }
+        String iColumn =  String.join(",", columnNames);
+        String iValue = columnNames.stream().map(n -> "?").collect(Collectors.joining(","));
 
-        SqlBuilder sqlBuilder = SqlBuilder.builder()
-                .insertInto(EntityUtils.getTableName(entityClass), columnNames.toArray(new String[0]))
-                .valuesBatch(valuesList.stream()
-                .map(list -> list.toArray(new Object[0]))
-                .collect(Collectors.toList()));
-        return new SQLWrapperExecutor(mc, sqlBuilder);
+        String sql =  String.format(sqlTemp, EntityUtils.getTableName(entityClass),iColumn, iValue);
+        List<Object[]> batchParams = valuesList.stream().filter(Objects::nonNull).map(list -> list.toArray(new Object[0])).collect(Collectors.toList());
+
+
+        return new SQLWrapperExecutor(mc, SimpleSqlBuilder.ofBatch(sql, batchParams));
     }
 
 
