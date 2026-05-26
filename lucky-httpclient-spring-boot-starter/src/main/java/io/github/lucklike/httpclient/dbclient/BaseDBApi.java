@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient;
 
+import com.luckyframework.common.ContainerUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.sql.LambdaCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.LambdaDeleteBuilder;
@@ -8,6 +9,8 @@ import io.github.lucklike.httpclient.dbclient.sql.LambdaUpdateBuilder;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -128,6 +131,59 @@ public interface BaseDBApi<E> {
      * @return 影响行数
      */
     @SQL(executor = SQL_BATCH_INSERT_SQL)
-    int[] batchInsert(@NonNull Collection<E> entities);
+    int[] _batchInsert_(@NonNull Collection<E> entities);
+
+    /**
+     * 批量INSERT，每次批量操作1000条
+     *
+     * @param entities 要插入的实体数组
+     * @return 影响行数
+     */
+    default int[] batchInsert(@NonNull E[] entities) {
+        return batchInsert(Arrays.asList(entities), 1000);
+    }
+
+    /**
+     * 批量INSERT
+     *
+     * @param entities  要插入的实体数组
+     * @param batchSize 每次批量操作的条数
+     * @return 影响行数
+     */
+    default int[] batchInsert(@NonNull E[] entities, int batchSize) {
+        return batchInsert(Arrays.asList(entities), batchSize);
+    }
+
+    /**
+     * 批量INSERT，每次批量操作1000条
+     *
+     * @param entities 要插入的实体集合
+     * @return 影响行数
+     */
+    default int[] batchInsert(@NonNull Collection<E> entities) {
+        return batchInsert(entities, 1000);
+    }
+
+    /**
+     * 批量INSERT，指定每次批量操作的条数
+     *
+     * @param entities  要插入的实体集合
+     * @param batchSize 每次批量操作的条数
+     * @return 影响行数
+     */
+    default int[] batchInsert(@NonNull Collection<E> entities, int batchSize) {
+        if (ContainerUtils.isEmptyCollection(entities)) {
+            return new int[0];
+        }
+
+        List<Integer> result = new ArrayList<>();
+        for (List<E> partitionList : ContainerUtils.partition(entities, batchSize)) {
+            int[] ints = _batchInsert_(partitionList);
+            for (int i : ints) {
+                result.add(i);
+            }
+        }
+        return result.stream().mapToInt(Integer::intValue).toArray();
+    }
 
 }
