@@ -1,7 +1,9 @@
 package io.github.lucklike.httpclient.dbclient;
 
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
+import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
 import io.github.lucklike.httpclient.dbclient.sql.LambdaCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.LambdaDeleteBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.LambdaQueryBuilder;
@@ -15,19 +17,50 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 提供基于Lambda表达式查询功能的基本API
+ * 提供基于实体类的CRUD操作以及批量操作
  *
  * @param <E> 实体类型泛型
  */
 public interface BaseDBApi<E> {
 
+    /**
+     * {@link SQLFunctions#lambdaSql(MethodContext)}
+     */
     String SQL_LAMBDA = "#{lambdaSql($mc$)}";
+
+    /**
+     * {@link SQLFunctions#selectById(MethodContext)}
+     */
     String SQL_SELECT_BY_ID = "#{selectById($mc$)}";
+
+    /**
+     * {@link SQLFunctions#selectByEntity(MethodContext)}
+     */
     String SQL_SELECT_BY_ENTITY = "#{selectByEntity($mc$)}";
+
+    /**
+     * {@link SQLFunctions#deleteById(MethodContext)}
+     */
     String SQL_DELETE_BY_ID = "#{deleteById($mc$)}";
+
+    /**
+     * {@link SQLFunctions#updateById(MethodContext)}
+     */
     String SQL_UPDATE_BY_ID = "#{updateById($mc$)}";
+
+    /**
+     * {@link SQLFunctions#insertSql(MethodContext)}
+     */
     String SQL_INSERT_SQL = "#{insertSql($mc$)}";
+
+    /**
+     * {@link SQLFunctions#batchInsertSql(MethodContext)}
+     */
     String SQL_BATCH_INSERT_SQL = "#{batchInsertSql($mc$)}";
+
+    /**
+     * {@link SQLFunctions#batchUpdateById(MethodContext)}
+     */
     String SQL_BATCH_UPDATE_BY_ID = "#{batchUpdateById($mc$)}";
 
     /**
@@ -136,6 +169,7 @@ public interface BaseDBApi<E> {
 
     /**
      * 批量UPDATE
+     *
      * @param entities 要更新的实体集合
      * @return 影响行数
      */
