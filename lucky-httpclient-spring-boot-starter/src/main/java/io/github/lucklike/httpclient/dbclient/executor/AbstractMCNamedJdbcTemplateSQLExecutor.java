@@ -19,6 +19,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * 基于{@link NamedParameterJdbcTemplate} + {@link MethodContext}实现的 SQL 执行器抽象类
@@ -77,6 +78,14 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         return methodContext;
     }
 
+    private Class<?> getStreamElementClass() {
+       return methodContext.getResultResolvableType().getGeneric(0).toClass();
+    }
+
+    protected boolean isStreamQuery() {
+        return Stream.class == methodContext.getResultResolvableType().toClass();
+    }
+
     /**
      * 获取 SQL 类型
      *
@@ -85,6 +94,31 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
     public SQLType getSqlType() {
         return sqlType;
     }
+
+    protected Stream<?> queryForStream(String sqlTemp, Object[] sqlArgs) {
+        JdbcTemplate jdbcTemplate = getJdbcTemplate();
+        Class<?> entityClass = getStreamElementClass();
+        RowMapper<?> rowMapper;
+        if (Map.class.isAssignableFrom(entityClass)) {
+            rowMapper = new ColumnMapRowMapper();
+        } else {
+            rowMapper = new CachedAnnotationRowMapper<>(entityClass);
+        }
+        return jdbcTemplate.queryForStream(sqlTemp, rowMapper, sqlArgs);
+    }
+
+    protected Stream<?> queryForStream(String sqlTemp, SqlParameterSource sqlParamSource) {
+        NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
+        Class<?> entityClass = getStreamElementClass();
+        RowMapper<?> rowMapper;
+        if (Map.class.isAssignableFrom(entityClass)) {
+            rowMapper = new ColumnMapRowMapper();
+        } else {
+            rowMapper = new CachedAnnotationRowMapper<>(entityClass);
+        }
+        return jdbcTemplate.queryForStream(sqlTemp, sqlParamSource, rowMapper);
+    }
+
 
     protected Object query(String sqlTemp, Object[] sqlArgs) {
         JdbcTemplate jdbcTemplate = getJdbcTemplate();

@@ -8,7 +8,7 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import com.luckyframework.reflect.MethodUtils;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
-import io.github.lucklike.httpclient.dbclient.executor.AnnotationSQLExecutor;
+import io.github.lucklike.httpclient.dbclient.executor.NamedParamSQLExecutor;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -95,7 +95,7 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
         SQLType sqlType = sqlAnn.type();
 
         // 构建 SQL 执行器
-        SQLExecutor sqlExecutor = new AnnotationSQLExecutor(mc, sqlType, sqlTemp);
+        SQLExecutor sqlExecutor = new NamedParamSQLExecutor(mc, sqlType, sqlTemp);
         return sqlExecutor.execute();
     }
 }

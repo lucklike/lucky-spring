@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 提供基于实体类的CRUD操作以及批量操作
@@ -93,6 +94,16 @@ public interface BaseDBApi<E> {
     List<E> selectList(LambdaQueryBuilder<E> queryBuilder);
 
     /**
+     * 执行 SELECT类型 SQL 返回流式结果
+     *
+     * @param queryBuilder SELECT查询条件
+     * @return 流式结果 - the result Stream, containing mapped objects, needing to be closed once fully processed (e.g. through a try-with-resources clause)
+     */
+    @NonNull
+    @SQL(executor = SQL_LAMBDA)
+    Stream<E> selectStream(LambdaQueryBuilder<E> queryBuilder);
+
+    /**
      * 使用实体类对象作为条件进行查询（将非空属性值作为条件使用 AND 进行拼接）
      *
      * @param queryEntity 查询实体类对象
@@ -101,6 +112,16 @@ public interface BaseDBApi<E> {
     @NonNull
     @SQL(executor = SQL_SELECT_BY_ENTITY)
     List<E> selectList(@NonNull E queryEntity);
+
+    /**
+     * 使用实体类对象作为条件进行查询,返回流式结果（将非空属性值作为条件使用 AND 进行拼接）
+     *
+     * @param queryEntity 查询实体类对象
+     * @return 流式结果 - the result Stream, containing mapped objects, needing to be closed once fully processed (e.g. through a try-with-resources clause)
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_ENTITY)
+    Stream<E> selectStream(@NonNull E queryEntity);
 
     /**
      * 执行UPDATE类型的SQL返回结果

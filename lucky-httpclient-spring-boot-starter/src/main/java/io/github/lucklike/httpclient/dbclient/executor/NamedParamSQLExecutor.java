@@ -26,15 +26,15 @@ import java.util.Map;
  * @version 1.0.0
  * @date 2026/5/25 00:10
  */
-public class AnnotationSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
+public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(AnnotationSQLExecutor.class);
+    private static final Logger logger = LoggerFactory.getLogger(NamedParamSQLExecutor.class);
 
     private final String sqlTemp;
     private final SqlParameterSource sqlParamSource;
     private final SqlParameterSource[] batchSqlParamSource;
 
-    public AnnotationSQLExecutor(MethodContext mc, SQLType type, String sqlTemp) throws SQLException {
+    public NamedParamSQLExecutor(MethodContext mc, SQLType type, String sqlTemp) throws SQLException {
         super(mc, type);
         this.sqlTemp = sqlTemp;
         if (type == SQLType.BATCH) {
@@ -62,35 +62,78 @@ public class AnnotationSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
     }
 
     /**
-     * 构建批量操作 SQL 参数源
+     * Builds a batch operation SQL parameter source array.
+     * <p>
+     * This method iterates through all method parameters to find the first Iterable type parameter,
+     * then converts each element in the Iterable into a SqlParameterSource that can be used for
+     * batch SQL operations. Each element can be either a Map (converted to MapSqlParameterSource)
+     * or a JavaBean (converted to BeanPropertySqlParameterSource).
+     * </p>
      *
-     * @param mc 方法上下文
-     * @return 批量操作 SQL 参数源
-     * @throws SQLException 构建过程可能出现的异常
+     * <p><b>Usage Example:</b>
+     * <pre>
+     * // For batch insert with List&lt;Map&lt;String, Object&gt;&gt;
+     * List&lt;Map&lt;String, Object&gt;&gt; batchData = ...;
+     * methodContext.setParameters(batchData, otherParams...);
+     * SqlParameterSource[] sources = createBatchSqlParameterSource(methodContext);
+     *
+     * // For batch update with List&lt;User&gt; (JavaBean)
+     * List&lt;User&gt; users = ...;
+     * SqlParameterSource[] sources = createBatchSqlParameterSource(methodContext);
+     * </pre>
+     * </p>
+     *
+     * @param mc The method context containing all parameters of the target method.
+     *          Must contain at least one parameter of type Iterable (e.g., List, Set, Collection).
+     * @return An array of SqlParameterSource objects, where each element corresponds to one item
+     *         in the source Iterable. Never returns null.
+     * @throws SQLException If no Iterable parameter is found in the method context, or if the
+     *                      Iterable is null. The exception message will indicate the specific
+     *                      batch operation parameter error.
+     *
+     * @see SqlParameterSource
+     * @see MapSqlParameterSource
+     * @see BeanPropertySqlParameterSource
+     * @see ContainerUtils#isIterable(Object)
+     * @see ContainerUtils#getIterable(Object)
      */
     @SuppressWarnings("unchecked")
     private SqlParameterSource[] createBatchSqlParameterSource(MethodContext mc) throws SQLException {
+        // Step 1: Locate the first iterable parameter in the method context
         Iterable<Object> iterable = null;
         for (ParameterContext pc : mc.getParameterContexts()) {
             Object value = pc.getValue();
             if (ContainerUtils.isIterable(value)) {
                 iterable = ContainerUtils.getIterable(value);
-                break;
+                break; // Use the first iterable found
             }
         }
 
+        // Step 2: Validate that an iterable parameter exists
         if (iterable == null) {
-            throw new SQLException("批量操作参数异常");
+            throw new SQLException("Batch operation parameter error: no Iterable parameter found in method context");
         }
 
+        // Step 3: Convert each element in the iterable to a SqlParameterSource
         List<SqlParameterSource> sqlParameterSources = new ArrayList<>();
         for (Object obj : iterable) {
+            if (obj == null) {
+                // Optionally handle null elements - you may want to skip or throw exception
+                // For now, we'll add an empty parameter source
+                sqlParameterSources.add(new MapSqlParameterSource());
+                continue;
+            }
+
             if (obj instanceof Map) {
+                // Convert Map to MapSqlParameterSource for named parameter binding
                 sqlParameterSources.add(new MapSqlParameterSource((Map<String, ?>) obj));
             } else {
+                // Convert JavaBean to BeanPropertySqlParameterSource for property-based binding
                 sqlParameterSources.add(new BeanPropertySqlParameterSource(obj));
             }
         }
+
+        // Step 4: Return as array
         return sqlParameterSources.toArray(new SqlParameterSource[0]);
     }
 
@@ -99,7 +142,9 @@ public class AnnotationSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
         switch (getSqlType()) {
             case SELECT:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
-                return query(sqlTemp, sqlParamSource);
+                return isStreamQuery()
+                        ? queryForStream(sqlTemp, sqlParamSource)
+                        : query(sqlTemp, sqlParamSource);
             case UPDATE:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return update(sqlTemp, sqlParamSource);

@@ -753,8 +753,8 @@ public class SqlBuilder implements SQLWrapper {
                 sql.append(SELECT).append("*");
             } else {
                 sql.append(SELECT);
-                for (int i = 0; i < selectFragments.size(); i++) {
-                    sql.append(selectFragments.get(i).getSql());
+                for (SqlFragment selectFragment : selectFragments) {
+                    sql.append(selectFragment.getSql());
                 }
             }
 
@@ -859,7 +859,7 @@ public class SqlBuilder implements SQLWrapper {
         }
 
         // 构建 DELETE 语句
-        else if (sqlType == SQLType.UPDATE && isDeleteStatement) {
+        else if (sqlType == SQLType.UPDATE) {
             sql.append(DELETE_FROM);
 
             if (!fromFragments.isEmpty()) {
