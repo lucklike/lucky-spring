@@ -1,15 +1,18 @@
 package io.github.lucklike.httpclient.dbclient.plugin;
 
 import com.luckyframework.reflect.AnnotationUtils;
+import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.StringUtils;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -66,25 +69,25 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         }
 
         // 处理当前类的字段
-        Field[] fields = clazz.getDeclaredFields();
+        Field[] fields = ClassUtils.getAllFields(clazz);
         for (Field field : fields) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+
+            String fieldName = field.getName();
+
             Column column = AnnotationUtils.findMergedAnnotation(field, Column.class);
             if (column != null) {
-                String columnName;
-                if (StringUtils.hasText(column.value())) {
-                    // 使用注解中指定的列名
-                    columnName = column.value();
-                } else {
-                    // 如果没有指定值，使用默认的驼峰转下划线规则
-                    columnName = camelToUnderscore(field.getName());
+                if (column.exist()) {
+                    String columnName = StringUtils.hasText(column.value()) ? column.value() : fieldName;
+                    metadata.addMapping(fieldName, columnName);
                 }
-
-                metadata.addMapping(field.getName(), columnName);
+            } else {
+                metadata.addMapping(fieldName, fieldName);
             }
         }
 
-        // 处理父类
-        collectColumnAnnotations(clazz.getSuperclass(), metadata);
     }
 
     /**
@@ -116,11 +119,6 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
 
             // 查找对应的字段
             String fieldName = metadata.findFieldByColumn(columnName);
-
-            if (fieldName == null) {
-                // 降级为驼峰映射
-                fieldName = underscoreToCamel(columnName);
-            }
 
             // 查找属性描述符
             PropertyDescriptor pd = findProperty(fieldName, pds);
@@ -163,18 +161,6 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         return null;
     }
 
-    private String camelToUnderscore(String camelCase) {
-        StringBuilder result = new StringBuilder();
-        for (char c : camelCase.toCharArray()) {
-            if (Character.isUpperCase(c)) {
-                result.append('_').append(Character.toLowerCase(c));
-            } else {
-                result.append(c);
-            }
-        }
-        return result.toString();
-    }
-
     private String underscoreToCamel(String underscore) {
         if (!underscore.contains("_")) {
             return underscore;
@@ -202,29 +188,20 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         // 字段名 -> 列名
         private final Map<String, String> fieldToColumn = new HashMap<>();
         // 列名 -> 字段名
-        private final Map<String, String> columnToField = new HashMap<>();
+        private final Map<String, String> columnToField = new LinkedCaseInsensitiveMap<>();
 
         public void addMapping(String fieldName, String columnName) {
             fieldToColumn.put(fieldName, columnName);
-            columnToField.put(columnName.toLowerCase(), fieldName);
+            columnToField.put(columnName, fieldName);
         }
 
         public String findFieldByColumn(String columnName) {
             // 精确匹配
-            String field = columnToField.get(columnName.toLowerCase());
+            String field = columnToField.get(columnName);
             if (field != null) {
                 return field;
             }
-
-            // 忽略下划线匹配
-            String normalizedColumn = columnName.replace("_", "").toLowerCase();
-            for (Map.Entry<String, String> entry : columnToField.entrySet()) {
-                if (entry.getKey().replace("_", "").equalsIgnoreCase(normalizedColumn)) {
-                    return entry.getValue();
-                }
-            }
-
-            return null;
+            return columnName;
         }
 
         public boolean hasAnnotationMappings() {
