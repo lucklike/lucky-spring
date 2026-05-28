@@ -94,14 +94,25 @@ public interface BaseDBApi<E> {
     List<E> selectList(LambdaQueryBuilder<E> queryBuilder);
 
     /**
-     * 执行 SELECT类型 SQL 返回流式结果
+     * 执行 SELECT 类型 SQL 并以流式方式返回结果。
+     * <p>
+     * 返回的 {@link Stream} 需要在使用完毕后关闭（例如通过 try-with-resources 语句），
+     * 以避免数据库连接和游标资源泄漏。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * try (Stream<User> stream = mapper.stream(queryBuilder)) {
+     *     stream.filter(user -> user.getAge() > 18)
+     *           .forEach(System.out::println);
+     * }
+     * }</pre>
      *
-     * @param queryBuilder SELECT查询条件
-     * @return 流式结果 - the result Stream, containing mapped objects, needing to be closed once fully processed (e.g. through a try-with-resources clause)
+     * @param queryBuilder SELECT 查询条件构建器
+     * @return 包含映射对象的 Stream，必须在使用完毕后关闭
      */
     @NonNull
     @SQL(executor = SQL_LAMBDA)
-    Stream<E> selectStream(LambdaQueryBuilder<E> queryBuilder);
+    Stream<E> stream(LambdaQueryBuilder<E> queryBuilder);
 
     /**
      * 使用实体类对象作为条件进行查询（将非空属性值作为条件使用 AND 进行拼接）
@@ -114,14 +125,36 @@ public interface BaseDBApi<E> {
     List<E> selectList(@NonNull E queryEntity);
 
     /**
-     * 使用实体类对象作为条件进行查询,返回流式结果（将非空属性值作为条件使用 AND 进行拼接）
+     * 根据实体对象中的非空属性作为查询条件进行查询，并以流式方式返回结果。
+     * <p>
+     * 查询条件规则：
+     * <ul>
+     *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
+     *     <li>多个条件之间使用 {@code AND} 连接</li>
+     *     <li>{@code null} 值属性会被自动忽略</li>
+     * </ul>
+     * <p>
+     * <b>注意：</b> 返回的 {@link Stream} 必须在使用完毕后关闭（例如通过 try-with-resources 语句），
+     * 以避免数据库连接和游标资源泄漏。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询年龄为 18 岁的用户（name 为 null 会被忽略）
+     * User condition = new User();
+     * condition.setAge(18);
      *
-     * @param queryEntity 查询实体类对象
-     * @return 流式结果 - the result Stream, containing mapped objects, needing to be closed once fully processed (e.g. through a try-with-resources clause)
+     * try (Stream<User> stream = mapper.stream(condition)) {
+     *     stream.forEach(System.out::println);
+     * }
+     * }</pre>
+     *
+     * @param queryEntity 查询条件实体对象，仅使用其中的非空属性作为查询条件
+     * @return 包含映射对象的 Stream，必须在使用完毕后关闭
+     * @throws IllegalArgumentException 如果 queryEntity 为 null 时抛出
      */
     @NonNull
     @SQL(executor = SQL_SELECT_BY_ENTITY)
-    Stream<E> selectStream(@NonNull E queryEntity);
+    Stream<E> stream(@NonNull E queryEntity);
 
     /**
      * 执行UPDATE类型的SQL返回结果
