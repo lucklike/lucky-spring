@@ -1,15 +1,52 @@
+// LambdaCountBuilder.java
+
 package io.github.lucklike.httpclient.dbclient.sql;
 
 import java.util.Collection;
 import java.util.function.Consumer;
 
+/**
+ * Lambda 表达式风格的 COUNT 查询构建器
+ *
+ * <p>专门用于构建统计查询语句的构建器，自动生成 SELECT COUNT(*) 或 SELECT COUNT(column) FROM table
+ * 支持添加 JOIN、WHERE、GROUP BY、HAVING、ORDER BY、LIMIT 等子句。
+ *
+ * <p>使用示例：
+ * <pre>
+ * // 统计所有用户数量
+ * LambdaCountBuilder&lt;User&gt; countBuilder = new LambdaCountBuilder&lt;&gt;(User.class);
+ *
+ * // 统计指定条件的用户数量
+ * LambdaCountBuilder&lt;User&gt; countBuilder = new LambdaCountBuilder&lt;&gt;(User.class);
+ * countBuilder.eq(User::getStatus, 1).like(User::getName, "%张%");
+ *
+ * // 统计指定列的非空值数量
+ * LambdaCountBuilder&lt;User&gt; countBuilder = new LambdaCountBuilder&lt;&gt;(User.class, User::getEmail);
+ * </pre>
+ *
+ * @param <T> 实体类型
+ * @author fukang
+ * @version 3.0.0
+ * @date 2026/5/25
+ */
 public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
 
+    /**
+     * 构造统计构建器，使用 COUNT(*)
+     *
+     * @param clazz 实体类类型，用于获取表名
+     */
     LambdaCountBuilder(Class<T> clazz) {
         super(clazz);
         selectCount().from();
     }
 
+    /**
+     * 构造统计构建器，统计指定列的非空值数量 COUNT(column)
+     *
+     * @param clazz  实体类类型，用于获取表名
+     * @param column 要统计的列对应的 Lambda 函数
+     */
     public LambdaCountBuilder(Class<T> clazz, SFunction<T, ?> column) {
         super(clazz);
         selectCount(column).from();

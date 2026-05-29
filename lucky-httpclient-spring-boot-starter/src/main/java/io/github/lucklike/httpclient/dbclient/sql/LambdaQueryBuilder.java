@@ -1,15 +1,60 @@
+// LambdaQueryBuilder.java
+
 package io.github.lucklike.httpclient.dbclient.sql;
 
 import java.util.Collection;
 import java.util.function.Consumer;
 
+/**
+ * Lambda 表达式风格的 SELECT 查询构建器
+ *
+ * <p>专门用于构建 SELECT 查询语句的构建器，提供了类型安全的 Lambda 方式
+ * 来指定查询列、WHERE 条件、JOIN、GROUP BY、ORDER BY、LIMIT 等子句。
+ *
+ * <p>使用示例：
+ * <pre>
+ * // 查询所有列
+ * LambdaQueryBuilder&lt;User&gt; query = new LambdaQueryBuilder&lt;&gt;(User.class);
+ *
+ * // 查询指定列
+ * LambdaQueryBuilder&lt;User&gt; query = new LambdaQueryBuilder&lt;&gt;(User.class, User::getId, User::getName);
+ *
+ * // 带条件的查询
+ * LambdaQueryBuilder&lt;User&gt; query = new LambdaQueryBuilder&lt;&gt;(User.class);
+ * query.eq(User::getStatus, 1)
+ *      .like(User::getName, "%test%")
+ *      .orderByDesc(User::getCreateTime)
+ *      .limit(10);
+ *
+ * // 复杂条件（嵌套括号）
+ * query.where(b -> {
+ *     b.eq(User::getStatus, 1).or().eq(User::getStatus, 2);
+ * }).and().gt(User::getAge, 18);
+ * </pre>
+ *
+ * @param <T> 实体类型
+ * @author fukang
+ * @version 3.0.0
+ * @date 2026/5/25
+ */
 public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
 
+    /**
+     * 构造查询构建器，默认查询所有列（SELECT *）
+     *
+     * @param clazz 实体类类型，用于获取表名和列信息
+     */
     LambdaQueryBuilder(Class<T> clazz) {
         super(clazz);
         select().from();
     }
 
+    /**
+     * 构造查询构建器，并指定要查询的列
+     *
+     * @param clazz         实体类类型，用于获取表名和列信息
+     * @param selectColumns 要查询的列对应的 Lambda 函数列表
+     */
     @SafeVarargs
     public LambdaQueryBuilder(Class<T> clazz, SFunction<T, ?>... selectColumns) {
         super(clazz);
