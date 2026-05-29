@@ -263,7 +263,7 @@ public class SqlBuilder implements SQLWrapper {
         if (insertValuesFragments.isEmpty()) {
             insertValuesFragments.add(new SqlFragment(sb.toString(), params));
         } else {
-            insertValuesFragments.add(new SqlFragment(", " + sb.toString(), params));
+            insertValuesFragments.add(new SqlFragment(", " + sb, params));
         }
         return this;
     }
@@ -453,7 +453,7 @@ public class SqlBuilder implements SQLWrapper {
     }
 
     public SqlBuilder between(String column, Object value1, Object value2) {
-        condition(column + " BETWEEN ? AND ?", value1);
+        condition(column + " BETWEEN ? AND ?", value1, value2);
         return this;
     }
 
