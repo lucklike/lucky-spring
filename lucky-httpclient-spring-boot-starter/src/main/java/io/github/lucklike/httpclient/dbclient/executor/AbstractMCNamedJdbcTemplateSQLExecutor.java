@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.executor;
 
+import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
@@ -16,6 +17,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -325,5 +327,35 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         return StringUtils.hasText(tempBeanName)
                 ? ApplicationContextUtils.getBean(tempBeanName, NamedParameterJdbcTemplate.class)
                 : ApplicationContextUtils.getBean(NamedParameterJdbcTemplate.class);
+    }
+
+    protected String getSqlParam(Object[] params) {
+        if (ContainerUtils.isEmptyArray(params)) {
+            return "[]";
+        }
+
+        List<String> paramArray = new ArrayList<>();
+        for (Object param : params) {
+            if (param == null) {
+                paramArray.add("null");
+            } else {
+                paramArray.add(StringUtils.format("({}){}", ClassUtils.getClassSimpleName(param), param));
+            }
+        }
+
+        return StringUtils.format("[{}]", String.join(",  ", paramArray));
+    }
+
+    protected String getBatchSqlParam(List<Object[]> batchSqlParam) {
+        if (ContainerUtils.isEmptyCollection(batchSqlParam)) {
+            return "[]";
+        }
+
+        List<String> paramArray = new ArrayList<>();
+        for (Object[] batchParam : batchSqlParam) {
+            paramArray.add(getSqlParam(batchParam));
+        }
+
+        return StringUtils.format("[\n\t{}\n]", String.join("\n\t", paramArray));
     }
 }

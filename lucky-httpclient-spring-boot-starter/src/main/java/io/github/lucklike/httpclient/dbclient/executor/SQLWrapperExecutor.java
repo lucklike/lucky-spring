@@ -7,10 +7,9 @@ import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 
 /**
+ * SQL包装器执行器
  *
  * @author fukang
  * @version 1.0.0
@@ -32,15 +31,15 @@ public class SQLWrapperExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
         String sqlTemp = sqlWrapper.getSqlTemp();
         switch (getSqlType()) {
             case SELECT:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, Arrays.toString(sqlWrapper.getParams()))));
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
                 return isStreamQuery()
                         ? queryForStream(sqlTemp, sqlWrapper.getParams())
                         : query(sqlTemp, sqlWrapper.getParams());
             case UPDATE:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, Arrays.toString(sqlWrapper.getParams()))));
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
                 return update(sqlTemp, sqlWrapper.getParams());
             default:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlWrapper.getBatchParams())));
+                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getBatchSqlParam(sqlWrapper.getBatchParams()))));
                 return batchUpdate(sqlTemp, sqlWrapper.getBatchParams());
         }
     }
