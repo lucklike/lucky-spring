@@ -50,6 +50,39 @@ public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 构造一个查询所有列的 SELECT 查询构建器。
+     *
+     * @param sqlBuilder Lambda SQL 构建器实例
+     * @param <T>        实体类型泛型
+     */
+    public LambdaQueryBuilder(LambdaSqlBuilder<T> sqlBuilder) {
+        super(sqlBuilder);
+        select().from();
+    }
+
+    /**
+     * 构造一个查询指定列的 SELECT 查询构建器。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * new LambdaQueryBuilder<>(
+     *     LambdaSqlBuilder.of(User.class),
+     *     User::getName,
+     *     User::getAge
+     * );
+     * }</pre>
+     *
+     * @param sqlBuilder    Lambda SQL 构建器实例
+     * @param selectColumns 要查询的列对应的 Lambda 函数
+     * @param <T>           实体类型泛型
+     */
+    @SafeVarargs
+    public LambdaQueryBuilder(LambdaSqlBuilder<T> sqlBuilder, SFunction<T, ?>... selectColumns) {
+        super(sqlBuilder);
+        select(selectColumns).from();
+    }
+
+    /**
      * 构造查询构建器，并指定要查询的列
      *
      * @param clazz         实体类类型，用于获取表名和列信息

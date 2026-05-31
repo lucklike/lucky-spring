@@ -60,6 +60,26 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     }
 
     /**
+     * 拷贝构造函数。
+     * <p>
+     * 基于现有的 LambdaSqlBuilder 实例创建一个深拷贝副本。
+     * 复制后的新实例与原实例相互独立，修改一个不会影响另一个。
+     * <p>
+     * 复制内容包括：实体类类型、表名、底层 SqlBuilder（深拷贝）、嵌套条件状态及参数列表。
+     * 特别地，构建状态 isBuilt 会被重置为 false，确保新实例可以正常使用。
+     *
+     * @param lambdaSqlBuilder 要复制的源 LambdaSqlBuilder 实例
+     */
+    protected LambdaSqlBuilder(LambdaSqlBuilder<T> lambdaSqlBuilder) {
+        this.entityClass = lambdaSqlBuilder.entityClass;
+        this.tableName = lambdaSqlBuilder.tableName;
+        this.sqlBuilder = lambdaSqlBuilder.sqlBuilder.copy();
+        this.isBuilt = false;
+        this.inNestedCondition = lambdaSqlBuilder.inNestedCondition;
+        this.nestedParams = new ArrayList<>(lambdaSqlBuilder.nestedParams);
+    }
+
+    /**
      * 创建 LambdaSqlBuilder 实例的静态工厂方法
      *
      * @param entityClass 实体类类型

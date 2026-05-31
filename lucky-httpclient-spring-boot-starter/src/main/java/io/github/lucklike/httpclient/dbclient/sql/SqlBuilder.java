@@ -1,6 +1,11 @@
 package io.github.lucklike.httpclient.dbclient.sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -645,27 +650,42 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder copy() {
         SqlBuilder copy = new SqlBuilder();
-        copy.selectFragments.addAll(this.selectFragments);
-        copy.fromFragments.addAll(this.fromFragments);
-        copy.joinFragments.addAll(this.joinFragments);
-        copy.setFragments.addAll(this.setFragments);
-        copy.whereFragments.addAll(this.whereFragments);
-        copy.groupByFragments.addAll(this.groupByFragments);
-        copy.havingFragments.addAll(this.havingFragments);
-        copy.orderByFragments.addAll(this.orderByFragments);
-        copy.limitFragments.addAll(this.limitFragments);
-        copy.insertIntoFragments.addAll(this.insertIntoFragments);
-        copy.insertColumnsFragments.addAll(this.insertColumnsFragments);
-        copy.insertValuesFragments.addAll(this.insertValuesFragments);
+
+        // 深拷贝所有 SqlFragment
+        copy.selectFragments.addAll(copyFragments(this.selectFragments));
+        copy.fromFragments.addAll(copyFragments(this.fromFragments));
+        copy.joinFragments.addAll(copyFragments(this.joinFragments));
+        copy.setFragments.addAll(copyFragments(this.setFragments));
+        copy.whereFragments.addAll(copyFragments(this.whereFragments));
+        copy.groupByFragments.addAll(copyFragments(this.groupByFragments));
+        copy.havingFragments.addAll(copyFragments(this.havingFragments));
+        copy.orderByFragments.addAll(copyFragments(this.orderByFragments));
+        copy.limitFragments.addAll(copyFragments(this.limitFragments));
+        copy.insertIntoFragments.addAll(copyFragments(this.insertIntoFragments));
+        copy.insertColumnsFragments.addAll(copyFragments(this.insertColumnsFragments));
+        copy.insertValuesFragments.addAll(copyFragments(this.insertValuesFragments));
+
+        // 深拷贝 batchParams（注意内部对象的深浅取决于使用场景）
         for (Object[] batch : this.batchParams) {
             copy.batchParams.add(batch.clone());
         }
+
         copy.useBatch = this.useBatch;
         copy.sqlType = this.sqlType;
         copy.hasWhere = this.hasWhere;
         copy.needAndPrefix = this.needAndPrefix;
         copy.isDeleteStatement = this.isDeleteStatement;
+        copy.isBuilt = false;  // 关键：重置构建状态
+
         return copy;
+    }
+
+    private List<SqlFragment> copyFragments(List<SqlFragment> fragments) {
+        List<SqlFragment> copies = new ArrayList<>();
+        for (SqlFragment fragment : fragments) {
+            copies.add(new SqlFragment(fragment.sql, new ArrayList<>(fragment.params)));
+        }
+        return copies;
     }
 
     public SqlBuilder setSqlType(SQLType type) {

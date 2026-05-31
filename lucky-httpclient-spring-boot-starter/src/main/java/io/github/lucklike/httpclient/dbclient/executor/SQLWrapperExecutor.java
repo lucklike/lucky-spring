@@ -32,9 +32,7 @@ public class SQLWrapperExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
         switch (getSqlType()) {
             case SELECT:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
-                return isStreamQuery()
-                        ? queryForStream(sqlTemp, sqlWrapper.getParams())
-                        : query(sqlTemp, sqlWrapper.getParams());
+                return queryAutoSelectModel(sqlTemp, sqlWrapper.getParams());
             case UPDATE:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
                 return update(sqlTemp, sqlWrapper.getParams());

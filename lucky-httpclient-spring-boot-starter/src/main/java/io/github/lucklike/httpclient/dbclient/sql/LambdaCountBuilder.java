@@ -42,6 +42,55 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 构造一个基于 Lambda 表达式的 COUNT 统计构建器。
+     * <p>
+     * 该构造函数会创建一个统计查询，默认对实体类对应的表进行全表统计（COUNT(*)），
+     * 并自动设置 FROM 子句为当前实体类映射的表名。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 统计用户表中所有记录数
+     * LambdaCountBuilder<User> countBuilder = new LambdaCountBuilder<>(
+     *     LambdaSqlBuilder.of(User.class)
+     * );
+     *
+     * // 最终生成的 SQL 类似于：SELECT COUNT(*) FROM user
+     * }</pre>
+     *
+     * @param sqlBuilder Lambda SQL 构建器实例，用于提供实体类类型、表名映射等基础信息
+     */
+    public LambdaCountBuilder(LambdaSqlBuilder<T> sqlBuilder) {
+        super(sqlBuilder);
+        selectCount().from();
+    }
+
+    /**
+     * 构造一个基于 Lambda 表达式的 COUNT 统计构建器。
+     * <p>
+     * 该构造函数会创建一个统计查询，统计指定列的非空值数量（COUNT(column)），
+     * 并自动设置 FROM 子句为当前实体类映射的表名。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 统计用户表中 status 列非空的记录数
+     * LambdaCountBuilder<User> countBuilder = new LambdaCountBuilder<>(
+     *     LambdaSqlBuilder.of(User.class),
+     *     User::getStatus
+     * );
+     *
+     * // 最终生成的 SQL 类似于：SELECT COUNT(status) FROM user
+     * }</pre>
+     *
+     * @param sqlBuilder Lambda SQL 构建器实例，用于提供实体类类型、表名映射等基础信息
+     * @param column     要统计的列对应的 Lambda 函数（如 User::getStatus），
+     *                   该方法会统计该列非空值的数量
+     */
+    public LambdaCountBuilder(LambdaSqlBuilder<T> sqlBuilder, SFunction<T, ?> column) {
+        super(sqlBuilder);
+        selectCount(column).from();
+    }
+
+    /**
      * 构造统计构建器，统计指定列的非空值数量 COUNT(column)
      *
      * @param clazz  实体类类型，用于获取表名

@@ -45,6 +45,36 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 构造一个基于 Lambda 表达式的 UPDATE 更新构建器。
+     * <p>
+     * 该构造函数会创建一个更新操作，默认对实体类对应的表执行更新（UPDATE table）。
+     * <p>
+     * <b>注意：</b>
+     * <ul>
+     *     <li>必须通过 {@code set()} 方法指定要更新的列和值</li>
+     *     <li>如果不在后续链式调用中添加 WHERE 条件，执行时将更新表中的所有数据，请务必谨慎</li>
+     * </ul>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * LambdaUpdateBuilder<User> updateBuilder = new LambdaUpdateBuilder<>(
+     *     LambdaSqlBuilder.of(User.class)
+     * );
+     *
+     *  updateBuilder
+     *     .set(User::getStatus, 1)
+     *     .eq(User::getStatus, 3);
+     * }</pre>
+     *
+     * @param sqlBuilder Lambda SQL 构建器实例，用于提供实体类类型、表名映射等基础信息
+     * @param <T>        实体类型泛型
+     */
+    public LambdaUpdateBuilder(LambdaSqlBuilder<T> sqlBuilder) {
+        super(sqlBuilder);
+        update();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

@@ -6,9 +6,14 @@ import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
+import io.github.lucklike.httpclient.dbclient.annotation.DBClient;
 import io.github.lucklike.httpclient.dbclient.plugin.CachedAnnotationRowMapper;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
-import io.github.lucklike.httpclient.dbclient.annotation.DBClient;
+import io.github.lucklike.httpclient.dbclient.sql.page.ContextPage;
+import io.github.lucklike.httpclient.dbclient.sql.page.Page;
+import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
+import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageSql;
+import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageStrategyFactory;
 import org.springframework.core.ResolvableType;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,9 +23,11 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -81,11 +88,16 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
     }
 
     private Class<?> getStreamElementClass() {
-       return methodContext.getResultResolvableType().getGeneric(0).toClass();
+        return methodContext.getResultResolvableType().getGeneric(0).toClass();
     }
 
     protected boolean isStreamQuery() {
         return Stream.class == methodContext.getResultResolvableType().toClass();
+    }
+
+    protected boolean isPageQuery() {
+        return PageResult.class == methodContext.getResultResolvableType().toClass() &&
+                methodContext.getArgument(Page.class) != null;
     }
 
     /**
@@ -97,30 +109,54 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         return sqlType;
     }
 
-    protected Stream<?> queryForStream(String sqlTemp, Object[] sqlArgs) {
-        JdbcTemplate jdbcTemplate = getJdbcTemplate();
-        Class<?> entityClass = getStreamElementClass();
-        RowMapper<?> rowMapper;
-        if (Map.class.isAssignableFrom(entityClass)) {
-            rowMapper = new ColumnMapRowMapper();
-        } else {
-            rowMapper = new CachedAnnotationRowMapper<>(entityClass);
+    protected Object queryAutoSelectModel(String sqlTemp, Object[] sqlArgs) {
+        if (isPageQuery()) {
+            return queryPage(sqlTemp, sqlArgs);
         }
-        return jdbcTemplate.queryForStream(sqlTemp, rowMapper, sqlArgs);
+        if (isStreamQuery()) {
+            return queryForStream(sqlTemp, sqlArgs);
+        }
+        return query(sqlTemp, sqlArgs);
+    }
+
+    protected Object queryAutoSelectModel(String sqlTemp, SqlParameterSource sqlParameterSource) {
+        if (isPageQuery()) {
+            return queryPage(sqlTemp, sqlParameterSource);
+        }
+        if (isStreamQuery()) {
+            return queryForStream(sqlTemp, sqlParameterSource);
+        }
+        return query(sqlTemp, sqlParameterSource);
+    }
+
+    protected Stream<?> queryForStream(String sqlTemp, Object[] sqlArgs) {
+        return getJdbcTemplate().queryForStream(sqlTemp, creatSingleGenericRowMapper(), sqlArgs);
     }
 
     protected Stream<?> queryForStream(String sqlTemp, SqlParameterSource sqlParamSource) {
-        NamedParameterJdbcTemplate jdbcTemplate = getNamedParameterJdbcTemplate();
-        Class<?> entityClass = getStreamElementClass();
-        RowMapper<?> rowMapper;
-        if (Map.class.isAssignableFrom(entityClass)) {
-            rowMapper = new ColumnMapRowMapper();
-        } else {
-            rowMapper = new CachedAnnotationRowMapper<>(entityClass);
-        }
-        return jdbcTemplate.queryForStream(sqlTemp, sqlParamSource, rowMapper);
+        return namedParameterJdbcTemplate.queryForStream(sqlTemp, sqlParamSource, creatSingleGenericRowMapper());
     }
 
+    protected Object queryPage(String sqlTemp, Object[] sqlArgs) {
+        Page page = methodContext.getArgument(Page.class);
+        PageResult<?> resultPage = new PageResult<>(page);
+        JdbcTemplate jdbcTemplate = getJdbcTemplate();
+        page.setPageStrategyIfNotExist(() -> PageStrategyFactory.getStrategyByDataSource(jdbcTemplate.getDataSource()));
+        if (page.isCountTotal()) {
+            String countSql = page.buildCountSql(sqlTemp);
+            long totalCount = jdbcTemplate.queryForObject(countSql, long.class, sqlArgs);
+            resultPage.setTotalCount(totalCount);
+        }
+
+        PageSql pageParam = page.buildPageSql(sqlTemp);
+        String pageSql = pageParam.getSql();
+        Object[] pageArgs = mergeParams(sqlArgs, pageParam.getPageParam());
+
+        Class<?> entityClass = methodContext.getResultResolvableType().getGeneric(0).toClass();
+        List queryResult = jdbcTemplate.query(pageSql, new CachedAnnotationRowMapper<>(entityClass), pageArgs);
+        resultPage.setRecords(queryResult);
+        return resultPage;
+    }
 
     protected Object query(String sqlTemp, Object[] sqlArgs) {
         JdbcTemplate jdbcTemplate = getJdbcTemplate();
@@ -146,6 +182,25 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
 
         // Bean 类型
         return jdbcTemplate.query(sqlTemp, rowMapper, sqlArgs).stream().findFirst().orElse(null);
+    }
+
+
+    protected Object queryPage(String sqlTemp, SqlParameterSource sqlParamSource) {
+        ContextPage page = new ContextPage(methodContext, methodContext.getArgument(Page.class));
+        PageResult<?> resultPage = new PageResult<>(page);
+        page.setPageStrategyIfNotExist(() -> PageStrategyFactory.getStrategyByDataSource(namedParameterJdbcTemplate.getJdbcTemplate().getDataSource()));
+        if (page.isCountTotal()) {
+            String countSql = page.buildCountSql(sqlTemp);
+            Long totalCount = namedParameterJdbcTemplate.queryForObject(countSql, sqlParamSource, long.class);
+            resultPage.setTotalCount(totalCount == null ? 0 : totalCount);
+        }
+
+        PageSql pageParam = page.buildPageSql(sqlTemp);
+        String pageSql = pageParam.getSql();
+
+        List result = namedParameterJdbcTemplate.query(pageSql, sqlParamSource, creatSingleGenericRowMapper());
+        resultPage.setRecords(result);
+        return resultPage;
     }
 
     /**
@@ -294,6 +349,14 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         return ConversionUtils.conversion(updates, methodContext.getResultResolvableType());
     }
 
+    protected RowMapper<?> creatSingleGenericRowMapper() {
+        Class<?> entityClass = methodContext.getResultResolvableType().getGeneric(0).toClass();
+        if (Map.class.isAssignableFrom(entityClass)) {
+            return new ColumnMapRowMapper();
+        }
+        return new CachedAnnotationRowMapper<>(entityClass);
+    }
+
     protected RowMapper<?> createRowMapper() {
         ResolvableType resultType = methodContext.getResultResolvableType();
         // 集合类型
@@ -357,5 +420,14 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         }
 
         return StringUtils.format("[\n\t{}\n]", String.join("\n\t", paramArray));
+    }
+
+    private Object[] mergeParams(Object[] params1, Object[] params2) {
+        return Stream.of(
+                        params1 != null ? Arrays.stream(params1) : Stream.empty(),
+                        params2 != null ? Arrays.stream(params2) : Stream.empty()
+                )
+                .flatMap(Function.identity())
+                .toArray();
     }
 }

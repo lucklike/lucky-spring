@@ -40,6 +40,32 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 构造一个基于 Lambda 表达式的 DELETE 删除构建器。
+     * <p>
+     * 该构造函数会创建一个删除操作，默认对实体类对应的表执行删除（DELETE FROM table），
+     * 并自动设置 FROM 子句为当前实体类映射的表名。
+     * <p>
+     * <b>注意：</b> 如果不在后续链式调用中添加 WHERE 条件，执行时将删除表中的所有数据，
+     * 请务必在调用 delete() 方法前添加必要的过滤条件。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * LambdaDeleteBuilder<User> deleteBuilder = new LambdaDeleteBuilder<>(
+     *     LambdaSqlBuilder.of(User.class)
+     * );
+     *
+     * // 安全做法：添加条件后删除
+     * deleteBuilder.eq(User::getStatus, 0);
+     * }</pre>
+     *
+     * @param sqlBuilder Lambda SQL 构建器实例，用于提供实体类类型、表名映射等基础信息
+     */
+    public LambdaDeleteBuilder(LambdaSqlBuilder<T> sqlBuilder) {
+        super(sqlBuilder);
+        delete().from();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

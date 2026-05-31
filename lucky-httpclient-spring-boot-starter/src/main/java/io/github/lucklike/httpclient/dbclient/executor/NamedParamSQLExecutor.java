@@ -5,7 +5,7 @@ import com.luckyframework.common.FontUtil;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
-import io.github.lucklike.httpclient.dbclient.plugin.FlatBeanSqlParameterSource;
+import io.github.lucklike.httpclient.dbclient.plugin.ContentSpELSqlParameterSource;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,24 +41,10 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
             this.batchSqlParamSource = createBatchSqlParameterSource(mc);
             this.sqlParamSource = null;
         } else {
-            this.sqlParamSource = createSqlParameterSource(mc);
+            this.sqlParamSource = new ContentSpELSqlParameterSource(mc);
             this.batchSqlParamSource = null;
         }
 
-    }
-
-    /**
-     * 构建普通 SQL 参数源
-     *
-     * @param mc 方法上下文
-     * @return 普通 SQL 参数源
-     */
-    private SqlParameterSource createSqlParameterSource(MethodContext mc) {
-        FlatBeanSqlParameterSource sqlParamSource = new FlatBeanSqlParameterSource();
-        for (ParameterContext pc : mc.getParameterContexts()) {
-            sqlParamSource.addValue(pc.getName(), pc.getValue());
-        }
-        return sqlParamSource;
     }
 
     /**
@@ -142,9 +128,7 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
         switch (getSqlType()) {
             case SELECT:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
-                return isStreamQuery()
-                        ? queryForStream(sqlTemp, sqlParamSource)
-                        : query(sqlTemp, sqlParamSource);
+                return queryAutoSelectModel(sqlTemp, sqlParamSource);
             case UPDATE:
                 logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return update(sqlTemp, sqlParamSource);
