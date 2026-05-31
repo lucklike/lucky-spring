@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.dbclient.function;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
+import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
@@ -144,9 +145,9 @@ public class SQLFunctions {
         Class<?> entityClass = entity.getClass();
 
         SqlBuilder sqlBuilder = SqlBuilder.builder().select().from(EntityUtils.getTableName(entityClass));
-        columnHandler(entity, co -> {
+        columnHandler(mc, entity, co -> {
             if (co.getValue() != null) {
-                sqlBuilder.eq(co.getName(), co.getValue());
+                co.getCondition().additionCondition(sqlBuilder, co);
             }
         });
         return new SQLWrapperExecutor(mc, sqlBuilder);
@@ -199,7 +200,7 @@ public class SQLFunctions {
 
         SqlBuilder sqlBuilder = SqlBuilder.builder().update(EntityUtils.getTableName(entityClass));
 
-        columnHandler(entity, co -> {
+        columnHandler(mc, entity, co -> {
             if (co.isId()) {
                 hasIdField.set(true);
                 if (idFieldName[0] == null) {
@@ -249,7 +250,7 @@ public class SQLFunctions {
         List<String> columnNames = new ArrayList<>();
         List<Object> values = new ArrayList<>();
 
-        columnHandler(entity, co -> {
+        columnHandler(mc, entity, co -> {
             if (co.getValue() != null) {
                 columnNames.add(co.getName());
                 values.add(co.getValue());
@@ -432,10 +433,11 @@ public class SQLFunctions {
      * <p>遍历实体的所有非静态字段，过滤掉@Column(exist=false)的字段，
      * 并将每个字段封装为ColumnInfo对象后传递给消费者处理</p>
      *
+     * @param mc       方法上下文
      * @param entity   实体对象
      * @param consumer 列信息消费者，用于处理每个字段的列信息
      */
-    private static void columnHandler(Object entity, Consumer<ColumnInfo> consumer) {
+    private static void columnHandler(MethodContext mc, Object entity, Consumer<ColumnInfo> consumer) {
         for (Field field : ClassUtils.getAllFields(entity.getClass())) {
             if (Modifier.isStatic(field.getModifiers())) {
                 continue;
@@ -446,74 +448,21 @@ public class SQLFunctions {
             }
 
             ColumnInfo columnInfo;
+
             Object fieldValue = FieldUtils.getValue(entity, field);
             String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
+            Condition condition =
+                    columnAnn == null
+                            ? mc.generateObject(Condition.Eq.class, Scope.SINGLETON)
+                            : mc.generateObject(columnAnn.condition(), Scope.SINGLETON);
             if (AnnotationUtils.isAnnotated(field, Id.class)) {
-                columnInfo = new ColumnInfo(columnName, fieldValue, true);
+                columnInfo = new ColumnInfo(columnName, fieldValue, true, condition);
             } else {
-                columnInfo = new ColumnInfo(columnName, fieldValue, false);
+                columnInfo = new ColumnInfo(columnName, fieldValue, false, condition);
             }
 
             consumer.accept(columnInfo);
         }
     }
 
-    /**
-     * 列信息内部类
-     * <p>封装数据库列的元数据信息，包括列名、字段值和是否为主键标识</p>
-     */
-    static class ColumnInfo {
-        /**
-         * 数据库列名
-         */
-        private final String name;
-        /**
-         * 字段值
-         */
-        private final Object value;
-        /**
-         * 是否为主键ID字段
-         */
-        private final boolean isId;
-
-        /**
-         * 构造列信息对象
-         *
-         * @param name  数据库列名
-         * @param value 字段值
-         * @param isId  是否为主键ID字段
-         */
-        private ColumnInfo(String name, Object value, boolean isId) {
-            this.name = name;
-            this.value = value;
-            this.isId = isId;
-        }
-
-        /**
-         * 获取数据库列名
-         *
-         * @return 列名
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * 获取字段值
-         *
-         * @return 字段值
-         */
-        public Object getValue() {
-            return value;
-        }
-
-        /**
-         * 判断是否为主键ID字段
-         *
-         * @return true表示是ID字段，false表示不是
-         */
-        public boolean isId() {
-            return isId;
-        }
-    }
 }
