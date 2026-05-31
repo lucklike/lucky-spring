@@ -206,35 +206,6 @@ public interface BaseDBApi<E> {
     PageResult<E> selectPage(@NonNull E queryEntity, @NonNull Page page);
 
     /**
-     * 使用实体对象作为条件进行查询。
-     * <p>
-     * 查询条件规则：
-     * <ul>
-     *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
-     *     <li>多个条件之间使用 {@code AND} 连接</li>
-     *     <li>{@code null} 值属性会被自动忽略</li>
-     *     <li>如果所有属性都为 {@code null}，则会查询全表（请谨慎使用）</li>
-     * </ul>
-     * <p>
-     * 使用示例：
-     * <pre>{@code
-     * // 查询状态为1且年龄为18岁的用户列表
-     * User condition = new User();
-     * condition.setStatus(1);
-     * condition.setAge(18);
-     *
-     * List<User> users = mapper.selectList(condition);
-     * }</pre>
-     *
-     * @param queryEntity 查询条件实体对象，仅使用其中的非空属性作为查询条件
-     * @return 查询结果列表，永远不为 {@code null}
-     * @throws IllegalArgumentException 如果 queryEntity 为 null 时抛出
-     */
-    @NonNull
-    @SQL(executor = SQL_SELECT_BY_ENTITY)
-    List<E> selectList(@NonNull E queryEntity);
-
-    /**
      * 使用实体对象作为条件进行流式查询。
      * <p>
      * 查询条件规则：
@@ -242,6 +213,8 @@ public interface BaseDBApi<E> {
      *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
      *     <li>多个条件之间使用 {@code AND} 连接</li>
      *     <li>{@code null} 值属性会被自动忽略</li>
+     *     <li>支持通过字段上的 {@code @Column} 和 {@code @Id} 注解自定义列名</li>
+     *     <li>支持通过字段上的 {@code @Column(condition = XxxCondition.class)} 注解自定义条件类型</li>
      * </ul>
      * <p>
      * <b>注意：</b> 返回的 {@link Stream} 必须在使用完毕后关闭（例如通过 try-with-resources 语句），
@@ -265,6 +238,37 @@ public interface BaseDBApi<E> {
     @NonNull
     @SQL(executor = SQL_SELECT_BY_ENTITY)
     Stream<E> stream(@NonNull E queryEntity);
+
+    /**
+     * 使用实体对象作为条件进行查询。
+     * <p>
+     * 查询条件规则：
+     * <ul>
+     *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
+     *     <li>多个条件之间使用 {@code AND} 连接</li>
+     *     <li>{@code null} 值属性会被自动忽略</li>
+     *     <li>如果所有属性都为 {@code null}，则会查询全表（请谨慎使用）</li>
+     *     <li>支持通过字段上的 {@code @Column} 和 {@code @Id} 注解自定义列名</li>
+     *     <li>支持通过字段上的 {@code @Column(condition = XxxCondition.class)} 注解自定义条件类型</li>
+     * </ul>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询状态为1且年龄为18岁的用户列表
+     * User condition = new User();
+     * condition.setStatus(1);
+     * condition.setAge(18);
+     *
+     * List<User> users = mapper.selectList(condition);
+     * }</pre>
+     *
+     * @param queryEntity 查询条件实体对象，仅使用其中的非空属性作为查询条件
+     * @return 查询结果列表，永远不为 {@code null}
+     * @throws IllegalArgumentException 如果 queryEntity 为 null 时抛出
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_ENTITY)
+    List<E> selectList(@NonNull E queryEntity);
 
     /**
      * 执行 UPDATE 类型的 SQL 并返回影响行数。
