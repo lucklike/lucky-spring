@@ -17,7 +17,7 @@ public class Oracle12cPageStrategy extends AbstractPageStrategy {
     public PageSql pageSql(String sql, Page page) {
         // Oracle 12c+: SELECT ... OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         String pageSql = String.format(
-                "SELECT temp.* FRON(%s) temp %s OFFSET %s ROWS FETCH NEXT %s ROWS ONLY",
+                "SELECT temp.* FROM(%s) temp %s OFFSET %s ROWS FETCH NEXT %s ROWS ONLY",
                 sql,
                 buildOrderByClause(page),
                 getOffsetParamName(page),
