@@ -1,8 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.executor;
 
 import com.luckyframework.common.ContainerUtils;
-import com.luckyframework.common.FontUtil;
-import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import io.github.lucklike.httpclient.dbclient.plugin.ContentSpELSqlParameterSource;
@@ -15,7 +13,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -127,13 +124,10 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
     public Object execute() {
         switch (getSqlType()) {
             case SELECT:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return queryAutoSelectModel(sqlTemp, sqlParamSource);
             case UPDATE:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, sqlParamSource)));
                 return update(sqlTemp, sqlParamSource);
             default:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n\tSQL   : {}\n\tPARAM : {}\n>>", sqlTemp, Arrays.toString(batchSqlParamSource))));
                 return batchUpdate(sqlTemp, batchSqlParamSource);
         }
     }

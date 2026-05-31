@@ -1,7 +1,5 @@
 package io.github.lucklike.httpclient.dbclient.executor;
 
-import com.luckyframework.common.FontUtil;
-import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import org.slf4j.Logger;
@@ -31,13 +29,10 @@ public class SQLWrapperExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
         String sqlTemp = sqlWrapper.getSqlTemp();
         switch (getSqlType()) {
             case SELECT:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
                 return queryAutoSelectModel(sqlTemp, sqlWrapper.getParams());
             case UPDATE:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getSqlParam(sqlWrapper.getParams()))));
                 return update(sqlTemp, sqlWrapper.getParams());
             default:
-                logger.info(FontUtil.getWhiteStr(StringUtils.format("\n>>\n{}\n{}\n>>", sqlTemp, getBatchSqlParam(sqlWrapper.getBatchParams()))));
                 return batchUpdate(sqlTemp, sqlWrapper.getBatchParams());
         }
     }
