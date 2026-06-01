@@ -71,7 +71,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @HttpRequest
 @HttpClient(func = "__get_http_server_url__")
 @Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
-@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__")
+@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
 @SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
 public @interface StdHttpClient {
 
@@ -221,7 +221,7 @@ public @interface StdHttpClient {
                                             Request request,
                                             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                             @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
-            lifeCycleManager.requestCompleted(mc, request, apiConfig);
+            lifeCycleManager.requestInitCompleted(mc, request, apiConfig);
         }
 
 
@@ -271,6 +271,20 @@ public @interface StdHttpClient {
                                                  @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                                  @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
             return lifeCycleManager.getResponseMetaType(mc, apiConfig);
+        }
+
+
+        /**
+         * 强制指定响应体的Content-Type
+         *
+         * @param mc 方法上下文对象
+         * @return 强制指定的响应体Content-Type
+         */
+        @FunctionAlias("__mandatory_designation_response_content_type__")
+        public static String mandatoryDesignationResponseContentType(MethodContext mc) {
+            StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+            LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+            return lifeCycleManager.mandatoryDesignationResponseContentType(mc, apiConfig);
         }
 
         /**
@@ -434,11 +448,13 @@ public @interface StdHttpClient {
             apiConfig.setConditionBody(mergeList(config.getConditionBody(), methodConfig.getConditionBody()));
             apiConfig.setConditionConvert(mergeList(config.getConditionConvert(), methodConfig.getConditionConvert()));
             apiConfig.setConditionMetaType(mergeList(config.getConditionMetaType(), methodConfig.getConditionMetaType()));
+            apiConfig.setConditionRespContentType(mergeList(config.getConditionRespContentType(), methodConfig.getConditionRespContentType()));
 
             apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
             apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));
 
             apiConfig.setMetaType(blankReturnDefault(methodConfig.getMetaType(), config.getMetaType()));
+            apiConfig.setResponseContentType(blankReturnDefault(methodConfig.getResponseContentType(), config.getResponseContentType()));
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
             apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
             apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
@@ -495,14 +511,14 @@ public @interface StdHttpClient {
 
         }
 
-        private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.config.mock.WhenMockResult > _whenMockResults) {
+        private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.config.mock.WhenMockResult> _whenMockResults) {
             if (ContainerUtils.isEmptyCollection(_whenMockResults)) {
                 return Collections.emptyList();
             }
             List<WhenMockResult> listResult = new ArrayList<>(_whenMockResults.size());
             for (io.github.lucklike.httpclient.config.mock.WhenMockResult whenMockResult : _whenMockResults) {
-                WhenMockResult when =  new WhenMockResult();
-                BeanUtils.copyProperties(whenMockResult,  when);
+                WhenMockResult when = new WhenMockResult();
+                BeanUtils.copyProperties(whenMockResult, when);
                 listResult.add(when);
             }
             return listResult;
@@ -510,7 +526,7 @@ public @interface StdHttpClient {
 
         private static MockBody convertToMockBody(io.github.lucklike.httpclient.config.mock.MockBody _mockBody) {
             MockBody mockBody = new MockBody();
-            BeanUtils.copyProperties(_mockBody,  mockBody);
+            BeanUtils.copyProperties(_mockBody, mockBody);
             return mockBody;
         }
 

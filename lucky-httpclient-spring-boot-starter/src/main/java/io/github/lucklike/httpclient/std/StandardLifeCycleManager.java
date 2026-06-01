@@ -66,7 +66,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
     }
 
     @Override
-    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+    public void requestInitCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
         // 设置Api信息
         setApiInfo(mc, apiConfig);
         // 设置URL的Path部分
@@ -98,6 +98,20 @@ public class StandardLifeCycleManager implements LifeCycleManager {
             return mc.parseExpression(metaType, ResolvableType.class);
         }
         return ResolvableType.forClass(Object.class);
+    }
+
+    @Override
+    public String mandatoryDesignationResponseContentType(MethodContext mc, StandardApiConfiguration apiConfig) {
+        for (ConditionRespContentType conditionRespContentType : apiConfig.getConditionRespContentType()) {
+            if (mc.parseExpression(conditionRespContentType.getCondition(), boolean.class)) {
+                return mc.parseExpression(conditionRespContentType.getResponseContentType(), String.class);
+            }
+        }
+        String responseContentType = apiConfig.getResponseContentType();
+        if (StringUtils.hasText(responseContentType)) {
+            return mc.parseExpression(responseContentType, String.class);
+        }
+        return "";
     }
 
     @Override

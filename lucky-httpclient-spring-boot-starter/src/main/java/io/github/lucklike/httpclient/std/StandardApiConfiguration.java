@@ -150,8 +150,20 @@ public class StandardApiConfiguration {
     private String metaType;
 
     /**
+     * 强制指定响应体的Content-Type
+     */
+    private String responseContentType;
+
+    /**
+     * 支持条件表达式的强制指定响应体的Content-Type
+     */
+    @NestedConfigurationProperty
+    private List<ConditionRespContentType> conditionRespContentType = new ArrayList<>();
+
+    /**
      * 支持条件表达式的转化元类型表达式
      */
+    @NestedConfigurationProperty
     private List<ConditionMetaType> conditionMetaType = new ArrayList<>();
 
     /**
@@ -472,6 +484,42 @@ public class StandardApiConfiguration {
     }
 
     /**
+     * 强制指定响应体的Content-Type
+     *
+     * @return 强制指定响应体的Content-Type
+     */
+    public String getResponseContentType() {
+        return responseContentType;
+    }
+
+    /**
+     * 设置强制指定响应体的Content-Type
+     *
+     * @param responseContentType 强制指定响应体的Content-Type
+     */
+    public void setResponseContentType(String responseContentType) {
+        this.responseContentType = responseContentType;
+    }
+
+    /**
+     * 支持条件表达式的强制指定响应体的Content-Type
+     *
+     * @return 支持条件表达式的强制指定响应体的Content-Type
+     */
+    public List<ConditionRespContentType> getConditionRespContentType() {
+        return conditionRespContentType;
+    }
+
+    /**
+     * 设置支持条件表达式的强制指定响应体的Content-Type
+     *
+     * @param conditionRespContentType 支持条件表达式的强制指定响应体的Content-Type
+     */
+    public void setConditionRespContentType(List<ConditionRespContentType> conditionRespContentType) {
+        this.conditionRespContentType = conditionRespContentType;
+    }
+
+    /**
      * 获取转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
      *
      * @return 转化元类型表达式
@@ -719,5 +767,6 @@ public class StandardApiConfiguration {
         conditionBody.removeIf(config -> !config.effective());
         conditionConvert.removeIf(config -> !config.effective());
         conditionMetaType.removeIf(config -> !config.effective());
+        conditionRespContentType.removeIf(config -> !config.effective());
     }
 }

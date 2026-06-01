@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
-import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import org.springframework.core.ResolvableType;
@@ -65,7 +64,7 @@ public interface LifeCycleManager {
      * @param request   请求对象
      * @param apiConfig 配置信息
      */
-    default void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+    default void requestInitCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
 
     }
 
@@ -78,6 +77,17 @@ public interface LifeCycleManager {
      */
     default ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
         return ResolvableType.forClass(Object.class);
+    }
+
+    /**
+     * 强制指定响应体的的Content-Type
+     *
+     * @param mc        方法上下文
+     * @param apiConfig 配置信息
+     * @return 响应体的的Content-Type
+     */
+    default String mandatoryDesignationResponseContentType(MethodContext mc, StandardApiConfiguration apiConfig) {
+        return "";
     }
 
     /**
