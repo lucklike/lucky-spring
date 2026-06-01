@@ -18,7 +18,7 @@ public class SqlServer2008PageStrategy extends AbstractPageStrategy {
     public PageSql pageSql(String sql, Page page) {
         // SQL Server 2008: 使用 ROW_NUMBER() 实现分页
         String pageSql = String.format(
-                "SELECT t.* FROM (SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn, temp.* FROM (%s) temp %s) t WHERE t.rn BETWEEN %s AND %s",
+                "SELECT t.* FROM (SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn, temp.* FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s",
                 sql,
                 buildOrderByClause(page),
                 getOffsetParamName(page),

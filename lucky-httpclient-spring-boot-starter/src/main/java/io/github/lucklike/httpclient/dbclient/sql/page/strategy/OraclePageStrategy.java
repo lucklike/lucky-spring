@@ -17,7 +17,7 @@ public class OraclePageStrategy extends AbstractPageStrategy {
     public PageSql pageSql(String sql, Page page) {
         // Oracle ROWNUM 分页：使用子查询方式
         String pageSql = String.format(
-                "SELECT * FROM (SELECT temp.*, ROWNUM rn FROM (%s) temp %s) WHERE rn BETWEEN %s AND %s",
+                "SELECT * FROM (SELECT temp.*, ROWNUM rn FROM (SELECT * FROM (%s) %s) temp) WHERE rn BETWEEN %s AND %s",
                 sql,
                 buildOrderByClause(page),
                 getOffsetParamName(page),

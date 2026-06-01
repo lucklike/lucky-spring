@@ -18,7 +18,7 @@ public class Db2PageStrategy extends AbstractPageStrategy {
     public PageSql pageSql(String sql, Page page) {
         // DB2: 使用 ROW_NUMBER() 实现分页
         String pageSql = String.format(
-                "SELECT t.* FROM (SELECT ROW_NUMBER() OVER () AS rn, temp.* FROM (%s) temp %s) t WHERE t.rn BETWEEN %s AND %s",
+                "SELECT t.* FROM (SELECT ROW_NUMBER() OVER () AS rn, temp.* FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s",
                 sql,
                 buildOrderByClause(page),
                 getOffsetParamName(page),
