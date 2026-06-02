@@ -27,104 +27,184 @@ public class LambdaClientConditionBuilder<T> extends LambdaConditionBuilder<T> {
         this.baseDBApi = baseDBApi;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> on(String condition) {
-        return super.on(condition);
+    public LambdaClientConditionBuilder<T> on(String condition) {
+        super.on(condition);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <E> LambdaConditionBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
-        return super.on(leftColumn, rightColumn);
+    public <E> LambdaClientConditionBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
+        super.on(leftColumn, rightColumn);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> where(String condition, Object... values) {
-        return super.where(condition, values);
+    public LambdaClientConditionBuilder<T> where(String condition, Object... values) {
+        super.where(condition, values);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
-        return super.where(conditionBuilder);
+    public LambdaClientConditionBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
+        super.where(conditionBuilder);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> eq(SFunction<T, R> column, Object value) {
-        return super.eq(column, value);
+    public <R> LambdaClientConditionBuilder<T> eq(SFunction<T, R> column, Object value) {
+        super.eq(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> ne(SFunction<T, R> column, Object value) {
-        return super.ne(column, value);
+    public <R> LambdaClientConditionBuilder<T> ne(SFunction<T, R> column, Object value) {
+        super.ne(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> gt(SFunction<T, R> column, Object value) {
-        return super.gt(column, value);
+    public <R> LambdaClientConditionBuilder<T> gt(SFunction<T, R> column, Object value) {
+        super.gt(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> ge(SFunction<T, R> column, Object value) {
-        return super.ge(column, value);
+    public <R> LambdaClientConditionBuilder<T> ge(SFunction<T, R> column, Object value) {
+        super.ge(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> lt(SFunction<T, R> column, Object value) {
-        return super.lt(column, value);
+    public <R> LambdaClientConditionBuilder<T> lt(SFunction<T, R> column, Object value) {
+        super.lt(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> le(SFunction<T, R> column, Object value) {
-        return super.le(column, value);
+    public <R> LambdaClientConditionBuilder<T> le(SFunction<T, R> column, Object value) {
+        super.le(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> like(SFunction<T, ?> column, String value) {
-        return super.like(column, value);
+    public LambdaClientConditionBuilder<T> like(SFunction<T, ?> column, String value) {
+        super.like(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
-        return super.likeLeft(column, value);
+    public LambdaClientConditionBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
+        super.likeLeft(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> likeRight(SFunction<T, ?> column, String value) {
-        return super.likeRight(column, value);
+    public LambdaClientConditionBuilder<T> likeRight(SFunction<T, ?> column, String value) {
+        super.likeRight(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> notLike(SFunction<T, ?> column, String value) {
-        return super.notLike(column, value);
+    public LambdaClientConditionBuilder<T> notLike(SFunction<T, ?> column, String value) {
+        super.notLike(column, value);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public <R> LambdaConditionBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
-        return super.in(column, values);
+    public <R> LambdaClientConditionBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+        super.in(column, values);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> isNull(SFunction<T, ?> column) {
-        return super.isNull(column);
+    public LambdaClientConditionBuilder<T> isNull(SFunction<T, ?> column) {
+        super.isNull(column);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> isNotNull(SFunction<T, ?> column) {
-        return super.isNotNull(column);
+    public LambdaClientConditionBuilder<T> isNotNull(SFunction<T, ?> column) {
+        super.isNotNull(column);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
-        return super.between(column, value1, value2);
+    public LambdaClientConditionBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
+        super.between(column, value1, value2);
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> or() {
-        return super.or();
+    public LambdaClientConditionBuilder<T> or() {
+        super.or();
+        return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public LambdaConditionBuilder<T> and() {
-        return super.and();
+    public LambdaClientConditionBuilder<T> and() {
+        super.and();
+        return this;
     }
 
 
@@ -133,9 +213,8 @@ public class LambdaClientConditionBuilder<T> extends LambdaConditionBuilder<T> {
     /**
      * 转换为查询构建器
      *
-     *
      * @param selectColumns 要查询的列
-     * @return 查询构建器
+     * @ 查询构建器
      */
     @SafeVarargs
     public final LambdaClientQueryBuilder<T> becomeSelect(SFunction<T, ?>... selectColumns) {
@@ -149,7 +228,7 @@ public class LambdaClientConditionBuilder<T> extends LambdaConditionBuilder<T> {
      * 转换为统计构建器
      *
      * @param column 要统计的列（不传则 COUNT(*)）
-     * @return 统计构建器
+     * @ 统计构建器
      */
     @SafeVarargs
     public final LambdaClientCountBuilder<T> becomeCount(SFunction<T, ?>... column) {
@@ -162,16 +241,16 @@ public class LambdaClientConditionBuilder<T> extends LambdaConditionBuilder<T> {
     /**
      * 转换为删除构建器
      *
-     * @return 删除构建器
+     * @ 删除构建器
      */
     public final LambdaClientDeleteBuilder<T> becomeDelete() {
-        return new LambdaClientDeleteBuilder<>(this.baseDBApi,this);
+        return new LambdaClientDeleteBuilder<>(this.baseDBApi, this);
     }
 
     /**
      * 转换为更新构建器
      *
-     * @return 更新构建器
+     * @ 更新构建器
      */
     public final LambdaClientUpdateBuilder<T> becomeUpdate() {
         return new LambdaClientUpdateBuilder<>(this.baseDBApi, this);
