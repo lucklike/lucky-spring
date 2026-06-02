@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import com.luckyframework.common.ContainerUtils;
 

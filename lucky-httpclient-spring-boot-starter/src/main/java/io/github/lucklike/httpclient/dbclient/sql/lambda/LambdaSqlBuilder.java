@@ -1,9 +1,12 @@
 // LambdaSqlBuilder.java
 
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import io.github.lucklike.httpclient.dbclient.function.EntityUtils;
 import io.github.lucklike.httpclient.dbclient.function.LambdaUtils;
+import io.github.lucklike.httpclient.dbclient.sql.SQLType;
+import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -389,7 +392,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    protected LambdaSqlBuilder<T> update() {
+    protected LambdaSqlBuilder<T> updateSQL() {
         sqlBuilder.update(getTableName());
         return this;
     }
@@ -437,7 +440,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    protected LambdaSqlBuilder<T> delete() {
+    protected LambdaSqlBuilder<T> deleteSQL() {
         sqlBuilder.delete();
         sqlBuilder.from(getTableName());
         return this;
@@ -815,40 +818,6 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      */
     protected LambdaSqlBuilder<T> orderByDesc(SFunction<T, ?> column) {
         return orderBy(column, SqlBuilder.OrderType.DESC);
-    }
-
-    /**
-     * 添加 LIMIT 限制（查询前 N 条记录）
-     *
-     * @param limit 返回的最大记录数
-     * @return 当前构建器实例，支持链式调用
-     */
-    protected LambdaSqlBuilder<T> limit(int limit) {
-        sqlBuilder.limit(limit);
-        return this;
-    }
-
-    /**
-     * 添加 LIMIT 分页（带偏移量）
-     *
-     * @param offset 起始偏移量（从 0 开始）
-     * @param limit  返回的最大记录数
-     * @return 当前构建器实例，支持链式调用
-     */
-    protected LambdaSqlBuilder<T> limit(int offset, int limit) {
-        sqlBuilder.limit(offset, limit);
-        return this;
-    }
-
-    /**
-     * 添加 OFFSET 偏移量
-     *
-     * @param offset 起始偏移量（从 0 开始）
-     * @return 当前构建器实例，支持链式调用
-     */
-    protected LambdaSqlBuilder<T> offset(int offset) {
-        sqlBuilder.offset(offset);
-        return this;
     }
 
     // ==================== 辅助方法 ====================

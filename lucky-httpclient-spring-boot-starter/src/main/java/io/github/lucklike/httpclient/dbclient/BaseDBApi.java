@@ -4,12 +4,19 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
-import io.github.lucklike.httpclient.dbclient.sql.LambdaCountBuilder;
-import io.github.lucklike.httpclient.dbclient.sql.LambdaDeleteBuilder;
-import io.github.lucklike.httpclient.dbclient.sql.LambdaQueryBuilder;
-import io.github.lucklike.httpclient.dbclient.sql.LambdaUpdateBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientCountBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientUpdateBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaCountBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaUpdateBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
+import org.springframework.core.ResolvableType;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -636,5 +643,39 @@ public interface BaseDBApi<E> {
             }
         }
         return result.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    @SuppressWarnings("unchecked")
+    default LambdaClientQueryBuilder<E> lambdaQuery(List<SFunction<E, ?>> selectColumnList) {
+        return new LambdaClientQueryBuilder<>(this, entityClass(), selectColumnList.toArray(new SFunction[0]));
+    }
+
+    default LambdaClientQueryBuilder<E> lambdaQuery() {
+        return new LambdaClientQueryBuilder<>(this, entityClass());
+    }
+
+    default LambdaClientUpdateBuilder<E> lambdaUpdate() {
+        return new LambdaClientUpdateBuilder<>(this, entityClass());
+    }
+
+    default LambdaDeleteBuilder<E> lambdaDelete() {
+        return new LambdaClientDeleteBuilder<>(this, entityClass());
+    }
+
+    default LambdaClientCountBuilder<E> lambdaCount() {
+        return new LambdaClientCountBuilder<>(this, entityClass());
+    }
+
+    default LambdaClientCountBuilder<E> lambdaCount(SFunction<E, ?> countColumn) {
+        return new LambdaClientCountBuilder<>(this, entityClass(), countColumn);
+    }
+
+    default LambdaClientConditionBuilder<E> lambdaCondition() {
+        return new LambdaClientConditionBuilder<>(this, entityClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    default Class<E> entityClass() {
+        return (Class<E>) ResolvableType.forClass(BaseDBApi.class, getClass()).getGeneric(0).toClass();
     }
 }

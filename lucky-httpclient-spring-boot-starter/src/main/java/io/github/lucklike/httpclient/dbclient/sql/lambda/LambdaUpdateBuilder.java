@@ -1,6 +1,6 @@
 // LambdaUpdateBuilder.java
 
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -41,7 +41,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      */
     LambdaUpdateBuilder(Class<T> clazz) {
         super(clazz);
-        update();
+        updateSQL();
     }
 
     /**
@@ -67,11 +67,10 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * }</pre>
      *
      * @param sqlBuilder Lambda SQL 构建器实例，用于提供实体类类型、表名映射等基础信息
-     * @param <T>        实体类型泛型
      */
     public LambdaUpdateBuilder(LambdaSqlBuilder<T> sqlBuilder) {
         super(sqlBuilder);
-        update();
+        updateSQL();
     }
 
     /**

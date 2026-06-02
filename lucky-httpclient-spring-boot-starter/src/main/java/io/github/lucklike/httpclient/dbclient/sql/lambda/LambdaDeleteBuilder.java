@@ -1,6 +1,6 @@
 // LambdaDeleteBuilder.java
 
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -36,7 +36,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      */
     LambdaDeleteBuilder(Class<T> clazz) {
         super(clazz);
-        delete().from();
+        deleteSQL().from();
     }
 
     /**
@@ -62,7 +62,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      */
     public LambdaDeleteBuilder(LambdaSqlBuilder<T> sqlBuilder) {
         super(sqlBuilder);
-        delete().from();
+        deleteSQL().from();
     }
 
     /**

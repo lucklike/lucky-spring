@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import java.io.Serializable;
 import java.util.function.Function;

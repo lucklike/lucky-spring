@@ -29,7 +29,6 @@ public class SqlBuilder implements SQLWrapper {
     private final List<SqlFragment> groupByFragments;
     private final List<SqlFragment> havingFragments;
     private final List<SqlFragment> orderByFragments;
-    private final List<SqlFragment> limitFragments;
     private final List<SqlFragment> insertIntoFragments;
     private final List<SqlFragment> insertColumnsFragments;
     private final List<SqlFragment> insertValuesFragments;
@@ -112,7 +111,6 @@ public class SqlBuilder implements SQLWrapper {
         this.groupByFragments = new ArrayList<>();
         this.havingFragments = new ArrayList<>();
         this.orderByFragments = new ArrayList<>();
-        this.limitFragments = new ArrayList<>();
         this.insertIntoFragments = new ArrayList<>();
         this.insertColumnsFragments = new ArrayList<>();
         this.insertValuesFragments = new ArrayList<>();
@@ -605,24 +603,6 @@ public class SqlBuilder implements SQLWrapper {
         return this;
     }
 
-    public SqlBuilder limit(int limit) {
-        limitFragments.clear();
-        addFragment(limitFragments, "?", limit);
-        return this;
-    }
-
-    public SqlBuilder limit(int offset, int limit) {
-        limitFragments.clear();
-        addFragment(limitFragments, "? OFFSET ?", limit, offset);
-        return this;
-    }
-
-    public SqlBuilder offset(int offset) {
-        limitFragments.clear();
-        addFragment(limitFragments, "OFFSET ?", offset);
-        return this;
-    }
-
     // ==================== 其他方法 ====================
 
     public SqlBuilder clear() {
@@ -634,7 +614,6 @@ public class SqlBuilder implements SQLWrapper {
         groupByFragments.clear();
         havingFragments.clear();
         orderByFragments.clear();
-        limitFragments.clear();
         insertIntoFragments.clear();
         insertColumnsFragments.clear();
         insertValuesFragments.clear();
@@ -660,7 +639,6 @@ public class SqlBuilder implements SQLWrapper {
         copy.groupByFragments.addAll(copyFragments(this.groupByFragments));
         copy.havingFragments.addAll(copyFragments(this.havingFragments));
         copy.orderByFragments.addAll(copyFragments(this.orderByFragments));
-        copy.limitFragments.addAll(copyFragments(this.limitFragments));
         copy.insertIntoFragments.addAll(copyFragments(this.insertIntoFragments));
         copy.insertColumnsFragments.addAll(copyFragments(this.insertColumnsFragments));
         copy.insertValuesFragments.addAll(copyFragments(this.insertValuesFragments));
@@ -744,10 +722,6 @@ public class SqlBuilder implements SQLWrapper {
         for (SqlFragment fragment : orderByFragments) {
             allParams.addAll(fragment.getParams());
         }
-        // LIMIT 参数
-        for (SqlFragment fragment : limitFragments) {
-            allParams.addAll(fragment.getParams());
-        }
         // INSERT 参数
         for (SqlFragment fragment : insertIntoFragments) {
             allParams.addAll(fragment.getParams());
@@ -818,13 +792,6 @@ public class SqlBuilder implements SQLWrapper {
                     sql.append(fragment.getSql());
                 }
             }
-
-            if (!limitFragments.isEmpty()) {
-                sql.append(LIMIT);
-                for (SqlFragment fragment : limitFragments) {
-                    sql.append(fragment.getSql());
-                }
-            }
         }
 
         // 构建 INSERT 语句
@@ -868,13 +835,6 @@ public class SqlBuilder implements SQLWrapper {
                         sql.append(fragment.getSql());
                     }
                 }
-
-                if (!limitFragments.isEmpty()) {
-                    sql.append(LIMIT);
-                    for (SqlFragment fragment : limitFragments) {
-                        sql.append(fragment.getSql());
-                    }
-                }
             }
         }
 
@@ -891,13 +851,6 @@ public class SqlBuilder implements SQLWrapper {
             if (!whereFragments.isEmpty()) {
                 sql.append(WHERE);
                 for (SqlFragment fragment : whereFragments) {
-                    sql.append(fragment.getSql());
-                }
-            }
-
-            if (!limitFragments.isEmpty()) {
-                sql.append(LIMIT);
-                for (SqlFragment fragment : limitFragments) {
                     sql.append(fragment.getSql());
                 }
             }

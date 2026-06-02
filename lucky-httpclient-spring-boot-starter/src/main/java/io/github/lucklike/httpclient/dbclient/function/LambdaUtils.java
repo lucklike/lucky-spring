@@ -2,7 +2,7 @@ package io.github.lucklike.httpclient.dbclient.function;
 
 import com.luckyframework.reflect.AnnotationUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
-import io.github.lucklike.httpclient.dbclient.sql.SFunction;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
 
 import java.beans.Introspector;
 import java.lang.invoke.SerializedLambda;

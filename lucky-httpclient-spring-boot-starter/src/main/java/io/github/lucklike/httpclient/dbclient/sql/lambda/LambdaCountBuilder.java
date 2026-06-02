@@ -1,6 +1,6 @@
-// LambdaCountBuilder.java
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
-package io.github.lucklike.httpclient.dbclient.sql;
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -351,33 +351,6 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     @Override
     public LambdaCountBuilder<T> orderByDesc(SFunction<T, ?> column) {
         super.orderByDesc(column);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaCountBuilder<T> limit(int limit) {
-        super.limit(limit);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaCountBuilder<T> limit(int offset, int limit) {
-        super.limit(offset, limit);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaCountBuilder<T> offset(int offset) {
-        super.offset(offset);
         return this;
     }
 

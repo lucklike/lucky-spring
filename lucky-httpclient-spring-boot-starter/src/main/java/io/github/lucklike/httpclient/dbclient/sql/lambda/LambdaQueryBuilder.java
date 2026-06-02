@@ -1,6 +1,8 @@
 // LambdaQueryBuilder.java
 
-package io.github.lucklike.httpclient.dbclient.sql;
+package io.github.lucklike.httpclient.dbclient.sql.lambda;
+
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -53,7 +55,6 @@ public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
      * 构造一个查询所有列的 SELECT 查询构建器。
      *
      * @param sqlBuilder Lambda SQL 构建器实例
-     * @param <T>        实体类型泛型
      */
     public LambdaQueryBuilder(LambdaSqlBuilder<T> sqlBuilder) {
         super(sqlBuilder);
@@ -74,7 +75,6 @@ public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
      *
      * @param sqlBuilder    Lambda SQL 构建器实例
      * @param selectColumns 要查询的列对应的 Lambda 函数
-     * @param <T>           实体类型泛型
      */
     @SafeVarargs
     public LambdaQueryBuilder(LambdaSqlBuilder<T> sqlBuilder, SFunction<T, ?>... selectColumns) {
@@ -344,33 +344,6 @@ public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
     @Override
     public LambdaQueryBuilder<T> orderByDesc(SFunction<T, ?> column) {
         super.orderByDesc(column);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaQueryBuilder<T> limit(int limit) {
-        super.limit(limit);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaQueryBuilder<T> limit(int offset, int limit) {
-        super.limit(offset, limit);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaQueryBuilder<T> offset(int offset) {
-        super.offset(offset);
         return this;
     }
 
