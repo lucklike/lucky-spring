@@ -8,7 +8,6 @@ import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -905,34 +904,6 @@ public class LambdaClientConditionBuilder<T> {
      */
     public PageResult<T> page(Page page) {
         return toSelect().page(page);
-    }
-
-    /**
-     * 执行 UPDATE 操作并返回影响行数
-     * <p>
-     * 根据构建器中设置的更新字段和条件，执行 UPDATE 操作。
-     * </p>
-     * <p>
-     * <b>警告：</b>
-     * <ul>
-     *     <li>如果没有设置任何条件，可能会更新全表数据</li>
-     *     <li>建议始终添加至少一个条件来限制更新范围</li>
-     * </ul>
-     * </p>
-     * <p>
-     * 使用示例：
-     * <pre>{@code
-     * int rows = baseDBApi.lambdaUpdate()
-     *     .set(User::getStatus, 1)
-     *     .eq(User::getStatus, 0)
-     *     .update();
-     * }
-     * </pre>
-     *
-     * @return 被更新的记录行数
-     */
-    public int update() {
-        return toUpdate().update();
     }
 
     /**
