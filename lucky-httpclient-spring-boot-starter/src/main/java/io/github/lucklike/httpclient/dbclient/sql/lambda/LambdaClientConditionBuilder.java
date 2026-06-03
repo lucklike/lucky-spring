@@ -3,9 +3,13 @@ package io.github.lucklike.httpclient.dbclient.sql.lambda;
 import com.luckyframework.common.ContainerUtils;
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.page.Page;
+import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * 自带数据库客户端的条件构建器
@@ -801,5 +805,201 @@ public class LambdaClientConditionBuilder<T> {
      */
     public final LambdaClientUpdateBuilder<T> toUpdate() {
         return new LambdaClientUpdateBuilder<>(this.baseDBApi, this.conditionBuilder);
+    }
+
+    // ==================== 执行方法 ====================
+
+    /**
+     * 执行查询并返回结果列表
+     * <p>
+     * 根据构建器中设置的条件、排序、关联表等，执行 SELECT 查询并返回结果列表。
+     * 如果查询结果为空，返回空列表（非 null）。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * List<User> users = baseDBApi.lambdaQuery()
+     *     .eq(User::getStatus, 1)
+     *     .orderByDesc(User::getCreateTime)
+     *     .list();
+     * }
+     * </pre>
+     *
+     * @return 查询结果列表，永远不为 null
+     */
+    public List<T> list() {
+        return toSelect().list();
+    }
+
+    /**
+     * 执行查询并返回单条结果
+     * <p>
+     * 根据构建器中设置的条件，执行 SELECT 查询并返回第一条结果。
+     * 如果查询结果为空，返回 null。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果查询结果有多条，只返回第一条。建议配合 limit(1) 使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * User user = baseDBApi.lambdaQuery()
+     *     .eq(User::getId, 1L)
+     *     .one();
+     * }
+     * </pre>
+     *
+     * @return 查询结果，可能为 null
+     */
+    public T one() {
+        return toSelect().one();
+    }
+
+    /**
+     * 以流式方式执行查询并返回结果流
+     * <p>
+     * 返回的 {@link Stream} 需要在使用完毕后关闭（例如通过 try-with-resources 语句），
+     * 以避免数据库连接和游标资源泄漏。
+     * 适用于处理大量数据，避免一次性加载所有结果到内存。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * try (Stream<User> stream = baseDBApi.lambdaQuery()
+     *         .gt(User::getAge, 18)
+     *         .stream()) {
+     *     stream.filter(user -> user.getName().startsWith("张"))
+     *           .forEach(System.out::println);
+     * }
+     * }
+     * </pre>
+     *
+     * @return 包含映射对象的 Stream，必须在使用完毕后关闭
+     */
+    public Stream<T> stream() {
+        return toSelect().stream();
+    }
+
+    /**
+     * 执行分页查询
+     * <p>
+     * 根据构建器中设置的条件和分页参数，执行分页查询。
+     * 分页参数通过 {@link Page} 对象传递，包含当前页码、每页大小、排序字段等信息。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果 {@link Page#isCountTotal()} 为 {@code true}，则会自动执行 COUNT 查询；
+     * 否则只查询分页数据，总记录数为 -1。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * Page page = Page.of(1, 10).desc("create_time");
+     * PageResult<User> result = baseDBApi.lambdaQuery()
+     *     .eq(User::getStatus, 1)
+     *     .page(page);
+     * }
+     * </pre>
+     *
+     * @param page 分页参数对象
+     * @return 分页结果，包含数据列表和分页信息
+     */
+    public PageResult<T> page(Page page) {
+        return toSelect().page(page);
+    }
+
+    /**
+     * 执行 UPDATE 操作并返回影响行数
+     * <p>
+     * 根据构建器中设置的更新字段和条件，执行 UPDATE 操作。
+     * </p>
+     * <p>
+     * <b>警告：</b>
+     * <ul>
+     *     <li>如果没有设置任何条件，可能会更新全表数据</li>
+     *     <li>建议始终添加至少一个条件来限制更新范围</li>
+     * </ul>
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = baseDBApi.lambdaUpdate()
+     *     .set(User::getStatus, 1)
+     *     .eq(User::getStatus, 0)
+     *     .update();
+     * }
+     * </pre>
+     *
+     * @return 被更新的记录行数
+     */
+    public int update() {
+        return toUpdate().update();
+    }
+
+    /**
+     * 执行 DELETE 操作并返回影响行数
+     * <p>
+     * 根据构建器中设置的条件，执行 DELETE 操作。
+     * </p>
+     * <p>
+     * <b>警告：</b>
+     * <ul>
+     *     <li>如果没有设置任何条件，可能会删除全表数据</li>
+     *     <li>建议始终添加至少一个条件来限制删除范围</li>
+     * </ul>
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = baseDBApi.lambdaDelete()
+     *     .eq(User::getStatus, 0)
+     *     .delete();
+     * }
+     * </pre>
+     *
+     * @return 被删除的记录行数
+     */
+    public int delete() {
+        return toDelete().delete();
+    }
+
+    /**
+     * 执行 COUNT 查询并返回统计结果
+     * <p>
+     * 根据构建器中设置的条件，执行 COUNT 查询并返回统计结果。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * long count = baseDBApi.lambdaCount()
+     *     .eq(User::getStatus, 1)
+     *     .count();
+     * }
+     * </pre>
+     *
+     * @return 统计结果（满足条件的记录数）
+     */
+    public long count() {
+        return toCount().count();
+    }
+
+    /**
+     * 判断满足条件的记录是否存在
+     * <p>
+     * 根据构建器中设置的条件，判断是否存在满足条件的记录。
+     * 等价于 {@code count() > 0}，但性能更优（某些数据库实现会使用 LIMIT 1 优化）。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * boolean exists = baseDBApi.lambdaCount()
+     *     .eq(User::getEmail, "test@example.com")
+     *     .exist();
+     * }
+     * </pre>
+     *
+     * @return true 表示存在至少一条记录，false 表示不存在任何记录
+     */
+    public boolean exist() {
+        return toCount().exist();
     }
 }
