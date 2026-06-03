@@ -645,35 +645,102 @@ public interface BaseDBApi<E> {
         return result.stream().mapToInt(Integer::intValue).toArray();
     }
 
+    /**
+     * 创建指定查询列的 Lambda 查询构建器
+     *
+     * @param selectColumnList 要查询的列列表
+     * @return Lambda 查询构建器
+     */
     @SuppressWarnings("unchecked")
     default LambdaClientQueryBuilder<E> lambdaQuery(List<SFunction<E, ?>> selectColumnList) {
         return new LambdaClientQueryBuilder<>(this, entityClass(), selectColumnList.toArray(new SFunction[0]));
     }
 
+    /**
+     * 创建 Lambda 查询构建器
+     * <p>
+     * 返回一个基于当前数据库客户端的 Lambda 查询构建器，
+     * 用于构建动态查询条件并执行查询操作。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * List<User> users = baseDBApi.lambdaQuery()
+     *     .eq(User::getStatus, 1)
+     *     .list();
+     * }</pre>
+     * </p>
+     *
+     * @return Lambda 查询构建器
+     */
     default LambdaClientQueryBuilder<E> lambdaQuery() {
         return new LambdaClientQueryBuilder<>(this, entityClass());
     }
 
+    /**
+     * 创建 Lambda 更新构建器
+     * <p>
+     * 返回一个基于当前数据库客户端的 Lambda 更新构建器，
+     * 用于构建动态更新条件并执行更新操作。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * baseDBApi.lambdaUpdate()
+     *     .set(User::getStatus, 1)
+     *     .eq(User::getId, 1L)
+     *     .update();
+     * }</pre>
+     * </p>
+     *
+     * @return Lambda 更新构建器
+     */
     default LambdaClientUpdateBuilder<E> lambdaUpdate() {
         return new LambdaClientUpdateBuilder<>(this, entityClass());
     }
 
-    default LambdaDeleteBuilder<E> lambdaDelete() {
+    /**
+     * 创建 Lambda 删除构建器
+     *
+     * @return Lambda 删除构建器
+     */
+    default LambdaClientDeleteBuilder<E> lambdaDelete() {
         return new LambdaClientDeleteBuilder<>(this, entityClass());
     }
 
+    /**
+     * 创建 Lambda 统计构建器（COUNT(*)）
+     *
+     * @return Lambda 统计构建器
+     */
     default LambdaClientCountBuilder<E> lambdaCount() {
         return new LambdaClientCountBuilder<>(this, entityClass());
     }
 
+    /**
+     * 创建 Lambda 统计构建器（统计指定列）
+     *
+     * @param countColumn 要统计的列
+     * @return Lambda 统计构建器
+     */
     default LambdaClientCountBuilder<E> lambdaCount(SFunction<E, ?> countColumn) {
         return new LambdaClientCountBuilder<>(this, entityClass(), countColumn);
     }
 
+    /**
+     * 创建 Lambda 条件构建器
+     *
+     * @return Lambda 条件构建器
+     */
     default LambdaClientConditionBuilder<E> lambdaCondition() {
         return new LambdaClientConditionBuilder<>(this, entityClass());
     }
 
+    /**
+     * 获取实体类类型
+     *
+     * @return 实体类 Class 对象
+     */
     @SuppressWarnings("unchecked")
     default Class<E> entityClass() {
         return (Class<E>) ResolvableType.forClass(BaseDBApi.class, getClass()).getGeneric(0).toClass();

@@ -2,257 +2,804 @@ package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import com.luckyframework.common.ContainerUtils;
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 
 import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
  * 自带数据库客户端的条件构建器
+ * <p>
+ * 该类封装了 {@link LambdaConditionBuilder} 和 {@link BaseDBApi}，
+ * 提供流式 API 构建查询条件，并可通过 {@link #toSelect}, {@link #toCount},
+ * {@link #toUpdate}, {@link #toDelete} 方法转换为对应的操作构建器。
+ * </p>
+ * <p>
+ * 使用示例：
+ * <pre>{@code
+ * // 通过 BaseDBApi 获取条件构建器
+ * LambdaClientConditionBuilder<User> condition = baseDBApi.lambdaCondition();
  *
+ * // 构建条件并执行查询
+ * List<User> users = condition.eq(User::getStatus, 1)
+ *     .orderByDesc(User::getCreateTime)
+ *     .toSelect()
+ *     .list();
+ *
+ * // 构建条件并执行更新
+ * int rows = condition.eq(User::getStatus, 0)
+ *     .toUpdate()
+ *     .set(User::getStatus, 1)
+ *     .update();
+ * }
+ * </pre>
+ * </p>
+ *
+ * @param <T> 实体类型
  * @author fukang
  * @version 1.0.0
  * @date 2026/6/3 02:11
  */
-public class LambdaClientConditionBuilder<T> extends LambdaConditionBuilder<T> {
+public class LambdaClientConditionBuilder<T> {
 
     private final BaseDBApi<T> baseDBApi;
+    private final LambdaConditionBuilder<T> conditionBuilder;
 
     /**
      * 构造条件构建器
      *
+     * @param baseDBApi   数据库客户端API
      * @param entityClass 实体类类型
      */
     public LambdaClientConditionBuilder(BaseDBApi<T> baseDBApi, Class<T> entityClass) {
-        super(entityClass);
+        this.conditionBuilder = new LambdaConditionBuilder<>(entityClass);
         this.baseDBApi = baseDBApi;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public LambdaClientConditionBuilder<T> on(String condition) {
-        super.on(condition);
-        return this;
-    }
+    // ==================== 条件方法（返回自身类型） ====================
 
     /**
-     * {@inheritDoc}
+     * 添加自定义 WHERE 条件
+     * <p>
+     * 使用原生 SQL 片段作为条件，可用于构建复杂或 Lambda 表达式无法表达的条件。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * condition.where("DATE(create_time) = CURDATE()")
+     *          .where("age BETWEEN ? AND ?", 18, 30);
+     * }</pre>
+     * </p>
+     *
+     * @param condition SQL 条件片段，可使用 ? 作为参数占位符
+     * @param values    占位符对应的参数值，按顺序匹配
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
-    public <E> LambdaClientConditionBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
-        super.on(leftColumn, rightColumn);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public LambdaClientConditionBuilder<T> where(String condition, Object... values) {
-        super.where(condition, values);
+        conditionBuilder.where(condition, values);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 等于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加等于条件：column = value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
-    public LambdaClientConditionBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
-        super.where(conditionBuilder);
+    protected <R> LambdaClientConditionBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.eq(condition, column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 不等于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加不等于条件：column != value 或 column &lt;&gt; value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
+    protected <R> LambdaClientConditionBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.ne(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 大于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加大于条件：column > value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.gt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 大于等于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加大于等于条件：column >= value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.ge(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 小于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加小于条件：column < value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.lt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 小于等于条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加小于等于条件：column <= value
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     比较值
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+        conditionBuilder.le(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 模糊匹配条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 LIKE 条件：column LIKE '%value%'
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     匹配值（会自动添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+        conditionBuilder.like(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 左模糊匹配条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 LIKE 条件：column LIKE '%value'
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     匹配值（会自动在前面添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+        conditionBuilder.likeLeft(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 右模糊匹配条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 LIKE 条件：column LIKE 'value%'
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     匹配值（会自动在后面添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+        conditionBuilder.likeRight(condition, column, value);
+        return this;
+    }
+
+    /**
+     * 非模糊匹配条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 NOT LIKE 条件：column NOT LIKE '%value%'
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value     匹配值（会自动添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+        conditionBuilder.notLike(condition, column, value);
+        return this;
+    }
+
+    /**
+     * IN 条件（条件性添加，可变参数）
+     * <p>
+     * 当 condition 为 true 时，添加 IN 条件：column IN (value1, value2, ...)
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param values    值列表
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    @SafeVarargs
+    protected final <R> LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+        conditionBuilder.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * IN 条件（条件性添加，集合参数）
+     * <p>
+     * 当 condition 为 true 时，添加 IN 条件：column IN (value1, value2, ...)
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param values    值集合
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        conditionBuilder.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * NOT IN 条件（条件性添加，可变参数）
+     * <p>
+     * 当 condition 为 true 时，添加 NOT IN 条件：column NOT IN (value1, value2, ...)
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param values    值列表
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    @SafeVarargs
+    protected final <R> LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+        conditionBuilder.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * NOT IN 条件（条件性添加，集合参数）
+     * <p>
+     * 当 condition 为 true 时，添加 NOT IN 条件：column NOT IN (value1, value2, ...)
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param values    值集合
+     * @param <R>       字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        conditionBuilder.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * IS NULL 条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 IS NULL 条件：column IS NULL
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+        conditionBuilder.isNull(condition, column);
+        return this;
+    }
+
+    /**
+     * IS NOT NULL 条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 IS NOT NULL 条件：column IS NOT NULL
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+        conditionBuilder.isNotNull(condition, column);
+        return this;
+    }
+
+    /**
+     * BETWEEN 条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 BETWEEN 条件：column BETWEEN value1 AND value2
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    表字段的 Lambda 表达式
+     * @param value1    起始值
+     * @param value2    结束值
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+        conditionBuilder.between(condition, column, value1, value2);
+        return this;
+    }
+
+    /**
+     * 排序条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 ORDER BY 排序条件
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    排序字段的 Lambda 表达式
+     * @param orderType 排序类型（ASC 升序 / DESC 降序）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+        conditionBuilder.orderBy(condition, column, orderType);
+        return this;
+    }
+
+    /**
+     * 升序排序条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 ORDER BY column ASC 排序条件
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    排序字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+        conditionBuilder.orderByAsc(condition, column);
+        return this;
+    }
+
+    /**
+     * 降序排序条件（条件性添加）
+     * <p>
+     * 当 condition 为 true 时，添加 ORDER BY column DESC 排序条件
+     * </p>
+     *
+     * @param condition 是否添加此条件
+     * @param column    排序字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaClientConditionBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+        conditionBuilder.orderByDesc(condition, column);
+        return this;
+    }
+
+    /**
+     * NOT IN 条件（可变参数）
+     * <p>
+     * 添加 NOT IN 条件：column NOT IN (value1, value2, ...)
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param values 值列表
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    @SafeVarargs
+    protected final <R> LambdaClientConditionBuilder<T> notIn(SFunction<T, R> column, R... values) {
+        conditionBuilder.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * NOT IN 条件（集合参数）
+     * <p>
+     * 添加 NOT IN 条件：column NOT IN (value1, value2, ...)
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param values 值集合
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaClientConditionBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+        conditionBuilder.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * 等于条件
+     * <p>
+     * 添加等于条件：column = value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
     public <R> LambdaClientConditionBuilder<T> eq(SFunction<T, R> column, Object value) {
-        super.eq(column, value);
+        conditionBuilder.eq(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 不等于条件
+     * <p>
+     * 添加不等于条件：column != value 或 column &lt;&gt; value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public <R> LambdaClientConditionBuilder<T> ne(SFunction<T, R> column, Object value) {
-        super.ne(column, value);
+        conditionBuilder.ne(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 大于条件
+     * <p>
+     * 添加大于条件：column > value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public <R> LambdaClientConditionBuilder<T> gt(SFunction<T, R> column, Object value) {
-        super.gt(column, value);
+        conditionBuilder.gt(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 大于等于条件
+     * <p>
+     * 添加大于等于条件：column >= value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public <R> LambdaClientConditionBuilder<T> ge(SFunction<T, R> column, Object value) {
-        super.ge(column, value);
+        conditionBuilder.ge(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 小于条件
+     * <p>
+     * 添加小于条件：column < value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public <R> LambdaClientConditionBuilder<T> lt(SFunction<T, R> column, Object value) {
-        super.lt(column, value);
+        conditionBuilder.lt(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 小于等于条件
+     * <p>
+     * 添加小于等于条件：column <= value
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  比较值
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public <R> LambdaClientConditionBuilder<T> le(SFunction<T, R> column, Object value) {
-        super.le(column, value);
+        conditionBuilder.le(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 模糊匹配条件
+     * <p>
+     * 添加 LIKE 条件：column LIKE '%value%'
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  匹配值（会自动添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> like(SFunction<T, ?> column, String value) {
-        super.like(column, value);
+        conditionBuilder.like(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 左模糊匹配条件
+     * <p>
+     * 添加 LIKE 条件：column LIKE '%value'
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  匹配值（会自动在前面添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
-        super.likeLeft(column, value);
+        conditionBuilder.likeLeft(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 右模糊匹配条件
+     * <p>
+     * 添加 LIKE 条件：column LIKE 'value%'
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  匹配值（会自动在后面添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> likeRight(SFunction<T, ?> column, String value) {
-        super.likeRight(column, value);
+        conditionBuilder.likeRight(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * 非模糊匹配条件
+     * <p>
+     * 添加 NOT LIKE 条件：column NOT LIKE '%value%'
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value  匹配值（会自动添加 % 通配符）
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> notLike(SFunction<T, ?> column, String value) {
-        super.notLike(column, value);
+        conditionBuilder.notLike(column, value);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * IN 条件（可变参数）
+     * <p>
+     * 添加 IN 条件：column IN (value1, value2, ...)
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param values 值列表
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
+    @SafeVarargs
+    public final <R> LambdaClientConditionBuilder<T> in(SFunction<T, R> column, R... values) {
+        conditionBuilder.in(column, values);
+        return this;
+    }
+
+    /**
+     * IN 条件（集合参数）
+     * <p>
+     * 添加 IN 条件：column IN (value1, value2, ...)
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param values 值集合
+     * @param <R>    字段类型
+     * @return 当前构建器实例，支持链式调用
+     */
     public <R> LambdaClientConditionBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
-        super.in(column, values);
+        conditionBuilder.in(column, values);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * IS NULL 条件
+     * <p>
+     * 添加 IS NULL 条件：column IS NULL
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> isNull(SFunction<T, ?> column) {
-        super.isNull(column);
+        conditionBuilder.isNull(column);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * IS NOT NULL 条件
+     * <p>
+     * 添加 IS NOT NULL 条件：column IS NOT NULL
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> isNotNull(SFunction<T, ?> column) {
-        super.isNotNull(column);
+        conditionBuilder.isNotNull(column);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * BETWEEN 条件
+     * <p>
+     * 添加 BETWEEN 条件：column BETWEEN value1 AND value2
+     * </p>
+     *
+     * @param column 表字段的 Lambda 表达式
+     * @param value1 起始值
+     * @param value2 结束值
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
-        super.between(column, value1, value2);
+        conditionBuilder.between(column, value1, value2);
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * OR 逻辑运算符
+     * <p>
+     * 添加 OR 关键字，将后续条件与前一个条件进行 OR 连接
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> or() {
-        super.or();
+        conditionBuilder.or();
         return this;
     }
 
     /**
-     * {@inheritDoc}
+     * AND 逻辑运算符
+     * <p>
+     * 添加 AND 关键字，将后续条件与前一个条件进行 AND 连接（默认行为，通常无需显式调用）
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
      */
-    @Override
     public LambdaClientConditionBuilder<T> and() {
-        super.and();
+        conditionBuilder.and();
         return this;
     }
-
 
     // ==================== 类型转换方法 ====================
 
     /**
-     * 转换为查询构建器
+     * 将当前的条件构建器转换为查询构建器
+     * <p>
+     * 转换后可用于执行 SELECT 查询操作。如果不指定查询列，则默认查询所有列。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询所有列
+     * List<User> users = condition.toSelect().list();
      *
-     * @param selectColumns 要查询的列
-     * @ 查询构建器
+     * // 查询指定列
+     * List<User> users = condition.toSelect(User::getId, User::getName).list();
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumns 要查询的列（可选），使用 Lambda 表达式指定
+     * @return 查询构建器
      */
     @SafeVarargs
-    public final LambdaClientQueryBuilder<T> becomeSelect(SFunction<T, ?>... selectColumns) {
+    public final LambdaClientQueryBuilder<T> toSelect(SFunction<T, ?>... selectColumns) {
         if (ContainerUtils.isNotEmptyArray(selectColumns)) {
-            return new LambdaClientQueryBuilder<>(this.baseDBApi, this);
+            return new LambdaClientQueryBuilder<>(this.baseDBApi, this.conditionBuilder, selectColumns);
         }
-        return new LambdaClientQueryBuilder<>(this.baseDBApi, this, selectColumns);
+        return new LambdaClientQueryBuilder<>(this.baseDBApi, this.conditionBuilder);
     }
 
     /**
-     * 转换为统计构建器
+     * 将当前的条件构建器转换为统计构建器
+     * <p>
+     * 转换后可用于执行 COUNT 统计查询。如果不指定统计列，则执行 COUNT(*) 统计总记录数；
+     * 如果指定了统计列，则统计该列的非空值数量。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 统计总记录数
+     * long total = condition.toCount().count();
      *
-     * @param column 要统计的列（不传则 COUNT(*)）
-     * @ 统计构建器
+     * // 统计指定列的非空值数量
+     * long count = condition.toCount(User::getEmail).count();
+     * }</pre>
+     * </p>
+     *
+     * @param column 要统计的列（可选），使用 Lambda 表达式指定
+     * @return 统计构建器
      */
     @SafeVarargs
-    public final LambdaClientCountBuilder<T> becomeCount(SFunction<T, ?>... column) {
+    public final LambdaClientCountBuilder<T> toCount(SFunction<T, ?>... column) {
         if (ContainerUtils.isEmptyArray(column)) {
-            return new LambdaClientCountBuilder<>(this.baseDBApi, this);
+            return new LambdaClientCountBuilder<>(this.baseDBApi, this.conditionBuilder);
         }
-        return new LambdaClientCountBuilder<>(this.baseDBApi, this, column[0]);
+        return new LambdaClientCountBuilder<>(this.baseDBApi, this.conditionBuilder, column[0]);
     }
 
     /**
-     * 转换为删除构建器
+     * 将当前的条件构建器转换为删除构建器
+     * <p>
+     * 转换后可用于执行 DELETE 删除操作。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果条件为空，可能会删除全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = condition.toDelete().delete();
+     * }</pre>
+     * </p>
      *
-     * @ 删除构建器
+     * @return 删除构建器
      */
-    public final LambdaClientDeleteBuilder<T> becomeDelete() {
-        return new LambdaClientDeleteBuilder<>(this.baseDBApi, this);
+    public final LambdaClientDeleteBuilder<T> toDelete() {
+        return new LambdaClientDeleteBuilder<>(this.baseDBApi, this.conditionBuilder);
     }
 
     /**
-     * 转换为更新构建器
+     * 将当前的条件构建器转换为更新构建器
+     * <p>
+     * 转换后可用于执行 UPDATE 更新操作。转换后需要调用 {@link LambdaClientUpdateBuilder#set(SFunction, Object)}
+     * 方法设置要更新的字段。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果条件为空，可能会更新全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = condition.toUpdate()
+     *     .set(User::getStatus, 1)
+     *     .update();
+     * }</pre>
+     * </p>
      *
-     * @ 更新构建器
+     * @return 更新构建器
      */
-    public final LambdaClientUpdateBuilder<T> becomeUpdate() {
-        return new LambdaClientUpdateBuilder<>(this.baseDBApi, this);
+    public final LambdaClientUpdateBuilder<T> toUpdate() {
+        return new LambdaClientUpdateBuilder<>(this.baseDBApi, this.conditionBuilder);
     }
 }

@@ -2,6 +2,8 @@
 
 package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
+import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
+
 import java.util.Collection;
 import java.util.function.Consumer;
 
@@ -80,6 +82,207 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
     @Override
     public LambdaDeleteBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
         super.where(conditionBuilder);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+         super.eq(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+         super.ne(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+         super.gt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+         super.ge(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+         super.lt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+         super.le(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+         super.like(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+         super.likeLeft(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+         super.likeRight(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+         super.notLike(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+         super.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+         super.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+         super.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+         super.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+         super.isNull(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+         super.isNotNull(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+         super.between(condition, column, value1, value2);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+         super.orderBy(condition, column, orderType);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+         super.orderByAsc(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaDeleteBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+         super.orderByDesc(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, R... values) {
+         super.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+         super.notIn(column, values);
         return this;
     }
 

@@ -455,6 +455,12 @@ public class SqlBuilder implements SQLWrapper {
         return condition(column + " NOT IN (" + placeholders + ")", values);
     }
 
+    public SqlBuilder notIn(String column, Collection<?> values) {
+        if (values == null || values.isEmpty()) return this;
+        String placeholders = values.stream().map(v -> "?").collect(Collectors.joining(", "));
+        return condition(column + " NOT IN (" + placeholders + ")", values);
+    }
+
     public SqlBuilder between(String column, Object value1, Object value2) {
         condition(column + " BETWEEN ? AND ?", value1, value2);
         return this;

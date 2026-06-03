@@ -170,6 +170,207 @@ public class LambdaQueryBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
+    protected <R> LambdaQueryBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+        super.eq(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+        super.ne(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+        super.gt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+        super.ge(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+        super.lt(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+        super.le(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+        super.like(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+        super.likeLeft(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+        super.likeRight(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+        super.notLike(condition, column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaQueryBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+        super.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        super.in(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaQueryBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+        super.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        super.notIn(condition, column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected <R> LambdaQueryBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+        super.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+        super.isNull(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+        super.isNotNull(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+        super.between(condition, column, value1, value2);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+        super.orderBy(condition, column, orderType);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+        super.orderByAsc(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected LambdaQueryBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+        super.orderByDesc(condition, column);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SafeVarargs
+    @Override
+    protected final <R> LambdaQueryBuilder<T> notIn(SFunction<T, R> column, R... values) {
+        super.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public <R> LambdaQueryBuilder<T> eq(SFunction<T, R> column, Object value) {
         super.eq(column, value);
         return this;

@@ -29,22 +29,34 @@ import java.util.function.Consumer;
  */
 public class LambdaSqlBuilder<T> implements SQLWrapper {
 
-    /** 实体类类型，用于通过反射获取表名和列名映射关系 */
+    /**
+     * 实体类类型，用于通过反射获取表名和列名映射关系
+     */
     private final Class<T> entityClass;
 
-    /** 表名（可自定义，若不设置则从实体类注解中获取） */
+    /**
+     * 表名（可自定义，若不设置则从实体类注解中获取）
+     */
     private String tableName;
 
-    /** 底层 SQL 构建器，实际执行 SQL 语句的构建 */
+    /**
+     * 底层 SQL 构建器，实际执行 SQL 语句的构建
+     */
     private final SqlBuilder sqlBuilder;
 
-    /** 标记是否已经构建过 SQL，防止重复构建 */
+    /**
+     * 标记是否已经构建过 SQL，防止重复构建
+     */
     private boolean isBuilt;
 
-    /** 是否处于嵌套条件构建中（用于处理括号内的复合条件） */
+    /**
+     * 是否处于嵌套条件构建中（用于处理括号内的复合条件）
+     */
     private boolean inNestedCondition;
 
-    /** 嵌套条件中的参数列表 */
+    /**
+     * 嵌套条件中的参数列表
+     */
     private List<Object> nestedParams;
 
     // ==================== 构造方法 ====================
@@ -265,10 +277,10 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     /**
      * 添加 JOIN 关联
      *
-     * @param type       JOIN 类型（INNER、LEFT、RIGHT）
-     * @param joinClass  要关联的实体类
-     * @param alias      关联表的别名
-     * @param <E>        关联实体类型
+     * @param type      JOIN 类型（INNER、LEFT、RIGHT）
+     * @param joinClass 要关联的实体类
+     * @param alias     关联表的别名
+     * @param <E>       关联实体类型
      * @return 当前构建器实例，支持链式调用
      */
     protected <E> LambdaSqlBuilder<T> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
@@ -385,7 +397,38 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    // ==================== UPDATE 相关方法 ====================
+// ==================== UPDATE 相关方法 ====================
+
+    /**
+     * 设置要更新的列和值（使用 Lambda 表达式指定列），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才执行此设置
+     * @param column    要更新的列对应的 Lambda 函数
+     * @param value     更新的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> set(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return set(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 设置要更新的列和值（直接使用列名字符串），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才执行此设置
+     * @param column    列名
+     * @param value     更新的值
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> set(boolean condition, String column, Object value) {
+        if (condition) {
+            return set(column, value);
+        }
+        return this;
+    }
 
     /**
      * 设置 UPDATE 子句，使用实体类映射的表名
@@ -505,7 +548,326 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return this;
     }
 
-    // 基础条件方法
+// ==================== 基础条件方法 ====================
+
+    /**
+     * 等于条件（=），支持条件判断
+     * <p>
+     * 只有当 condition 为 true 时，才会添加等于条件。
+     * 适用于动态条件构建场景。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * boolean filterByAge = true;
+     * builder.eq(() -> filterByAge, User::getAge, 18);
+     * }</pre>
+     * </p>
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return eq(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 不等于条件（&lt;&gt; 或 !=），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return ne(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 大于条件（&gt;），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return gt(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 大于等于条件（&gt;=），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return ge(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 小于条件（&lt;），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return lt(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 小于等于条件（&lt;=），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     比较的值
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+        if (condition) {
+            return le(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 模糊匹配条件（LIKE），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     匹配模式（需自行包含 % 通配符）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+        if (condition) {
+            return like(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 左模糊匹配条件（LIKE '%value'），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     匹配值（会自动在左侧添加 %）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+        if (condition) {
+            return likeLeft(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 右模糊匹配条件（LIKE 'value%'），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     匹配值（会自动在右侧添加 %）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+        if (condition) {
+            return likeRight(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 不匹配条件（NOT LIKE），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value     匹配模式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+        if (condition) {
+            return notLike(column, value);
+        }
+        return this;
+    }
+
+    /**
+     * 包含于条件（IN），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param values    值列表
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+        if (condition) {
+            return in(column, values);
+        }
+        return this;
+    }
+
+    /**
+     * 包含于条件（IN），使用集合参数，支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param values    值集合
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        if (condition) {
+            return in(column, values);
+        }
+        return this;
+    }
+
+    /**
+     * 不包含于条件（NOT IN），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param values    值列表
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+        if (condition) {
+            return notIn(column, values);
+        }
+        return this;
+    }
+
+    /**
+     * 不包含于条件（NOT IN），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param values    值集合
+     * @param <R>       列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+        if (condition) {
+            return notIn(column, values);
+        }
+        return this;
+    }
+
+    /**
+     * 为空条件（IS NULL），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+        if (condition) {
+            return isNull(column);
+        }
+        return this;
+    }
+
+    /**
+     * 非空条件（IS NOT NULL），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+        if (condition) {
+            return isNotNull(column);
+        }
+        return this;
+    }
+
+    /**
+     * 区间条件（BETWEEN），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此条件
+     * @param column    列对应的 Lambda 函数
+     * @param value1    区间起始值
+     * @param value2    区间结束值
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+        if (condition) {
+            return between(column, value1, value2);
+        }
+        return this;
+    }
+
+
+    /**
+     * 添加 ORDER BY 排序，支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此排序逻辑
+     * @param column    排序列对应的 Lambda 函数
+     * @param orderType 排序类型（ASC 升序 / DESC 降序）
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+        if (condition) {
+            return orderBy(column, orderType);
+        }
+        return this;
+    }
+
+    /**
+     * 添加升序排序（ORDER BY column ASC），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此排序逻辑
+     * @param column    排序列对应的 Lambda 函数
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+        if (condition) {
+            return orderByAsc(column);
+        }
+        return this;
+    }
+
+    /**
+     * 添加降序排序（ORDER BY column DESC），支持条件判断
+     *
+     * @param condition 条件判断，为 true 时才添加此排序逻辑
+     * @param column    排序列对应的 Lambda 函数
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+        if (condition) {
+            return orderByDesc(column);
+        }
+        return this;
+    }
 
     /**
      * 等于条件（=）
@@ -516,11 +878,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @return 当前构建器实例，支持链式调用
      */
     protected <R> LambdaSqlBuilder<T> eq(SFunction<T, R> column, Object value) {
-        if (inNestedCondition) {
-            sqlBuilder.eq(getColumn(column), value);
-        } else {
-            sqlBuilder.eq(getColumn(column), value);
-        }
+        sqlBuilder.eq(getColumn(column), value);
         return this;
     }
 
@@ -671,8 +1029,20 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    protected final <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    protected <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, R... values) {
+        sqlBuilder.notIn(getColumn(column), values);
+        return this;
+    }
+
+    /**
+     * 不包含于条件（NOT IN）
+     *
+     * @param column 列对应的 Lambda 函数
+     * @param values 值集合
+     * @param <R>    列类型
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
         sqlBuilder.notIn(getColumn(column), values);
         return this;
     }
@@ -767,8 +1137,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param columns 分组列对应的 Lambda 函数
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    protected final LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
+    protected LambdaSqlBuilder<T> groupBy(SFunction<T, ?>... columns) {
         String[] columnNames = Arrays.stream(columns)
                 .map(this::getColumn)
                 .toArray(String[]::new);
@@ -960,13 +1329,19 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * 单条查询结果，对应非批量操作
      */
     protected static class SingleQueryResult implements QueryResult {
-        /** SQL 语句 */
+        /**
+         * SQL 语句
+         */
         private final String sql;
 
-        /** SQL 参数数组 */
+        /**
+         * SQL 参数数组
+         */
         private final Object[] params;
 
-        /** SQL 类型 */
+        /**
+         * SQL 类型
+         */
         private final SQLType sqlType;
 
         /**
@@ -1018,13 +1393,19 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * 批量查询结果，对应批量操作（如批量插入）
      */
     protected static class BatchQueryResult implements QueryResult {
-        /** SQL 语句模板 */
+        /**
+         * SQL 语句模板
+         */
         private final String sql;
 
-        /** 批量参数列表 */
+        /**
+         * 批量参数列表
+         */
         private final List<Object[]> batchParams;
 
-        /** SQL 类型 */
+        /**
+         * SQL 类型
+         */
         private final SQLType sqlType;
 
         /**
