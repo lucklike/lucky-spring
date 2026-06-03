@@ -75,6 +75,10 @@ public class LambdaClientUpdateBuilder<T> {
         this.baseDBApi = baseDBApi;
     }
 
+    public LambdaUpdateBuilder<T> getUpdateBuilder() {
+        return updateBuilder;
+    }
+
     // ==================== SET 方法 ====================
 
     /**
