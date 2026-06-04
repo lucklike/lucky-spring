@@ -5,6 +5,7 @@ import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
+import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.mock.MockResult;
@@ -196,12 +197,14 @@ public class StandardApiConfiguration {
     @NestedConfigurationProperty
     private MockResult mockConfig;
 
-
+    /**
+     * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
     @NestedConfigurationProperty
     private SpELImportConf spelImport;
 
     /**
-     * SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     * {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
     @NestedConfigurationProperty
     private SpELImportConf methodMetaSpelImport;
@@ -766,18 +769,38 @@ public class StandardApiConfiguration {
         this.mockConfig = mockConfig;
     }
 
+    /**
+     * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @return 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
     public SpELImportConf getSpelImport() {
         return spelImport;
     }
 
+    /**
+     * 设置当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @param spelImport 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
     public void setSpelImport(SpELImportConf spelImport) {
         this.spelImport = spelImport;
     }
 
+    /**
+     * {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @return {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
     public SpELImportConf getMethodMetaSpelImport() {
         return methodMetaSpelImport;
     }
 
+    /**
+     * 设置{@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @param methodMetaSpelImport {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
     public void setMethodMetaSpelImport(SpELImportConf methodMetaSpelImport) {
         this.methodMetaSpelImport = methodMetaSpelImport;
     }
