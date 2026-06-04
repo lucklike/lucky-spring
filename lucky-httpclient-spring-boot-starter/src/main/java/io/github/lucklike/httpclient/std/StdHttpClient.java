@@ -147,7 +147,7 @@ public @interface StdHttpClient {
             StandardHttpClientConfiguration config = simpleHttpClientConfigs.get(CommonFunctions.getApiConfigId(cc));
             config.removeNonEffectiveConfig();
 
-            // 注册SpEL变量、函数、Hooks、包
+            // 注册ClassContent级别SpEL变量、函数、Hooks、包
             SpELImportConf springElImport = config.getSpringElImport();
             if (springElImport != null) {
                 springElImport.importSpELRuntime(cc);
@@ -181,6 +181,12 @@ public @interface StdHttpClient {
             }
             resultMap.put(STANDARD_API_CONFIG_NAME, methodConfig);
             resultMap.put(STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
+
+            // 注册MethodMetaCOntent级别SpEL变量、函数、Hooks、包
+            SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpringElImport();
+            if (methodMetaSpringElImport != null) {
+                methodMetaSpringElImport.importSpELRuntime(mec);
+            }
             lifeCycleManager.methodMetaContentInit(mec, methodConfig);
             return resultMap;
         }
@@ -194,8 +200,18 @@ public @interface StdHttpClient {
          */
         @Callback(lifecycle = Lifecycle.METHOD)
         public static void methodContentInit(MethodContext mc,
+                                             @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
                                              @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                              @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+            // 注册MethodContent级别的SpEL变量、函数、Hooks、包
+            SpELImportConf commonMethodSpringElImport = config.getCommonMethodSpringElImport();
+            if (commonMethodSpringElImport != null) {
+                commonMethodSpringElImport.importSpELRuntime(mc);
+            }
+            SpELImportConf methodSpELImportConf = apiConfig.getSpringElImport();
+            if (methodSpELImportConf != null) {
+                methodSpELImportConf.importSpELRuntime(mc);
+            }
             lifeCycleManager.methodContentInit(mc, apiConfig);
         }
 

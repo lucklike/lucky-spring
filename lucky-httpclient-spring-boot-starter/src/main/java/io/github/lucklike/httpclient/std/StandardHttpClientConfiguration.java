@@ -1,7 +1,7 @@
 package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
-import com.luckyframework.httpclient.proxy.spel.SpELImport;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -23,6 +23,12 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
      * 标准客户端中单个方法的个性化配置
      */
     private Map<String, StandardApiConfiguration> methodConfigs = new LinkedHashMap<>();
+
+    /**
+     * {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    @NestedConfigurationProperty
+    private SpELImportConf commonMethodSpringElImport;
 
     /**
      * 获取生命周期管理器对象
@@ -58,6 +64,24 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
      */
     public void setMethodConfigs(Map<String, StandardApiConfiguration> methodConfigs) {
         this.methodConfigs = methodConfigs;
+    }
+
+    /**
+     * {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @return {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public SpELImportConf getCommonMethodSpringElImport() {
+        return commonMethodSpringElImport;
+    }
+
+    /**
+     * 设置{@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @param commonMethodSpringElImport {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public void setCommonMethodSpringElImport(SpELImportConf commonMethodSpringElImport) {
+        this.commonMethodSpringElImport = commonMethodSpringElImport;
     }
 
     @Override
