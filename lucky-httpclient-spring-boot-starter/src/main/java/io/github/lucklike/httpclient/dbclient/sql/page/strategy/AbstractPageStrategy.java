@@ -61,7 +61,7 @@ public abstract class AbstractPageStrategy implements PageStrategy {
             orderByBuilder.append(columnsStr).append(" ").append(oc.getOrder().name());
         }
 
-        return orderByBuilder.length() > 0 ? " ORDER BY " + orderByBuilder.toString() : "";
+        return orderByBuilder.length() > 0 ? " ORDER BY " + orderByBuilder : "";
     }
 
     /**

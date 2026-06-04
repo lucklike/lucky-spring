@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.sql.page.strategy;
 
+import com.luckyframework.common.ContainerUtils;
 import io.github.lucklike.httpclient.dbclient.sql.page.ContextPage;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 
@@ -17,7 +18,7 @@ public class OraclePageStrategy extends AbstractPageStrategy {
     public PageSql pageSql(String sql, Page page) {
         // Oracle ROWNUM 分页：使用子查询方式
         String pageSql = String.format(
-                "SELECT * FROM (SELECT temp.*, ROWNUM rn FROM (SELECT * FROM (%s) %s) temp) WHERE rn BETWEEN %s AND %s",
+                getPageSQLTemp(page),
                 sql,
                 buildOrderByClause(page),
                 getOffsetParamName(page),
@@ -43,5 +44,14 @@ public class OraclePageStrategy extends AbstractPageStrategy {
             return String.format(":$%s.getEndRow", pageParamIndex);
         }
         return "?";
+    }
+
+    private String getPageSQLTemp(Page page) {
+        // 没有排序：直接在原始SQL外层套分页
+        if (ContainerUtils.isEmptyCollection(page.getOrderColumns())) {
+            return "SELECT * FROM (SELECT temp.*, ROWNUM rn FROM (%s %s) temp) WHERE rn BETWEEN %s AND %s";
+        }
+        // 有排序：需要两层嵌套，先排序再赋ROWNUM
+        return  "SELECT * FROM (SELECT temp.*, ROWNUM rn FROM (SELECT * FROM (%s) %s) temp) WHERE rn BETWEEN %s AND %s";
     }
 }
