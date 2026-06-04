@@ -14,6 +14,7 @@ import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
+import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
@@ -61,8 +62,22 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
     public void methodMetaContentInit(MethodMetaContext mec, StandardApiConfiguration config) {
+        // 注册SpEL变量、函数、Hooks、包
+        SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpringElImport();
+        if (methodMetaSpringElImport != null) {
+            methodMetaSpringElImport.importSpELRuntime(mec);
+        }
         // 重试相关配置
         retrySetter(mec, config);
+    }
+
+    @Override
+    public void methodContentInit(MethodContext mc, StandardApiConfiguration config) {
+        // 注册SpEL变量、函数、Hooks、包
+        SpELImportConf spELImportConf = config.getSpringElImport();
+        if (spELImportConf != null) {
+            spELImportConf.importSpELRuntime(mc);
+        }
     }
 
     @Override

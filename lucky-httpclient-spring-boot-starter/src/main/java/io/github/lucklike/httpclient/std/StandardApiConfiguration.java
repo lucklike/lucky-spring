@@ -4,6 +4,7 @@ import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
+import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.mock.MockResult;
@@ -194,6 +195,16 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private MockResult mockConfig;
+
+
+    @NestedConfigurationProperty
+    private SpELImportConf springElImport;
+
+    /**
+     * SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    @NestedConfigurationProperty
+    private SpELImportConf methodMetaSpringElImport;
 
     /**
      * 设置的请求头参数
@@ -753,6 +764,22 @@ public class StandardApiConfiguration {
      */
     public void setMockConfig(MockResult mockConfig) {
         this.mockConfig = mockConfig;
+    }
+
+    public SpELImportConf getSpringElImport() {
+        return springElImport;
+    }
+
+    public void setSpringElImport(SpELImportConf springElImport) {
+        this.springElImport = springElImport;
+    }
+
+    public SpELImportConf getMethodMetaSpringElImport() {
+        return methodMetaSpringElImport;
+    }
+
+    public void setMethodMetaSpringElImport(SpELImportConf methodMetaSpringElImport) {
+        this.methodMetaSpringElImport = methodMetaSpringElImport;
     }
 
     /**

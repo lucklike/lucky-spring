@@ -1,5 +1,7 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
+import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 

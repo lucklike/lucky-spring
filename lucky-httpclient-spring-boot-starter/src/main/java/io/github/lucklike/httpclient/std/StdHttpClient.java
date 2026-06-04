@@ -12,6 +12,7 @@ import com.luckyframework.httpclient.proxy.annotations.RespConvert;
 import com.luckyframework.httpclient.proxy.configapi.ApiConfig;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
+import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
@@ -145,6 +146,12 @@ public @interface StdHttpClient {
             Map<String, StandardHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getStandardClientConfigs();
             StandardHttpClientConfiguration config = simpleHttpClientConfigs.get(CommonFunctions.getApiConfigId(cc));
             config.removeNonEffectiveConfig();
+
+            // 注册SpEL变量、函数、Hooks、包
+            SpELImportConf springElImport = config.getSpringElImport();
+            if (springElImport != null) {
+                springElImport.importSpELRuntime(cc);
+            }
 
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
@@ -458,6 +465,8 @@ public @interface StdHttpClient {
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
             apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
             apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
+            apiConfig.setSpringElImport(methodConfig.getSpringElImport());
+            apiConfig.setMethodMetaSpringElImport(methodConfig.getMethodMetaSpringElImport());
 
             return apiConfig;
         }
