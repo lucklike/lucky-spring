@@ -32,7 +32,7 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
 
         // 获取方法元信息
         ExecuteMeta meta = decorator.getMeta();
-        MethodContext mc = meta.getMethodContext();
+        MethodContext mc = new MethodContext(meta.getMethodMetaContext(), meta.getArgs());
         Method method = meta.getMethod();
         MethodProxy methodProxy = meta.getMethodProxy();
         Object[] args = meta.getArgs();
