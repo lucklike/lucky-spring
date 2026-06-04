@@ -198,13 +198,13 @@ public class StandardApiConfiguration {
 
 
     @NestedConfigurationProperty
-    private SpELImportConf springElImport;
+    private SpELImportConf spelImport;
 
     /**
      * SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
     @NestedConfigurationProperty
-    private SpELImportConf methodMetaSpringElImport;
+    private SpELImportConf methodMetaSpelImport;
 
     /**
      * 设置的请求头参数
@@ -766,20 +766,20 @@ public class StandardApiConfiguration {
         this.mockConfig = mockConfig;
     }
 
-    public SpELImportConf getSpringElImport() {
-        return springElImport;
+    public SpELImportConf getSpelImport() {
+        return spelImport;
     }
 
-    public void setSpringElImport(SpELImportConf springElImport) {
-        this.springElImport = springElImport;
+    public void setSpelImport(SpELImportConf spelImport) {
+        this.spelImport = spelImport;
     }
 
-    public SpELImportConf getMethodMetaSpringElImport() {
-        return methodMetaSpringElImport;
+    public SpELImportConf getMethodMetaSpelImport() {
+        return methodMetaSpelImport;
     }
 
-    public void setMethodMetaSpringElImport(SpELImportConf methodMetaSpringElImport) {
-        this.methodMetaSpringElImport = methodMetaSpringElImport;
+    public void setMethodMetaSpelImport(SpELImportConf methodMetaSpelImport) {
+        this.methodMetaSpelImport = methodMetaSpelImport;
     }
 
     /**

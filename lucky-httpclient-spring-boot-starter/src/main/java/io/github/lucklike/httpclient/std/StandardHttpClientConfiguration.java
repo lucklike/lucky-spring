@@ -28,7 +28,7 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
      * {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
     @NestedConfigurationProperty
-    private SpELImportConf commonMethodSpringElImport;
+    private SpELImportConf methodSpelImport;
 
     /**
      * 获取生命周期管理器对象
@@ -71,17 +71,17 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
      *
      * @return {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
-    public SpELImportConf getCommonMethodSpringElImport() {
-        return commonMethodSpringElImport;
+    public SpELImportConf getMethodSpelImport() {
+        return methodSpelImport;
     }
 
     /**
      * 设置{@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      *
-     * @param commonMethodSpringElImport {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     * @param methodSpelImport {@link MethodContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
-    public void setCommonMethodSpringElImport(SpELImportConf commonMethodSpringElImport) {
-        this.commonMethodSpringElImport = commonMethodSpringElImport;
+    public void setMethodSpelImport(SpELImportConf methodSpelImport) {
+        this.methodSpelImport = methodSpelImport;
     }
 
     @Override

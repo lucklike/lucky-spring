@@ -148,7 +148,7 @@ public @interface StdHttpClient {
             config.removeNonEffectiveConfig();
 
             // 注册ClassContent级别SpEL变量、函数、Hooks、包
-            SpELImportConf springElImport = config.getSpringElImport();
+            SpELImportConf springElImport = config.getSpelImport();
             if (springElImport != null) {
                 springElImport.importSpELRuntime(cc);
             }
@@ -183,7 +183,7 @@ public @interface StdHttpClient {
             resultMap.put(STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
 
             // 注册MethodMetaCOntent级别SpEL变量、函数、Hooks、包
-            SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpringElImport();
+            SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpelImport();
             if (methodMetaSpringElImport != null) {
                 methodMetaSpringElImport.importSpELRuntime(mec);
             }
@@ -204,11 +204,11 @@ public @interface StdHttpClient {
                                              @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                              @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
             // 注册MethodContent级别的SpEL变量、函数、Hooks、包
-            SpELImportConf commonMethodSpringElImport = config.getCommonMethodSpringElImport();
+            SpELImportConf commonMethodSpringElImport = config.getMethodSpelImport();
             if (commonMethodSpringElImport != null) {
                 commonMethodSpringElImport.importSpELRuntime(mc);
             }
-            SpELImportConf methodSpELImportConf = apiConfig.getSpringElImport();
+            SpELImportConf methodSpELImportConf = apiConfig.getSpelImport();
             if (methodSpELImportConf != null) {
                 methodSpELImportConf.importSpELRuntime(mc);
             }
@@ -481,8 +481,8 @@ public @interface StdHttpClient {
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
             apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
             apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
-            apiConfig.setSpringElImport(methodConfig.getSpringElImport());
-            apiConfig.setMethodMetaSpringElImport(methodConfig.getMethodMetaSpringElImport());
+            apiConfig.setSpelImport(methodConfig.getSpelImport());
+            apiConfig.setMethodMetaSpelImport(methodConfig.getMethodMetaSpelImport());
 
             return apiConfig;
         }
