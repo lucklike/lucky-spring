@@ -179,6 +179,11 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     private Map<String, StandardHttpClientConfiguration> standardClientConfigs = new LinkedHashMap<>();
 
+    /**
+     * 开启标准客户端初始化配置校验
+     */
+    private boolean enableStdClientInitCheck = true;
+
 
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
@@ -396,6 +401,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
         this.standardClientConfigs = standardClientConfigs;
     }
 
+    /**
+     * 设置是否开启标准客户端初始化配置校验
+     *
+     * @param enableStdClientInitCheck 是否开启标准客户端初始化配置校验
+     */
+    public void setEnableStdClientInitCheck(boolean enableStdClientInitCheck) {
+        this.enableStdClientInitCheck = enableStdClientInitCheck;
+    }
+
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
@@ -599,5 +613,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public Map<String, StandardHttpClientConfiguration> getStandardClientConfigs() {
         return standardClientConfigs;
+    }
+
+    /**
+     * 是否开启标准客户端初始化配置校验
+     *
+     * @return 是否开启标准客户端初始化配置校验
+     */
+    public boolean isEnableStdClientInitCheck() {
+        return enableStdClientInitCheck;
     }
 }

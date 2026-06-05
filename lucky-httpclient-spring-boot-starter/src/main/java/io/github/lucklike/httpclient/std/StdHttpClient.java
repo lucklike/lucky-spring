@@ -37,6 +37,8 @@ import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
 import io.github.lucklike.httpclient.config.mock.MockResult;
 import io.github.lucklike.httpclient.discovery.HttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.lang.NonNull;
@@ -114,6 +116,7 @@ public @interface StdHttpClient {
      * 标准HTTP客户端实现相关的工具函数和回调函数
      */
     class StandardHttpClientFunctionAndCallback {
+        private static final Logger logger = LoggerFactory.getLogger(StandardHttpClientFunctionAndCallback.class);
 
         // 存储标准客户端配置对象的变量名
         public static final String STANDARD_HTTP_CLIENT_CONFIG_NAME = "$StandardHttpClientConfiguration";
@@ -141,10 +144,8 @@ public @interface StdHttpClient {
                 ClassContext cc,
                 @Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfiguration
         ) {
-
             // 初始化LifeCycleManager和SimpleHttpClientConfiguration配置
-            Map<String, StandardHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getStandardClientConfigs();
-            StandardHttpClientConfiguration config = simpleHttpClientConfigs.get(CommonFunctions.getApiConfigId(cc));
+            StandardHttpClientConfiguration config = loadStandardHttpClientConfiguration(cc, factoryConfiguration);
             config.removeNonEffectiveConfig();
 
             // 注册ClassContent级别SpEL变量、函数、Hooks、包
@@ -407,6 +408,38 @@ public @interface StdHttpClient {
             throw new ConfigurationParserException("@StdHttpClient('{}')[{}] Lifecycle manager configuration is missing", CommonFunctions.getApiConfigId(cc), cc.getCurrentAnnotatedElement().getName());
         }
 
+        /**
+         * 加载{@link StandardHttpClientConfiguration}配置
+         *
+         * @param cc                   类上下文
+         * @param factoryConfiguration 全局配置
+         * @return {@link StandardHttpClientConfiguration}配置
+         */
+        private static StandardHttpClientConfiguration loadStandardHttpClientConfiguration(ClassContext cc, HttpClientProxyObjectFactoryConfiguration factoryConfiguration) {
+            // 初始化LifeCycleManager和SimpleHttpClientConfiguration配置
+            String apiConfigId = CommonFunctions.getApiConfigId(cc);
+            Map<String, StandardHttpClientConfiguration> simpleHttpClientConfigs = factoryConfiguration.getStandardClientConfigs();
+            StandardHttpClientConfiguration config = simpleHttpClientConfigs.get(apiConfigId);
+            if (config == null) {
+                // 是否开启标准客户端初始化配置校验
+                if (factoryConfiguration.isEnableStdClientInitCheck()) {
+                    throw new ConfigurationParserException(
+                            "@StdHttpClient('{0}')[{1}] Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{0}'",
+                            apiConfigId,
+                            cc.getCurrentAnnotatedElement().getName()
+                    );
+                } else {
+                    logger.warn(
+                            "[☣️] Unavailable standard http client: @StdHttpClient('{}')[{}] -- Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{}'",
+                            apiConfigId,
+                            cc.getCurrentAnnotatedElement().getName(),
+                            apiConfigId
+                   );
+                    config = new StandardHttpClientConfiguration();
+                }
+            }
+            return config;
+        }
 
         /**
          * 合并配置
