@@ -25,6 +25,7 @@ import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
 import com.luckyframework.httpclient.proxy.mock.config.MockConfiguration;
 import com.luckyframework.httpclient.proxy.mock.config.WhenMockResult;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
+import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
@@ -63,6 +64,27 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
+import static io.github.lucklike.httpclient.std.Constant.CALL_FUNC_MDRCT;
+import static io.github.lucklike.httpclient.std.Constant.CALL_FUNC_MOCK_ENABLE;
+import static io.github.lucklike.httpclient.std.Constant.FUNC_FUNC_MOCK_RESULT;
+import static io.github.lucklike.httpclient.std.Constant.FUNC_RESP_META_TYPE_GET;
+import static io.github.lucklike.httpclient.std.Constant.FUNC_RESULT_CONVERT;
+import static io.github.lucklike.httpclient.std.Constant.FUNC_URL_GET;
+import static io.github.lucklike.httpclient.std.Constant.LIFE_CYCLE_MANAGER_NAME;
+import static io.github.lucklike.httpclient.std.Constant.NAMESPACE;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MDRCT;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_ENABLE;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_RESULT;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESP_META_TYPE_GET;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESULT_CONVERT;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_URL_GET;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_LIFE_CYCLE_MANAGER_NAME;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_API_CONFIG_NAME;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_HTTP_CLIENT_CONFIG_NAME;
+import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_MOCK_CONFIG;
+import static io.github.lucklike.httpclient.std.Constant.STANDARD_API_CONFIG_NAME;
+import static io.github.lucklike.httpclient.std.Constant.STANDARD_HTTP_CLIENT_CONFIG_NAME;
+import static io.github.lucklike.httpclient.std.Constant.STANDARD_MOCK_CONFIG;
 
 /**
  * 标准的HTTP客户端
@@ -72,9 +94,9 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @Inherited
 @ApiConfig
 @HttpRequest
-@HttpClient(func = "__get_http_server_url__")
-@Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
-@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
+@HttpClient(func = FUNC_URL_GET)
+@Mock(enable = CALL_FUNC_MOCK_ENABLE, mockFunc = FUNC_FUNC_MOCK_RESULT)
+@RespConvert(metaTypeFunc = FUNC_RESP_META_TYPE_GET, resultFunc = FUNC_RESULT_CONVERT, respContentType = CALL_FUNC_MDRCT)
 @SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
 public @interface StdHttpClient {
 
@@ -115,17 +137,9 @@ public @interface StdHttpClient {
     /**
      * 标准HTTP客户端实现相关的工具函数和回调函数
      */
+    @Namespace(NAMESPACE)
     class StandardHttpClientFunctionAndCallback {
         private static final Logger logger = LoggerFactory.getLogger(StandardHttpClientFunctionAndCallback.class);
-
-        // 存储标准客户端配置对象的变量名
-        public static final String STANDARD_HTTP_CLIENT_CONFIG_NAME = "$StandardHttpClientConfiguration";
-        // 存储标准API配置对象的变量名
-        public static final String STANDARD_API_CONFIG_NAME = "$StandardApiConfiguration";
-        // 存储生命周期管理器对象变量名
-        public static final String LIFE_CYCLE_MANAGER_NAME = "$LifeCycleManager";
-        // 存储标准客户端 Mock 相关配置的变量名
-        public static final String STANDARD_MOCK_CONFIG = "$StandardMockConfiguration";
 
         static {
             ContextValueUnpack.addParameterConvert(new StdInitBindParameterConvert());
@@ -156,8 +170,8 @@ public @interface StdHttpClient {
 
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
-            resultMap.put(STANDARD_HTTP_CLIENT_CONFIG_NAME, config);
-            resultMap.put(LIFE_CYCLE_MANAGER_NAME, LazyValue.of(() -> createLifeCycleManager(cc, config)));
+            resultMap.put(SIMPLE_STANDARD_HTTP_CLIENT_CONFIG_NAME, config);
+            resultMap.put(SIMPLE_LIFE_CYCLE_MANAGER_NAME, LazyValue.of(() -> createLifeCycleManager(cc, config)));
             return resultMap;
         }
 
@@ -180,8 +194,8 @@ public @interface StdHttpClient {
             if (methodConfig.getRetryConfig() != null) {
                 methodConfig.getRetryConfig().init();
             }
-            resultMap.put(STANDARD_API_CONFIG_NAME, methodConfig);
-            resultMap.put(STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
+            resultMap.put(SIMPLE_STANDARD_API_CONFIG_NAME, methodConfig);
+            resultMap.put(SIMPLE_STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
 
             // 注册MethodMetaCOntent级别SpEL变量、函数、Hooks、包
             SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpelImport();
@@ -275,7 +289,7 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 目标HTTP服务地址
          */
-        @FunctionAlias("__get_http_server_url__")
+        @FunctionAlias(SIMPLE_FUNC_URL_GET)
         public static String getHttpServerUrl(MethodContext mc,
                                               @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                               @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
@@ -290,7 +304,7 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 响应元类型
          */
-        @FunctionAlias("__get_response_meta_type__")
+        @FunctionAlias(SIMPLE_FUNC_RESP_META_TYPE_GET)
         public static Object getResponseMetaType(MethodContext mc,
                                                  @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
                                                  @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
@@ -304,7 +318,7 @@ public @interface StdHttpClient {
          * @param mc 方法上下文对象
          * @return 强制指定的响应体Content-Type
          */
-        @FunctionAlias("__mandatory_designation_response_content_type__")
+        @FunctionAlias(SIMPLE_FUNC_MDRCT)
         public static String mandatoryDesignationResponseContentType(MethodContext mc) {
             StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
             LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
@@ -320,7 +334,7 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 最终的响应结果
          */
-        @FunctionAlias("__result_convert__")
+        @FunctionAlias(SIMPLE_FUNC_RESULT_CONVERT)
         public static Object resultConvert(MethodContext mc,
                                            Response response,
                                            @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
@@ -334,7 +348,7 @@ public @interface StdHttpClient {
          * @param mc 方法上下文
          * @return 是否启用 Mock 文件
          */
-        @FunctionAlias("__std_mock_enable__")
+        @FunctionAlias(SIMPLE_FUNC_MOCK_ENABLE)
         public static boolean stdMockEnable(MethodContext mc) {
             MockConfiguration mockConfig = mc.getRootVar(STANDARD_MOCK_CONFIG, MockConfiguration.class);
             return MockConfigFunction.mockEnable(mc, mockConfig);
@@ -348,7 +362,7 @@ public @interface StdHttpClient {
          * @return Mock 结果
          * @throws InterruptedException 可能出现的异常
          */
-        @FunctionAlias("__std_mock_result__")
+        @FunctionAlias(SIMPLE_FUNC_MOCK_RESULT)
         public static MockResponse stdMockResult(MethodContext mc,
                                                  @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig) throws InterruptedException {
 
@@ -434,7 +448,7 @@ public @interface StdHttpClient {
                             apiConfigId,
                             cc.getCurrentAnnotatedElement().getName(),
                             apiConfigId
-                   );
+                    );
                     config = new StandardHttpClientConfiguration();
                 }
             }

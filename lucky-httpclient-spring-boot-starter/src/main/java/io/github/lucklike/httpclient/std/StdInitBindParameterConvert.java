@@ -9,6 +9,7 @@ import org.springframework.lang.Nullable;
 import java.util.List;
 
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.spelInitCopy;
+import static io.github.lucklike.httpclient.std.Constant.STANDARD_API_CONFIG_NAME;
 
 /**
  * 标准化初始化参数绑定
@@ -26,7 +27,7 @@ public class StdInitBindParameterConvert implements ParameterConvert {
             return false;
         }
         // 没有初始化配置时不转换
-        StandardApiConfiguration config = context.getRootVar(StdHttpClient.StandardHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        StandardApiConfiguration config = context.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
         if (config ==null || ContainerUtils.isEmptyMap(config.getInitBindParams().getBindParams())) {
             return false;
         }
@@ -42,7 +43,7 @@ public class StdInitBindParameterConvert implements ParameterConvert {
 
     @Override
     public Object convert(ValueContext context, @Nullable Object value) {
-        StandardApiConfiguration config = context.getRootVar(StdHttpClient.StandardHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        StandardApiConfiguration config = context.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
         spelInitCopy(context, value, config.getInitBindParams().getBindParams());
         return value;
     }
