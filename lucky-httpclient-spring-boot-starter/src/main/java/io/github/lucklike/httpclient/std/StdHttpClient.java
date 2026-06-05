@@ -430,7 +430,7 @@ public @interface StdHttpClient {
                     );
                 } else {
                     logger.warn(
-                            "[☣️] Unavailable standard http client: @StdHttpClient('{}')[{}] -- Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{}'",
+                            "[⛔] Unavailable standard http client: @StdHttpClient('{}')[{}] -- Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{}'",
                             apiConfigId,
                             cc.getCurrentAnnotatedElement().getName(),
                             apiConfigId
