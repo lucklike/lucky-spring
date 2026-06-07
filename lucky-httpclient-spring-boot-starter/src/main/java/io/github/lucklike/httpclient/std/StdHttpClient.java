@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.luckyframework.common.ContainerUtils.mergeList;
+import static com.luckyframework.common.ContainerUtils.mergeCollection;
 import static com.luckyframework.common.ContainerUtils.mergeMap;
 import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
@@ -71,20 +71,16 @@ import static io.github.lucklike.httpclient.std.Constant.FUNC_RESP_META_TYPE_GET
 import static io.github.lucklike.httpclient.std.Constant.FUNC_RESULT_CONVERT;
 import static io.github.lucklike.httpclient.std.Constant.FUNC_URL_GET;
 import static io.github.lucklike.httpclient.std.Constant.LIFE_CYCLE_MANAGER_NAME;
-import static io.github.lucklike.httpclient.std.Constant.NAMESPACE;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MDRCT;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_ENABLE;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_RESULT;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESP_META_TYPE_GET;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESULT_CONVERT;
 import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_URL_GET;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_LIFE_CYCLE_MANAGER_NAME;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_API_CONFIG_NAME;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_HTTP_CLIENT_CONFIG_NAME;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_STANDARD_MOCK_CONFIG;
 import static io.github.lucklike.httpclient.std.Constant.STANDARD_API_CONFIG_NAME;
 import static io.github.lucklike.httpclient.std.Constant.STANDARD_HTTP_CLIENT_CONFIG_NAME;
 import static io.github.lucklike.httpclient.std.Constant.STANDARD_MOCK_CONFIG;
+import static io.github.lucklike.httpclient.std.Constant.STD_HTTP;
 
 /**
  * 标准的HTTP客户端
@@ -137,7 +133,7 @@ public @interface StdHttpClient {
     /**
      * 标准HTTP客户端实现相关的工具函数和回调函数
      */
-    @Namespace(NAMESPACE)
+    @Namespace(STD_HTTP)
     class StandardHttpClientFunctionAndCallback {
         private static final Logger logger = LoggerFactory.getLogger(StandardHttpClientFunctionAndCallback.class);
 
@@ -170,8 +166,8 @@ public @interface StdHttpClient {
 
             // 封装成 Map 后返回
             Map<String, Object> resultMap = new HashMap<>(2);
-            resultMap.put(SIMPLE_STANDARD_HTTP_CLIENT_CONFIG_NAME, config);
-            resultMap.put(SIMPLE_LIFE_CYCLE_MANAGER_NAME, LazyValue.of(() -> createLifeCycleManager(cc, config)));
+            resultMap.put(STANDARD_HTTP_CLIENT_CONFIG_NAME, config);
+            resultMap.put(LIFE_CYCLE_MANAGER_NAME, LazyValue.of(() -> createLifeCycleManager(cc, config)));
             return resultMap;
         }
 
@@ -186,16 +182,16 @@ public @interface StdHttpClient {
         @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, unfold = true)
         public static Map<String, Object> methodMetaContentInit(
                 MethodMetaContext mec,
-                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             Map<String, Object> resultMap = new HashMap<>(2);
             StandardApiConfiguration methodConfig = mergeConfig(mec, config);
             if (methodConfig.getRetryConfig() != null) {
                 methodConfig.getRetryConfig().init();
             }
-            resultMap.put(SIMPLE_STANDARD_API_CONFIG_NAME, methodConfig);
-            resultMap.put(SIMPLE_STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
+            resultMap.put(STANDARD_API_CONFIG_NAME, methodConfig);
+            resultMap.put(STANDARD_MOCK_CONFIG, createMockConfiguration(mec, config));
 
             // 注册MethodMetaCOntent级别SpEL变量、函数、Hooks、包
             SpELImportConf methodMetaSpringElImport = config.getMethodMetaSpelImport();
@@ -214,10 +210,12 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.METHOD)
-        public static void methodContentInit(MethodContext mc,
-                                             @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                                             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                             @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
+        public static void methodContentInit(
+                MethodContext mc,
+                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) {
             // 注册MethodContent级别的SpEL变量、函数、Hooks、包
             SpELImportConf commonMethodSpringElImport = config.getMethodSpelImport();
             if (commonMethodSpringElImport != null) {
@@ -239,10 +237,12 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.REQUEST_INIT)
-        public static void requestInit(MethodContext mc,
-                                       Request request,
-                                       @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                       @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static void requestInit(
+                MethodContext mc,
+                Request request,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             lifeCycleManager.requestInit(mc, request, apiConfig);
         }
 
@@ -255,10 +255,12 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.REQUEST)
-        public static void requestCompleted(MethodContext mc,
-                                            Request request,
-                                            @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                            @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static void requestCompleted(
+                MethodContext mc,
+                Request request,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             lifeCycleManager.requestInitCompleted(mc, request, apiConfig);
         }
 
@@ -272,10 +274,12 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          */
         @Callback(lifecycle = Lifecycle.RESPONSE)
-        public static void responseCompleted(MethodContext mc,
-                                             Response response,
-                                             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                             @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static void responseCompleted(
+                MethodContext mc,
+                Response response,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             if (lifeCycleManager != null) {
                 lifeCycleManager.responseCompleted(mc, response, apiConfig);
             }
@@ -290,9 +294,11 @@ public @interface StdHttpClient {
          * @return 目标HTTP服务地址
          */
         @FunctionAlias(SIMPLE_FUNC_URL_GET)
-        public static String getHttpServerUrl(MethodContext mc,
-                                              @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                              @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static String getHttpServerUrl(
+                MethodContext mc,
+                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             return lifeCycleManager.buildBaseUrl(mc, apiConfig);
         }
 
@@ -305,9 +311,11 @@ public @interface StdHttpClient {
          * @return 响应元类型
          */
         @FunctionAlias(SIMPLE_FUNC_RESP_META_TYPE_GET)
-        public static Object getResponseMetaType(MethodContext mc,
-                                                 @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static Object getResponseMetaType(
+                MethodContext mc,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             return lifeCycleManager.getResponseMetaType(mc, apiConfig);
         }
 
@@ -335,10 +343,12 @@ public @interface StdHttpClient {
          * @return 最终的响应结果
          */
         @FunctionAlias(SIMPLE_FUNC_RESULT_CONVERT)
-        public static Object resultConvert(MethodContext mc,
-                                           Response response,
-                                           @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                                           @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) throws Exception {
+        public static Object resultConvert(
+                MethodContext mc,
+                Response response,
+                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+        ) throws Exception {
             return lifeCycleManager.resultConvert(mc, response, apiConfig);
         }
 
@@ -363,8 +373,10 @@ public @interface StdHttpClient {
          * @throws InterruptedException 可能出现的异常
          */
         @FunctionAlias(SIMPLE_FUNC_MOCK_RESULT)
-        public static MockResponse stdMockResult(MethodContext mc,
-                                                 @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig) throws InterruptedException {
+        public static MockResponse stdMockResult(
+                MethodContext mc,
+                @Rar( value = STANDARD_MOCK_CONFIG) MockConfiguration mockConfig
+        ) throws InterruptedException {
 
             // 将Mock配置转化为MockResponse对象
             MockResponse mockResponse = MockConfigFunction.mockResult(mc, mockConfig);
@@ -510,15 +522,15 @@ public @interface StdHttpClient {
             apiConfig.setMultipartFormParams(mergeMultipartFormData(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
             apiConfig.setBody(blankReturnDefault(methodConfig.getBody(), config.getBody()));
 
-            apiConfig.setConditionHeaderParams(mergeList(config.getConditionHeaderParams(), methodConfig.getConditionHeaderParams()));
-            apiConfig.setConditionPathParams(mergeList(config.getConditionPathParams(), methodConfig.getConditionPathParams()));
-            apiConfig.setConditionQueryParams(mergeList(config.getConditionQueryParams(), methodConfig.getConditionQueryParams()));
-            apiConfig.setConditionFormParams(mergeList(config.getConditionFormParams(), methodConfig.getConditionFormParams()));
-            apiConfig.setConditionMultipartFormParams(mergeList(config.getConditionMultipartFormParams(), methodConfig.getConditionMultipartFormParams()));
-            apiConfig.setConditionBody(mergeList(config.getConditionBody(), methodConfig.getConditionBody()));
-            apiConfig.setConditionConvert(mergeList(config.getConditionConvert(), methodConfig.getConditionConvert()));
-            apiConfig.setConditionMetaType(mergeList(config.getConditionMetaType(), methodConfig.getConditionMetaType()));
-            apiConfig.setConditionRespContentType(mergeList(config.getConditionRespContentType(), methodConfig.getConditionRespContentType()));
+            apiConfig.setConditionHeaderParams(mergeCollection(config.getConditionHeaderParams(), methodConfig.getConditionHeaderParams()));
+            apiConfig.setConditionPathParams(mergeCollection(config.getConditionPathParams(), methodConfig.getConditionPathParams()));
+            apiConfig.setConditionQueryParams(mergeCollection(config.getConditionQueryParams(), methodConfig.getConditionQueryParams()));
+            apiConfig.setConditionFormParams(mergeCollection(config.getConditionFormParams(), methodConfig.getConditionFormParams()));
+            apiConfig.setConditionMultipartFormParams(mergeCollection(config.getConditionMultipartFormParams(), methodConfig.getConditionMultipartFormParams()));
+            apiConfig.setConditionBody(mergeCollection(config.getConditionBody(), methodConfig.getConditionBody()));
+            apiConfig.setConditionConvert(mergeCollection(config.getConditionConvert(), methodConfig.getConditionConvert()));
+            apiConfig.setConditionMetaType(mergeCollection(config.getConditionMetaType(), methodConfig.getConditionMetaType()));
+            apiConfig.setConditionRespContentType(mergeCollection(config.getConditionRespContentType(), methodConfig.getConditionRespContentType()));
 
             apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
             apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));
@@ -564,7 +576,7 @@ public @interface StdHttpClient {
                 boolean hasClassConfig = classMockResult != null;
                 if (hasClassConfig) {
                     mMockConfig.setHeaders(mergeMap(classMockResult.getHeaders(), methodMockResult.getHeaders()));
-                    mMockConfig.setMatch(convertToWhenMockResults(mergeList(classMockResult.getMatch(), methodMockResult.getMatch())));
+                    mMockConfig.setMatch(convertToWhenMockResults(mergeCollection(classMockResult.getMatch(), methodMockResult.getMatch())));
 
                     // set mock body
                     mMockConfig.setBody(convertToMockBody(nullReturnDefault(methodMockResult.getBody(), classMockResult.getBody())));
@@ -612,7 +624,7 @@ public @interface StdHttpClient {
         @SuppressWarnings("unchecked")
         private static InitBindParams mergeInitBindParams(InitBindParams cibp, InitBindParams mibp) {
             InitBindParams initBindParams = new InitBindParams();
-            initBindParams.setBindClasses(mergeList(cibp.getBindClasses(), mibp.getBindClasses()));
+            initBindParams.setBindClasses(mergeCollection(cibp.getBindClasses(), mibp.getBindClasses()));
             initBindParams.setBindParams(mergeMap(cibp.getBindParams(), mibp.getBindParams()));
             return initBindParams;
         }
