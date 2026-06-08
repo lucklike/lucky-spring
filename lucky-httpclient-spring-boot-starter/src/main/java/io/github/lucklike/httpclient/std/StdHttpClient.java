@@ -25,7 +25,6 @@ import com.luckyframework.httpclient.proxy.mock.config.MockConfigFunction;
 import com.luckyframework.httpclient.proxy.mock.config.MockConfiguration;
 import com.luckyframework.httpclient.proxy.mock.config.WhenMockResult;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
-import com.luckyframework.httpclient.proxy.spel.Namespace;
 import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
@@ -64,23 +63,6 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
-import static io.github.lucklike.httpclient.std.Constant.CALL_FUNC_MDRCT;
-import static io.github.lucklike.httpclient.std.Constant.CALL_FUNC_MOCK_ENABLE;
-import static io.github.lucklike.httpclient.std.Constant.FUNC_FUNC_MOCK_RESULT;
-import static io.github.lucklike.httpclient.std.Constant.FUNC_RESP_META_TYPE_GET;
-import static io.github.lucklike.httpclient.std.Constant.FUNC_RESULT_CONVERT;
-import static io.github.lucklike.httpclient.std.Constant.FUNC_URL_GET;
-import static io.github.lucklike.httpclient.std.Constant.LIFE_CYCLE_MANAGER_NAME;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MDRCT;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_ENABLE;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_MOCK_RESULT;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESP_META_TYPE_GET;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_RESULT_CONVERT;
-import static io.github.lucklike.httpclient.std.Constant.SIMPLE_FUNC_URL_GET;
-import static io.github.lucklike.httpclient.std.Constant.STANDARD_API_CONFIG_NAME;
-import static io.github.lucklike.httpclient.std.Constant.STANDARD_HTTP_CLIENT_CONFIG_NAME;
-import static io.github.lucklike.httpclient.std.Constant.STANDARD_MOCK_CONFIG;
-import static io.github.lucklike.httpclient.std.Constant.STD_HTTP;
 
 /**
  * 标准的HTTP客户端
@@ -90,9 +72,9 @@ import static io.github.lucklike.httpclient.std.Constant.STD_HTTP;
 @Inherited
 @ApiConfig
 @HttpRequest
-@HttpClient(func = FUNC_URL_GET)
-@Mock(enable = CALL_FUNC_MOCK_ENABLE, mockFunc = FUNC_FUNC_MOCK_RESULT)
-@RespConvert(metaTypeFunc = FUNC_RESP_META_TYPE_GET, resultFunc = FUNC_RESULT_CONVERT, respContentType = CALL_FUNC_MDRCT)
+@HttpClient(func = "__get_http_server_url__")
+@Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
+@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
 @SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
 public @interface StdHttpClient {
 
@@ -133,9 +115,17 @@ public @interface StdHttpClient {
     /**
      * 标准HTTP客户端实现相关的工具函数和回调函数
      */
-    @Namespace(STD_HTTP)
     class StandardHttpClientFunctionAndCallback {
         private static final Logger logger = LoggerFactory.getLogger(StandardHttpClientFunctionAndCallback.class);
+
+        // 存储标准客户端配置对象的变量名
+        public static final String STANDARD_HTTP_CLIENT_CONFIG_NAME = "$StandardHttpClientConfiguration";
+        // 存储标准API配置对象的变量名
+        public static final String STANDARD_API_CONFIG_NAME = "$StandardApiConfiguration";
+        // 存储生命周期管理器对象变量名
+        public static final String LIFE_CYCLE_MANAGER_NAME = "$LifeCycleManager";
+        // 存储标准客户端 Mock 相关配置的变量名
+        public static final String STANDARD_MOCK_CONFIG = "$StandardMockConfiguration";
 
         static {
             ContextValueUnpack.addParameterConvert(new StdInitBindParameterConvert());
@@ -182,8 +172,8 @@ public @interface StdHttpClient {
         @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, unfold = true)
         public static Map<String, Object> methodMetaContentInit(
                 MethodMetaContext mec,
-                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             Map<String, Object> resultMap = new HashMap<>(2);
             StandardApiConfiguration methodConfig = mergeConfig(mec, config);
@@ -212,9 +202,9 @@ public @interface StdHttpClient {
         @Callback(lifecycle = Lifecycle.METHOD)
         public static void methodContentInit(
                 MethodContext mc,
-                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             // 注册MethodContent级别的SpEL变量、函数、Hooks、包
             SpELImportConf commonMethodSpringElImport = config.getMethodSpelImport();
@@ -240,8 +230,8 @@ public @interface StdHttpClient {
         public static void requestInit(
                 MethodContext mc,
                 Request request,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             lifeCycleManager.requestInit(mc, request, apiConfig);
         }
@@ -258,8 +248,8 @@ public @interface StdHttpClient {
         public static void requestCompleted(
                 MethodContext mc,
                 Request request,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             lifeCycleManager.requestInitCompleted(mc, request, apiConfig);
         }
@@ -277,8 +267,8 @@ public @interface StdHttpClient {
         public static void responseCompleted(
                 MethodContext mc,
                 Response response,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             if (lifeCycleManager != null) {
                 lifeCycleManager.responseCompleted(mc, response, apiConfig);
@@ -293,11 +283,11 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 目标HTTP服务地址
          */
-        @FunctionAlias(SIMPLE_FUNC_URL_GET)
+        @FunctionAlias("__get_http_server_url__")
         public static String getHttpServerUrl(
                 MethodContext mc,
-                @Rar( value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.buildBaseUrl(mc, apiConfig);
         }
@@ -310,11 +300,11 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 响应元类型
          */
-        @FunctionAlias(SIMPLE_FUNC_RESP_META_TYPE_GET)
+        @FunctionAlias("__get_response_meta_type__")
         public static Object getResponseMetaType(
                 MethodContext mc,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.getResponseMetaType(mc, apiConfig);
         }
@@ -326,7 +316,7 @@ public @interface StdHttpClient {
          * @param mc 方法上下文对象
          * @return 强制指定的响应体Content-Type
          */
-        @FunctionAlias(SIMPLE_FUNC_MDRCT)
+        @FunctionAlias("__mandatory_designation_response_content_type__")
         public static String mandatoryDesignationResponseContentType(MethodContext mc) {
             StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
             LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
@@ -342,12 +332,12 @@ public @interface StdHttpClient {
          * @param lifeCycleManager 生命周期管理器对象
          * @return 最终的响应结果
          */
-        @FunctionAlias(SIMPLE_FUNC_RESULT_CONVERT)
+        @FunctionAlias("__result_convert__")
         public static Object resultConvert(
                 MethodContext mc,
                 Response response,
-                @Rar( value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar( value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.resultConvert(mc, response, apiConfig);
         }
@@ -358,7 +348,7 @@ public @interface StdHttpClient {
          * @param mc 方法上下文
          * @return 是否启用 Mock 文件
          */
-        @FunctionAlias(SIMPLE_FUNC_MOCK_ENABLE)
+        @FunctionAlias("__std_mock_enable__")
         public static boolean stdMockEnable(MethodContext mc) {
             MockConfiguration mockConfig = mc.getRootVar(STANDARD_MOCK_CONFIG, MockConfiguration.class);
             return MockConfigFunction.mockEnable(mc, mockConfig);
@@ -372,10 +362,10 @@ public @interface StdHttpClient {
          * @return Mock 结果
          * @throws InterruptedException 可能出现的异常
          */
-        @FunctionAlias(SIMPLE_FUNC_MOCK_RESULT)
+        @FunctionAlias("__std_mock_result__")
         public static MockResponse stdMockResult(
                 MethodContext mc,
-                @Rar( value = STANDARD_MOCK_CONFIG) MockConfiguration mockConfig
+                @Rar(value = STANDARD_MOCK_CONFIG) MockConfiguration mockConfig
         ) throws InterruptedException {
 
             // 将Mock配置转化为MockResponse对象
