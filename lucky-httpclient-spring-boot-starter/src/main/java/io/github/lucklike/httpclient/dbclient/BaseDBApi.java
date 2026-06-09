@@ -4,6 +4,7 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.Lambda;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientDeleteBuilder;
