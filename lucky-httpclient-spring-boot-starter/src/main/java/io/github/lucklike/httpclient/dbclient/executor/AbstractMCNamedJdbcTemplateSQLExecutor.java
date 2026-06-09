@@ -152,9 +152,7 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         PageSql pageParam = page.buildPageSql(sqlTemp);
         String pageSql = pageParam.getSql();
         Object[] pageArgs = mergeParams(sqlArgs, pageParam.getPageParam());
-
-        Class<?> entityClass = methodContext.getResultResolvableType().getGeneric(0).toClass();
-        List queryResult = jdbcTemplate.query(pageSql, new CachedAnnotationRowMapper<>(entityClass), pageArgs);
+        List queryResult = jdbcTemplate.query(pageSql, creatSingleGenericRowMapper(), pageArgs);
         resultPage.setRecords(queryResult);
         return resultPage;
     }
@@ -355,6 +353,9 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         if (Map.class.isAssignableFrom(entityClass)) {
             return new ColumnMapRowMapper();
         }
+        if (ClassUtils.isSimpleBaseType(entityClass)) {
+            return new SingleColumnRowMapper<>(entityClass);
+        }
         return new CachedAnnotationRowMapper<>(entityClass);
     }
 
@@ -365,11 +366,11 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
             Class<?> elementType = resultType.getGeneric(0).toClass();
             if (elementType == Map.class) {
                 return new ColumnMapRowMapper();
-            } else if (ClassUtils.isSimpleBaseType(elementType)) {
-                return new SingleColumnRowMapper<>(elementType);
-            } else {
-                return new CachedAnnotationRowMapper<>(elementType);
             }
+            if (ClassUtils.isSimpleBaseType(elementType)) {
+                return new SingleColumnRowMapper<>(elementType);
+            }
+            return new CachedAnnotationRowMapper<>(elementType);
         }
 
         // Map类型
