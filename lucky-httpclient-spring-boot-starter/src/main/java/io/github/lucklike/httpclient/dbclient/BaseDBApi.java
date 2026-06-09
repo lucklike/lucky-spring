@@ -895,6 +895,30 @@ public interface BaseDBApi<E> {
     }
 
     /**
+     * 创建 Lambda 查询构建器（查询所有列）。
+     * <p>
+     * 返回一个基于当前数据库客户端的 Lambda 查询构建器，
+     * 用于构建动态查询条件并执行查询操作。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * User user = new User();
+     * user.setName("Jack");
+     * List<User> users = userDBApi.lambdaQuery(user)
+     *     .where(User::getStatus).eq(1)
+     *     .list();
+     * }</pre>
+     * </p>
+     *
+     * @return Lambda 查询构建器
+     */
+    default LambdaClientQueryBuilder<E> lambdaQuery(@NonNull E entity) {
+        return new LambdaClientQueryBuilder<>(this,entity);
+    }
+
+
+    /**
      * 创建 Lambda 更新构建器。
      * <p>
      * 返回一个基于当前数据库客户端的 Lambda 更新构建器，

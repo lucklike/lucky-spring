@@ -1,12 +1,15 @@
 package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
+import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
+import org.springframework.lang.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -82,6 +85,22 @@ public class LambdaClientQueryBuilder<T> {
      * 构造查询构建器（使用实体类，查询所有列）
      *
      * @param baseDBApi 数据库客户端API
+     * @param entity     实体对象
+     */
+    @SuppressWarnings("unchecked")
+    public LambdaClientQueryBuilder(BaseDBApi<T> baseDBApi, @Nullable T entity) {
+        this(baseDBApi, (Class<T>) Objects.requireNonNull(entity).getClass());
+        SQLFunctions.columnHandler(entity, co -> {
+            if (co.getValue() != null) {
+                co.getCondition().additionCondition(queryBuilder.getSqlBuilder(), co);
+            }
+        });
+    }
+
+    /**
+     * 构造查询构建器（使用实体类，查询所有列）
+     *
+     * @param baseDBApi 数据库客户端API
      * @param clazz     实体类类型
      */
     public LambdaClientQueryBuilder(BaseDBApi<T> baseDBApi, Class<T> clazz) {
@@ -99,7 +118,6 @@ public class LambdaClientQueryBuilder<T> {
         this.queryBuilder = new LambdaQueryBuilder<>(sqlBuilder);
         this.baseDBApi = baseDBApi;
     }
-
 
     /**
      * {@inheritDoc}

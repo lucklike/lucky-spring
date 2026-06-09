@@ -465,4 +465,40 @@ public class SQLFunctions {
         }
     }
 
+    /**
+     * 处理实体对象的所有字段，提取列信息
+     * <p>遍历实体的所有非静态字段，过滤掉@Column(exist=false)的字段，
+     * 并将每个字段封装为ColumnInfo对象后传递给消费者处理</p>
+     *
+     * @param entity   实体对象
+     * @param consumer 列信息消费者，用于处理每个字段的列信息
+     */
+    public static void columnHandler(Object entity, Consumer<ColumnInfo> consumer) {
+        for (Field field : ClassUtils.getAllFields(entity.getClass())) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
+            if (columnAnn != null && !columnAnn.exist()) {
+                continue;
+            }
+
+            ColumnInfo columnInfo;
+
+            Object fieldValue = FieldUtils.getValue(entity, field);
+            String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
+            Condition condition =
+                    columnAnn == null
+                            ? ClassUtils.newObject(Condition.Eq.class)
+                            : ClassUtils.newObject(columnAnn.condition());
+            if (AnnotationUtils.isAnnotated(field, Id.class)) {
+                columnInfo = new ColumnInfo(columnName, fieldValue, true, condition);
+            } else {
+                columnInfo = new ColumnInfo(columnName, fieldValue, false, condition);
+            }
+
+            consumer.accept(columnInfo);
+        }
+    }
+
 }

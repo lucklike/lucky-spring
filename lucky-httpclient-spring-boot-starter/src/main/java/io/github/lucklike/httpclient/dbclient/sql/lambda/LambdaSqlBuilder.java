@@ -105,6 +105,10 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return new LambdaSqlBuilder<>(entityClass);
     }
 
+    public SqlBuilder getSqlBuilder() {
+        return sqlBuilder;
+    }
+
     // ==================== 表名和列名辅助方法 ====================
 
     /**
