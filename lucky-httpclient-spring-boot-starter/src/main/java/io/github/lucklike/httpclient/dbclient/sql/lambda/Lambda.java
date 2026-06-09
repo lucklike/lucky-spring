@@ -7,7 +7,7 @@ import com.luckyframework.common.ContainerUtils;
  * <p>
  * 提供基于 Lambda 表达式的类型安全 SQL 构造方法，支持：
  * <ul>
- *     <li>SELECT 查询：{@link #select(Class, SFunction[])}</li>
+ *     <li>SELECT 查询：{@link #select(Class)}</li>
  *     <li>COUNT 统计：{@link #count(Class, SFunction[])}</li>
  *     <li>UPDATE 更新：{@link #update(Class)}</li>
  *     <li>DELETE 删除：{@link #delete(Class)}</li>
@@ -56,14 +56,12 @@ public abstract class Lambda {
     /**
      * 构造 SELECT 查询。
      *
-     * @param clazz         实体类类型，用于生成表名和字段映射
-     * @param selectColumns 要查询的列（Lambda 表达式方式指定）
-     * @param <T>           实体类型
+     * @param clazz 实体类类型，用于生成表名和字段映射
+     * @param <T>   实体类型
      * @return {@link LambdaQueryBuilder} 查询构造器实例
      */
-    @SafeVarargs
-    public static <T> LambdaQueryBuilder<T> select(Class<T> clazz, SFunction<T, ?>... selectColumns) {
-        return new LambdaQueryBuilder<>(clazz, selectColumns);
+    public static <T> LambdaQueryBuilder<T> select(Class<T> clazz) {
+        return new LambdaQueryBuilder<>(clazz);
     }
 
     /**

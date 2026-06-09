@@ -895,29 +895,6 @@ public interface BaseDBApi<E> {
     }
 
     /**
-     * 创建指定查询列的 Lambda 查询构建器。
-     * <p>
-     * 使用此方法可以指定只查询部分字段，减少数据传输量。
-     * </p>
-     * <p>
-     * 使用示例：
-     * <pre>{@code
-     * // 只查询 ID 和名称字段
-     * List<User> users = userDBApi.lambdaQuery(Arrays.asList(User::getId, User::getName))
-     *     .where(User::getStatus).eq(1)
-     *     .list();
-     * }</pre>
-     * </p>
-     *
-     * @param selectColumnList 要查询的列列表
-     * @return Lambda 查询构建器
-     */
-    @SuppressWarnings("unchecked")
-    default LambdaClientQueryBuilder<E> lambdaQuery(List<SFunction<E, ?>> selectColumnList) {
-        return new LambdaClientQueryBuilder<>(this, entityClass(), selectColumnList.toArray(new SFunction[0]));
-    }
-
-    /**
      * 创建 Lambda 更新构建器。
      * <p>
      * 返回一个基于当前数据库客户端的 Lambda 更新构建器，

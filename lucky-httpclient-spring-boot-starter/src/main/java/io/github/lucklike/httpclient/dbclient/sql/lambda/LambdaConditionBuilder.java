@@ -43,7 +43,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      *
      * @param entityClass 实体类类型
      */
-    protected LambdaConditionBuilder(Class<T> entityClass) {
+    public LambdaConditionBuilder(Class<T> entityClass) {
         super(entityClass);
     }
 
@@ -70,7 +70,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
         super.eq(condition, column, value);
         return this;
     }
@@ -79,7 +79,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
         super.ne(condition, column, value);
         return this;
     }
@@ -88,7 +88,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
         super.gt(condition, column, value);
         return this;
     }
@@ -97,7 +97,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
         super.ge(condition, column, value);
         return this;
     }
@@ -106,7 +106,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
         super.lt(condition, column, value);
         return this;
     }
@@ -115,7 +115,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaConditionBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
         super.le(condition, column, value);
         return this;
     }
@@ -124,7 +124,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaConditionBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
         super.like(condition, column, value);
         return this;
     }
@@ -133,7 +133,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaConditionBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
         super.likeLeft(condition, column, value);
         return this;
     }
@@ -142,7 +142,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaConditionBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
         super.likeRight(condition, column, value);
         return this;
     }
@@ -151,7 +151,25 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaConditionBuilder<T> notLikeRight(SFunction<T, ?> column, String value) {
+        super.notLikeRight(column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> notLikeLeft(SFunction<T, ?> column, String value) {
+        super.notLikeLeft(column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
         super.notLike(condition, column, value);
         return this;
     }
@@ -161,7 +179,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaConditionBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public final <R> LambdaConditionBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
         super.in(condition, column, values);
         return this;
     }
@@ -170,7 +188,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaConditionBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
         super.in(condition, column, values);
         return this;
     }
@@ -180,7 +198,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public final <R> LambdaConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -189,7 +207,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -198,7 +216,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaConditionBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
         super.isNull(condition, column);
         return this;
     }
@@ -207,7 +225,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaConditionBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
         super.isNotNull(condition, column);
         return this;
     }
@@ -216,7 +234,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+    public LambdaConditionBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
         super.between(condition, column, value1, value2);
         return this;
     }
@@ -225,7 +243,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+    public LambdaConditionBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
         super.orderBy(condition, column, orderType);
         return this;
     }
@@ -234,7 +252,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+    public LambdaConditionBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
         super.orderByAsc(condition, column);
         return this;
     }
@@ -243,7 +261,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaConditionBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+    public LambdaConditionBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
         super.orderByDesc(condition, column);
         return this;
     }
@@ -253,7 +271,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaConditionBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public final <R> LambdaConditionBuilder<T> notIn(SFunction<T, R> column, R... values) {
         super.notIn(column, values);
         return this;
     }
@@ -262,7 +280,7 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaConditionBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaConditionBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
         super.notIn(column, values);
         return this;
     }
@@ -404,6 +422,32 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 添加 OR (xxx) 逻辑表达式
+     *
+     * @param consumer 括号中的表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    public LambdaConditionBuilder<T> or(Consumer<LambdaConditionBuilder<T>> consumer) {
+        orStart();
+        consumer.accept(this);
+        orEnd();
+        return this;
+    }
+
+    /**
+     * 添加 AND (xxx) 逻辑表达式
+     *
+     * @param consumer 括号中的表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    public LambdaConditionBuilder<T> and(Consumer<LambdaConditionBuilder<T>> consumer) {
+        andStart();
+        consumer.accept(this);
+        andEnd();
+        return this;
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -421,17 +465,52 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> andStart() {
+        super.andStart();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> andEnd() {
+        super.andEnd();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> orStart() {
+        super.orStart();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaConditionBuilder<T> orEnd() {
+        super.orEnd();
+        return this;
+    }
+
+
     // ==================== 类型转换方法 ====================
 
     /**
      * 转换为查询构建器
      *
-     * @param selectColumns 要查询的列
      * @return 查询构建器
      */
-    @SafeVarargs
-    public final LambdaQueryBuilder<T> toSelect(SFunction<T, ?>... selectColumns) {
-        return new LambdaQueryBuilder<>(this, selectColumns);
+    public final LambdaQueryBuilder<T> toSelect() {
+        return new LambdaQueryBuilder<>(this);
     }
 
     /**

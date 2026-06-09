@@ -89,7 +89,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
          super.eq(condition, column, value);
         return this;
     }
@@ -98,7 +98,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
          super.ne(condition, column, value);
         return this;
     }
@@ -107,7 +107,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
          super.gt(condition, column, value);
         return this;
     }
@@ -116,7 +116,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
          super.ge(condition, column, value);
         return this;
     }
@@ -125,7 +125,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
          super.lt(condition, column, value);
         return this;
     }
@@ -134,7 +134,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public <R> LambdaDeleteBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
          super.le(condition, column, value);
         return this;
     }
@@ -143,7 +143,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaDeleteBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
          super.like(condition, column, value);
         return this;
     }
@@ -152,7 +152,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaDeleteBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
          super.likeLeft(condition, column, value);
         return this;
     }
@@ -161,7 +161,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaDeleteBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
          super.likeRight(condition, column, value);
         return this;
     }
@@ -170,7 +170,25 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaDeleteBuilder<T> notLikeRight(SFunction<T, ?> column, String value) {
+        super.notLikeRight(column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> notLikeLeft(SFunction<T, ?> column, String value) {
+        super.notLikeLeft(column, value);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
          super.notLike(condition, column, value);
         return this;
     }
@@ -180,7 +198,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public final <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
          super.in(condition, column, values);
         return this;
     }
@@ -189,7 +207,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
          super.in(condition, column, values);
         return this;
     }
@@ -199,7 +217,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public final <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
          super.notIn(condition, column, values);
         return this;
     }
@@ -208,7 +226,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
          super.notIn(condition, column, values);
         return this;
     }
@@ -217,7 +235,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaDeleteBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
          super.isNull(condition, column);
         return this;
     }
@@ -226,7 +244,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaDeleteBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
          super.isNotNull(condition, column);
         return this;
     }
@@ -235,7 +253,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+    public LambdaDeleteBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
          super.between(condition, column, value1, value2);
         return this;
     }
@@ -244,7 +262,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+    public LambdaDeleteBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
          super.orderBy(condition, column, orderType);
         return this;
     }
@@ -253,7 +271,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+    public LambdaDeleteBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
          super.orderByAsc(condition, column);
         return this;
     }
@@ -262,7 +280,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected LambdaDeleteBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+    public LambdaDeleteBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
          super.orderByDesc(condition, column);
         return this;
     }
@@ -272,7 +290,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      */
     @SafeVarargs
     @Override
-    protected final <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public final <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, R... values) {
          super.notIn(column, values);
         return this;
     }
@@ -281,7 +299,7 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    protected <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public <R> LambdaDeleteBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
          super.notIn(column, values);
         return this;
     }
@@ -423,6 +441,33 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 添加 OR (xxx) 逻辑表达式
+     *
+     * @param consumer 括号中的表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    public LambdaDeleteBuilder<T> or(Consumer<LambdaDeleteBuilder<T>> consumer) {
+        orStart();
+        consumer.accept(this);
+        orEnd();
+        return this;
+    }
+
+    /**
+     * 添加 AND (xxx) 逻辑表达式
+     *
+     * @param consumer 括号中的表达式
+     * @return 当前构建器实例，支持链式调用
+     */
+    public LambdaDeleteBuilder<T> and(Consumer<LambdaDeleteBuilder<T>> consumer) {
+        andStart();
+        consumer.accept(this);
+        andEnd();
+        return this;
+    }
+
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -439,6 +484,44 @@ public class LambdaDeleteBuilder<T> extends LambdaSqlBuilder<T> {
         super.and();
         return this;
     }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> andStart() {
+        super.andStart();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> andEnd() {
+        super.andEnd();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> orStart() {
+        super.orStart();
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaDeleteBuilder<T> orEnd() {
+        super.orEnd();
+        return this;
+    }
+
 
     /**
      * {@inheritDoc}

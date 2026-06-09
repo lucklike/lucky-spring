@@ -1,11 +1,17 @@
 package io.github.lucklike.httpclient.dbclient.sql;
 
+import com.luckyframework.common.ContainerUtils;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -71,8 +77,9 @@ public class SqlBuilder implements SQLWrapper {
     private static final String ASC = " ASC";
     private static final String DESC = " DESC";
 
-    public enum OrderType { ASC, DESC }
-    public enum JoinType { INNER, LEFT, RIGHT }
+    public enum OrderType {ASC, DESC}
+
+    public enum JoinType {INNER, LEFT, RIGHT}
 
     /**
      * SQL片段，包含SQL文本和对应的参数
@@ -145,18 +152,18 @@ public class SqlBuilder implements SQLWrapper {
 
     public SqlBuilder select(String... columns) {
         setSqlType(SQLType.SELECT);
-
-        String sql;
-        if (columns == null || columns.length == 0) {
-            sql = "*";
+        if (ContainerUtils.isEmptyArray(columns)) {
+            if (selectFragments.isEmpty()) {
+                selectFragments.add(new SqlFragment("*"));
+            }
         } else {
-            sql = String.join(", ", columns);
-        }
-
-        if (selectFragments.isEmpty()) {
-            selectFragments.add(new SqlFragment(sql));
-        } else {
-            selectFragments.add(new SqlFragment(", " + sql));
+            selectFragments.removeIf(fragment -> Objects.equals(fragment.getSql(), "*"));
+            String sql = String.join(", ", columns);
+            if (selectFragments.isEmpty()) {
+                selectFragments.add(new SqlFragment(sql));
+            } else {
+                selectFragments.add(new SqlFragment(", " + sql));
+            }
         }
         return this;
     }
@@ -209,10 +216,17 @@ public class SqlBuilder implements SQLWrapper {
     public SqlBuilder join(JoinType type, String table, String alias) {
         String joinKeyword;
         switch (type) {
-            case INNER: joinKeyword = INNER_JOIN; break;
-            case LEFT: joinKeyword = LEFT_JOIN; break;
-            case RIGHT: joinKeyword = RIGHT_JOIN; break;
-            default: joinKeyword = INNER_JOIN;
+            case INNER:
+                joinKeyword = INNER_JOIN;
+                break;
+            case LEFT:
+                joinKeyword = LEFT_JOIN;
+                break;
+            case RIGHT:
+                joinKeyword = RIGHT_JOIN;
+                break;
+            default:
+                joinKeyword = INNER_JOIN;
         }
         String sql = joinKeyword + table;
         if (alias != null && !alias.isEmpty()) {
@@ -422,19 +436,27 @@ public class SqlBuilder implements SQLWrapper {
     }
 
     public SqlBuilder like(String column, String value) {
-        return condition(column + " LIKE ?", "%" + value + "%");
-    }
-
-    public SqlBuilder likeLeft(String column, String value) {
-        return condition(column + " LIKE ?", "%" + value);
-    }
-
-    public SqlBuilder likeRight(String column, String value) {
-        return condition(column + " LIKE ?", value + "%");
+        return condition(column + " LIKE ?", "%" + getLikeValue(value) + "%");
     }
 
     public SqlBuilder notLike(String column, String value) {
-        return condition(column + " NOT LIKE ?", "%" + value + "%");
+        return condition(column + " NOT LIKE ?", "%" + getLikeValue(value) + "%");
+    }
+
+    public SqlBuilder likeLeft(String column, String value) {
+        return condition(column + " LIKE ?", "%" + getLikeValue(value));
+    }
+
+    public SqlBuilder notLikeLeft(String column, String value) {
+        return condition(column + " NOT LIKE ?", "%" + getLikeValue(value));
+    }
+
+    public SqlBuilder likeRight(String column, String value) {
+        return condition(column + " LIKE ?", getLikeValue(value) + "%");
+    }
+
+    public SqlBuilder notLikeRight(String column, String value) {
+        return condition(column + " NOT LIKE ?", getLikeValue(value) + "%");
     }
 
     public SqlBuilder in(String column, Object... values) {
@@ -539,6 +561,20 @@ public class SqlBuilder implements SQLWrapper {
         return this;
     }
 
+    public SqlBuilder and(Consumer<SqlBuilder> consumer) {
+        and().bracketStart();
+        consumer.accept(this);
+        bracketEnd();
+        return this;
+    }
+
+    public SqlBuilder or(Consumer<SqlBuilder> consumer) {
+        or().bracketStart();
+        consumer.accept(this);
+        bracketEnd();
+        return this;
+    }
+
     public SqlBuilder bracketStart() {
         if (!hasWhere) {
             whereFragments.clear();
@@ -607,6 +643,13 @@ public class SqlBuilder implements SQLWrapper {
             orderBy(entry.getKey(), entry.getValue());
         }
         return this;
+    }
+
+    private String getLikeValue(String likeValue) {
+        if (likeValue == null) {
+            return "";
+        }
+        return likeValue.replace("%", "\\%").replace("_", "\\_");
     }
 
     // ==================== 其他方法 ====================
@@ -924,7 +967,9 @@ public class SqlBuilder implements SQLWrapper {
 
     public interface QueryResult {
         String getSql();
+
         SQLType getSqlType();
+
         boolean isBatch();
     }
 
@@ -940,12 +985,23 @@ public class SqlBuilder implements SQLWrapper {
         }
 
         @Override
-        public String getSql() { return sql; }
+        public String getSql() {
+            return sql;
+        }
+
         @Override
-        public SQLType getSqlType() { return sqlType; }
+        public SQLType getSqlType() {
+            return sqlType;
+        }
+
         @Override
-        public boolean isBatch() { return false; }
-        public Object[] getParams() { return params; }
+        public boolean isBatch() {
+            return false;
+        }
+
+        public Object[] getParams() {
+            return params;
+        }
 
         @Override
         public String toString() {
@@ -969,12 +1025,23 @@ public class SqlBuilder implements SQLWrapper {
         }
 
         @Override
-        public String getSql() { return sql; }
+        public String getSql() {
+            return sql;
+        }
+
         @Override
-        public SQLType getSqlType() { return sqlType; }
+        public SQLType getSqlType() {
+            return sqlType;
+        }
+
         @Override
-        public boolean isBatch() { return true; }
-        public List<Object[]> getBatchParams() { return new ArrayList<>(batchParams); }
+        public boolean isBatch() {
+            return true;
+        }
+
+        public List<Object[]> getBatchParams() {
+            return new ArrayList<>(batchParams);
+        }
 
         @Override
         public String toString() {

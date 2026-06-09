@@ -147,8 +147,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param columns 要查询的列对应的 Lambda 函数，若为空则表示查询所有列（SELECT *）
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    protected final LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
+    protected LambdaSqlBuilder<T> select(SFunction<T, ?>... columns) {
         if (columns == null || columns.length == 0) {
             sqlBuilder.select();
         } else {
@@ -984,6 +983,31 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
     }
 
     /**
+     * 不匹配条件（NOT LIKE 'value%'）
+     *
+     * @param column 列对应的 Lambda 函数
+     * @param value  匹配模式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> notLikeRight(SFunction<T, ?> column, String value) {
+        sqlBuilder.notLikeRight(getColumn(column), value);
+        return this;
+    }
+
+
+    /**
+     * 不匹配条件（NOT LIKE '%value'）
+     *
+     * @param column 列对应的 Lambda 函数
+     * @param value  匹配模式
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> notLikeLeft(SFunction<T, ?> column, String value) {
+        sqlBuilder.notLikeLeft(getColumn(column), value);
+        return this;
+    }
+
+    /**
      * 不匹配条件（NOT LIKE）
      *
      * @param column 列对应的 Lambda 函数
@@ -1101,6 +1125,63 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         sqlBuilder.and();
         return this;
     }
+
+    /**
+     * 拼接一个['AND ( ']，必须和andEnd方法配套使用
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> andStart() {
+        return and().bracketStart();
+    }
+
+    /**
+     * 拼接一个[')']，必须和andStart方法配套使用
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> andEnd() {
+        return bracketEnd();
+    }
+
+    /**
+     * 拼接一个['OR ( ']，必须和orEnd方法配套使用
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> orStart() {
+        return or().bracketStart();
+    }
+
+    /**
+     * 拼接一个[')']，必须和orStart方法配套使用
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> orEnd() {
+        return bracketEnd();
+    }
+
+    /**
+     * 添加一个左括号'('
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> bracketStart() {
+        sqlBuilder.bracketStart();
+        return this;
+    }
+
+    /**
+     * 添加一个右括号')'
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> bracketEnd() {
+        sqlBuilder.bracketEnd();
+        return this;
+    }
+
 
     // 子查询条件
 
