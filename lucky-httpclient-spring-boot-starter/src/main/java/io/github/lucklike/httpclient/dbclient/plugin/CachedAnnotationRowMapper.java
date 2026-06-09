@@ -161,7 +161,7 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         return null;
     }
 
-    private String underscoreToCamel(String underscore) {
+    private static String underscoreToCamel(String underscore) {
         if (!underscore.contains("_")) {
             return underscore;
         }
@@ -200,6 +200,13 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
             String field = columnToField.get(columnName);
             if (field != null) {
                 return field;
+            }
+
+            // 转驼峰
+            String humpColumn = underscoreToCamel(columnName);
+            String field1 = columnToField.get(humpColumn);
+            if (field1 != null) {
+                return field1;
             }
             return columnName;
         }

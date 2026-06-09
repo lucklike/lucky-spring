@@ -544,4 +544,8 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
     public final LambdaUpdateBuilder<T> toUpdate() {
         return new LambdaUpdateBuilder<>(this);
     }
+
+    public final LambdaSingleColumnQueryBuilder<T> toColumn(SFunction<T, ?> selectColumn) {
+        return new LambdaSingleColumnQueryBuilder<>(this, selectColumn);
+    }
 }

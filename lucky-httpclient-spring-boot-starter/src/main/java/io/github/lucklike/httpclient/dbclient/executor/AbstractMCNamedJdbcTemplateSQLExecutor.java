@@ -18,6 +18,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -364,6 +365,8 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
             Class<?> elementType = resultType.getGeneric(0).toClass();
             if (elementType == Map.class) {
                 return new ColumnMapRowMapper();
+            } else if (ClassUtils.isSimpleBaseType(elementType)) {
+                return new SingleColumnRowMapper<>(elementType);
             } else {
                 return new CachedAnnotationRowMapper<>(elementType);
             }

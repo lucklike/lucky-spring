@@ -172,8 +172,8 @@ public @interface StdHttpClient {
         @Callback(lifecycle = Lifecycle.METHOD_META, storeOrNot = true, unfold = true)
         public static Map<String, Object> methodMetaContentInit(
                 MethodMetaContext mec,
-                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             Map<String, Object> resultMap = new HashMap<>(2);
             StandardApiConfiguration methodConfig = mergeConfig(mec, config);
@@ -202,9 +202,9 @@ public @interface StdHttpClient {
         @Callback(lifecycle = Lifecycle.METHOD)
         public static void methodContentInit(
                 MethodContext mc,
-                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) {
             // 注册MethodContent级别的SpEL变量、函数、Hooks、包
             SpELImportConf commonMethodSpringElImport = config.getMethodSpelImport();
@@ -230,8 +230,8 @@ public @interface StdHttpClient {
         public static void requestInit(
                 MethodContext mc,
                 Request request,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             lifeCycleManager.requestInit(mc, request, apiConfig);
         }
@@ -248,8 +248,8 @@ public @interface StdHttpClient {
         public static void requestCompleted(
                 MethodContext mc,
                 Request request,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             lifeCycleManager.requestInitCompleted(mc, request, apiConfig);
         }
@@ -267,8 +267,8 @@ public @interface StdHttpClient {
         public static void responseCompleted(
                 MethodContext mc,
                 Response response,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             if (lifeCycleManager != null) {
                 lifeCycleManager.responseCompleted(mc, response, apiConfig);
@@ -286,8 +286,8 @@ public @interface StdHttpClient {
         @FunctionAlias("__get_http_server_url__")
         public static String getHttpServerUrl(
                 MethodContext mc,
-                @Rar(value = STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.buildBaseUrl(mc, apiConfig);
         }
@@ -303,8 +303,8 @@ public @interface StdHttpClient {
         @FunctionAlias("__get_response_meta_type__")
         public static Object getResponseMetaType(
                 MethodContext mc,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.getResponseMetaType(mc, apiConfig);
         }
@@ -336,8 +336,8 @@ public @interface StdHttpClient {
         public static Object resultConvert(
                 MethodContext mc,
                 Response response,
-                @Rar(value = STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
-                @Rar(value = LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
             return lifeCycleManager.resultConvert(mc, response, apiConfig);
         }
@@ -365,7 +365,7 @@ public @interface StdHttpClient {
         @FunctionAlias("__std_mock_result__")
         public static MockResponse stdMockResult(
                 MethodContext mc,
-                @Rar(value = STANDARD_MOCK_CONFIG) MockConfiguration mockConfig
+                @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig
         ) throws InterruptedException {
 
             // 将Mock配置转化为MockResponse对象

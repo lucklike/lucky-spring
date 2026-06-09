@@ -64,6 +64,10 @@ public abstract class Lambda {
         return new LambdaQueryBuilder<>(clazz);
     }
 
+    public static <T> LambdaSingleColumnQueryBuilder<T> column(Class<T> clazz, SFunction<T, ?> selectColumn) {
+        return new LambdaSingleColumnQueryBuilder<>(clazz, selectColumn);
+    }
+
     /**
      * 构造 COUNT 统计查询。
      * <p>

@@ -5,8 +5,13 @@ import io.github.lucklike.httpclient.dbclient.BaseDBApi;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -892,6 +897,10 @@ public class LambdaClientConditionBuilder<T> {
         return new LambdaClientUpdateBuilder<>(this.baseDBApi, this.conditionBuilder);
     }
 
+    public final LambdaClientSingleColumnQueryBuilder<T> toColumn(SFunction<T, ?> selectColumn) {
+        return new LambdaClientSingleColumnQueryBuilder<>(this.baseDBApi, this.conditionBuilder, selectColumn);
+    }
+
     // ==================== 执行方法 ====================
 
     /**
@@ -1089,5 +1098,131 @@ public class LambdaClientConditionBuilder<T> {
      */
     public boolean exist() {
         return toCount().exist();
+    }
+
+    public List<String> strs(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).strs();
+    }
+
+    public List<Integer> ints(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).ints();
+    }
+
+    public List<Long> longs(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).longs();
+    }
+
+    public List<Double> doubles(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).doubles();
+    }
+
+    public List<Date> dates(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).dates();
+    }
+
+    public List<BigDecimal> bigDecimals(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigDecimals();
+    }
+
+    public List<BigInteger> bigInts(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigInts();
+    }
+
+
+    //-------------
+
+    public Stream<String> strStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).strStream();
+    }
+
+    public Stream<Integer> intStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).intStream();
+    }
+
+    public Stream<Long> longStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).longStream();
+    }
+
+    public Stream<Double> doubleStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).doubleStream();
+    }
+
+    public Stream<Date> dateStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).dateStream();
+    }
+
+    public Stream<BigDecimal> bigDecimalStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigDecimalStream();
+    }
+
+    public Stream<BigInteger> bigIntStream(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigIntStream();
+    }
+
+    //-------------
+
+    public PageResult<String> strPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).strPage(page);
+    }
+
+    public PageResult<Integer> intPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).intPage(page);
+    }
+
+    public PageResult<Long> longPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).longPage(page);
+    }
+
+    public PageResult<Double> doublePage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).doublePage(page);
+    }
+
+    public PageResult<Date> datePage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).datePage(page);
+    }
+
+    public PageResult<BigDecimal> bigDecimalPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).bigDecimalPage(page);
+    }
+
+    public PageResult<BigInteger> bigIntPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).bigIntPage(page);
+    }
+
+    //-------------
+
+    @Nullable
+    public String str(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).str();
+    }
+
+    @Nullable
+    public Integer aInt(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).aInt();
+    }
+
+    @Nullable
+    public Long aLong(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).aLong();
+    }
+
+    @Nullable
+    public Double aDouble(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).aDouble();
+    }
+
+    @Nullable
+    public Date aDate(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).aDate();
+    }
+
+    @Nullable
+    public BigDecimal bigDecimal(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigDecimal();
+    }
+
+    @Nullable
+    public BigInteger bigInt(SFunction<T, ?> selectColumn) {
+        return toColumn(selectColumn).bigInt();
     }
 }

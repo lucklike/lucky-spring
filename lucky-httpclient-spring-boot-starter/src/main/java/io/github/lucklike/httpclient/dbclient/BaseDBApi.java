@@ -9,11 +9,13 @@ import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBu
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientDeleteBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientSingleColumnQueryBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientUpdateBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaConditionBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaDeleteBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaSingleColumnQueryBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaUpdateBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
@@ -22,9 +24,12 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -1044,5 +1049,113 @@ public interface BaseDBApi<E> {
     @SuppressWarnings("unchecked")
     default Class<E> entityClass() {
         return (Class<E>) ResolvableType.forClass(BaseDBApi.class, getClass()).getGeneric(0).toClass();
+    }
+
+    default LambdaClientSingleColumnQueryBuilder<E> lambdaColumn(SFunction<E, ?> selectColumn) {
+        return new LambdaClientSingleColumnQueryBuilder<>(this, entityClass(), selectColumn);
+    }
+
+    @SQL(executor = SQL_LAMBDA)
+    List<String> strColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<Integer> intColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<Long> longColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<Double> doubleColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<Date> dateColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<BigDecimal> bigDecimalColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    List<BigInteger> bigIntColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    //-------------
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<String> strStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<Integer> intStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<Long> longStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<Double> doubleStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<Date> dateStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<BigDecimal> bigDecimalStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    @SQL(executor = SQL_LAMBDA)
+    Stream<BigInteger> bigIntStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
+
+    //-------------
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<String> strPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<Integer> intPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<Long> longPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<Double> doublePage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<Date> datePage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<BigDecimal> bigDecimalPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    @SQL(executor = SQL_LAMBDA)
+    PageResult<BigInteger> bigIntPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
+
+    //-------------
+
+    @Nullable
+    default String strColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return strColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default Integer intColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return intColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default Long longColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return longColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default Double doubleColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return doubleColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default Date dateColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return dateColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default BigDecimal bigDecimalColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return bigDecimalColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    default BigInteger bigIntColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
+        return bigIntColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
     }
 }

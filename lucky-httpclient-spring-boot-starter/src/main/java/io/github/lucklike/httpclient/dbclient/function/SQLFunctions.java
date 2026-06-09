@@ -326,7 +326,7 @@ public class SQLFunctions {
      * @param mc 方法上下文对象，包含实体集合参数信息
      * @return SQL执行器，用于执行批量根据ID更新的SQL语句
      * @throws IllegalArgumentException 如果实体集合为空、没有@Id字段或没有可更新字段时抛出此异常
-     * @Id字段作为WHERE条件构建批量UPDATE语句</p> <p><b>注意：</b></p>
+     * {@link Id @Id}字段作为WHERE条件构建批量UPDATE语句</p> <p><b>注意：</b></p>
      * <ul>
      *     <li>实体集合不能为null或空</li>
      *     <li>实体中必须至少有一个字段标注了@Id注解</li>
