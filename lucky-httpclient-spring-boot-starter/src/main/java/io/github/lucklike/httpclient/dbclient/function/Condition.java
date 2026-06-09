@@ -13,6 +13,63 @@ import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 public interface Condition {
 
     /**
+     * 等于条件（=）
+     */
+    Class<? extends Condition> EQ = Eq.class;
+    /**
+     * 不等于条件（<>）
+     */
+    Class<? extends Condition> NE = Ne.class;
+    /**
+     * 大于条件（>）
+     */
+    Class<? extends Condition> GT = Gt.class;
+    /**
+     * 大于等于条件（>=）
+     */
+    Class<? extends Condition> GE = Ge.class;
+    /**
+     * 小于条件（<）
+     */
+    Class<? extends Condition> LT = Lt.class;
+    /**
+     * 小于等于条件（<=）
+     */
+    Class<? extends Condition> LE = Le.class;
+    /**
+     * 模糊查询条件（前后都加%）（LIKE '%value%'）
+     */
+    Class<? extends Condition> LIKE = Like.class;
+    /**
+     * 左模糊查询条件（前加%）（LIKE '%value'）
+     */
+    Class<? extends Condition> LIKE_LEFT = LikeLeft.class;
+    /**
+     * 右模糊查询条件（后加%）（LIKE 'value%'）
+     */
+    Class<? extends Condition> LIKE_RIGHT = LikeRight.class;
+    /**
+     * 排除模糊查询条件（前后都加%）（NOT LIKE '%value%'）
+     */
+    Class<? extends Condition> NOT_LIKE = NotLike.class;
+    /**
+     * 排除左模糊查询条件（前加%）（NOT LIKE '%value'）
+     */
+    Class<? extends Condition> NOT_LIKE_LEFT = NotLikeLeft.class;
+    /**
+     * 排除右模糊查询条件（后加%）（NOT LIKE 'value%'）
+     */
+    Class<? extends Condition> NOT_LIKE_RIGHT = NotLikeRight.class;
+    /**
+     * IS NULL 条件
+     */
+    Class<? extends Condition> IS_NULL = IsNull.class;
+    /**
+     * IS NOT NULL 条件
+     */
+    Class<? extends Condition> IS_NOT_NULL = IsNotNull.class;
+
+    /**
      * 追加条件
      *
      * @param sqlBuilder SQL 构建着
@@ -110,6 +167,40 @@ public interface Condition {
         public void additionCondition(SqlBuilder sqlBuilder, ColumnInfo columnInfo) {
             String value = String.valueOf(columnInfo.getValue());
             sqlBuilder.likeRight(columnInfo.getName(), value);
+        }
+    }
+
+    /**
+     * 排除模糊查询条件（前后都加%）（NOT KILE '%value%'）
+     */
+    class NotLike implements Condition {
+
+        @Override
+        public void additionCondition(SqlBuilder sqlBuilder, ColumnInfo columnInfo) {
+            String value = String.valueOf(columnInfo.getValue());
+            sqlBuilder.notLike(columnInfo.getName(), value);
+        }
+    }
+
+    /**
+     * 排除左模糊查询条件（前加%）（NOT KILE '%value'）
+     */
+    class NotLikeLeft implements Condition {
+        @Override
+        public void additionCondition(SqlBuilder sqlBuilder, ColumnInfo columnInfo) {
+            String value = String.valueOf(columnInfo.getValue());
+            sqlBuilder.notLikeLeft(columnInfo.getName(), value);
+        }
+    }
+
+    /**
+     * 排除右模糊查询条件（后加%）（NOT KILE 'value%'）
+     */
+    class NotLikeRight implements Condition {
+        @Override
+        public void additionCondition(SqlBuilder sqlBuilder, ColumnInfo columnInfo) {
+            String value = String.valueOf(columnInfo.getValue());
+            sqlBuilder.notLikeRight(columnInfo.getName(), value);
         }
     }
 
