@@ -8,7 +8,9 @@ import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.DBClient;
 import io.github.lucklike.httpclient.dbclient.plugin.CachedAnnotationRowMapper;
+import io.github.lucklike.httpclient.dbclient.plugin.LooseSingleColumnRowMapper;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaSingleColumnQueryBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.page.ContextPage;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
@@ -18,7 +20,6 @@ import org.springframework.core.ResolvableType;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -38,6 +40,7 @@ import java.util.stream.Stream;
  * @version 1.0.0
  * @date 2026/5/25 00:17
  */
+@SuppressWarnings("all")
 public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecutor {
 
     /**
@@ -349,17 +352,23 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
     }
 
     protected RowMapper<?> creatSingleGenericRowMapper() {
+        if (isColumnQuery()) {
+            return new LooseSingleColumnRowMapper<>(methodContext.getArgument(LambdaSingleColumnQueryBuilder.class).getSelectColumnType());
+        }
         Class<?> entityClass = methodContext.getResultResolvableType().getGeneric(0).toClass();
         if (Map.class.isAssignableFrom(entityClass)) {
             return new ColumnMapRowMapper();
         }
         if (ClassUtils.isSimpleBaseType(entityClass)) {
-            return new SingleColumnRowMapper<>(entityClass);
+            return new LooseSingleColumnRowMapper<>(entityClass);
         }
         return new CachedAnnotationRowMapper<>(entityClass);
     }
 
     protected RowMapper<?> createRowMapper() {
+        if (isColumnQuery()) {
+            return new LooseSingleColumnRowMapper<>(methodContext.getArgument(LambdaSingleColumnQueryBuilder.class).getSelectColumnType());
+        }
         ResolvableType resultType = methodContext.getResultResolvableType();
         // 集合类型
         if (Collection.class.isAssignableFrom(resultType.toClass())) {
@@ -368,7 +377,7 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
                 return new ColumnMapRowMapper();
             }
             if (ClassUtils.isSimpleBaseType(elementType)) {
-                return new SingleColumnRowMapper<>(elementType);
+                return new LooseSingleColumnRowMapper<>(elementType);
             }
             return new CachedAnnotationRowMapper<>(elementType);
         }
@@ -394,6 +403,10 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         return StringUtils.hasText(tempBeanName)
                 ? ApplicationContextUtils.getBean(tempBeanName, NamedParameterJdbcTemplate.class)
                 : ApplicationContextUtils.getBean(NamedParameterJdbcTemplate.class);
+    }
+
+    protected boolean isColumnQuery() {
+        return methodContext.getArgument(LambdaSingleColumnQueryBuilder.class) != null;
     }
 
     protected String getSqlParam(Object[] params) {

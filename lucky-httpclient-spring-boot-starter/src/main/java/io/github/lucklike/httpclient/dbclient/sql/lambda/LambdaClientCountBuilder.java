@@ -243,10 +243,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.eq(condition, column, value);
         return this;
     }
@@ -257,10 +256,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.ne(condition, column, value);
         return this;
     }
@@ -271,10 +269,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.gt(condition, column, value);
         return this;
     }
@@ -285,10 +282,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.ge(condition, column, value);
         return this;
     }
@@ -299,10 +295,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.lt(condition, column, value);
         return this;
     }
@@ -313,10 +308,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         countBuilder.le(condition, column, value);
         return this;
     }
@@ -379,11 +373,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientCountBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientCountBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         countBuilder.in(condition, column, values);
         return this;
     }
@@ -394,10 +386,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientCountBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         countBuilder.in(condition, column, values);
         return this;
     }
@@ -408,11 +399,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientCountBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientCountBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         countBuilder.notIn(condition, column, values);
         return this;
     }
@@ -423,10 +412,9 @@ public class LambdaClientCountBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientCountBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         countBuilder.notIn(condition, column, values);
         return this;
     }
@@ -514,11 +502,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientCountBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaClientCountBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         countBuilder.notIn(column, values);
         return this;
     }
@@ -528,10 +514,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientCountBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         countBuilder.notIn(column, values);
         return this;
     }
@@ -541,10 +526,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> eq(SFunction<T, ?> column, Object value) {
         countBuilder.eq(column, value);
         return this;
     }
@@ -554,10 +538,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> ne(SFunction<T, ?> column, Object value) {
         countBuilder.ne(column, value);
         return this;
     }
@@ -567,10 +550,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> gt(SFunction<T, ?> column, Object value) {
         countBuilder.gt(column, value);
         return this;
     }
@@ -580,10 +562,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> ge(SFunction<T, ?> column, Object value) {
         countBuilder.ge(column, value);
         return this;
     }
@@ -593,10 +574,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> lt(SFunction<T, ?> column, Object value) {
         countBuilder.lt(column, value);
         return this;
     }
@@ -606,10 +586,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaClientCountBuilder<T> le(SFunction<T, ?> column, Object value) {
         countBuilder.le(column, value);
         return this;
     }
@@ -691,10 +670,9 @@ public class LambdaClientCountBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientCountBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientCountBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         countBuilder.in(column, values);
         return this;
     }

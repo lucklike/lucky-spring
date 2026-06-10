@@ -136,10 +136,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * 通过 Lambda 函数获取对应的数据库列名
      *
      * @param function Lambda 函数，如 User::getName
-     * @param <R>      属性类型
      * @return 列名
      */
-    private <R> String getColumn(SFunction<T, R> function) {
+    private String getColumn(SFunction<T, ?> function) {
         return LambdaUtils.getColumnName(entityClass, function);
     }
 
@@ -408,10 +407,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才执行此设置
      * @param column    要更新的列对应的 Lambda 函数
      * @param value     更新的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> set(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> set(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return set(column, value);
         }
@@ -448,10 +446,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 要更新的列对应的 Lambda 函数
      * @param value  更新的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> set(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> set(SFunction<T, ?> column, Object value) {
         sqlBuilder.set(getColumn(column), value);
         return this;
     }
@@ -570,10 +567,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return eq(column, value);
         }
@@ -586,10 +582,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return ne(column, value);
         }
@@ -602,10 +597,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return gt(column, value);
         }
@@ -618,10 +612,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return ge(column, value);
         }
@@ -634,10 +627,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return lt(column, value);
         }
@@ -650,10 +642,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param value     比较的值
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         if (condition) {
             return le(column, value);
         }
@@ -726,10 +717,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param values    值列表
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    protected LambdaSqlBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         if (condition) {
             return in(column, values);
         }
@@ -742,10 +732,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param values    值集合
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    protected LambdaSqlBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         if (condition) {
             return in(column, values);
         }
@@ -758,10 +747,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param values    值列表
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    protected LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         if (condition) {
             return notIn(column, values);
         }
@@ -774,10 +762,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @param condition 条件判断，为 true 时才添加此条件
      * @param column    列对应的 Lambda 函数
      * @param values    值集合
-     * @param <R>       列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    protected LambdaSqlBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         if (condition) {
             return notIn(column, values);
         }
@@ -877,10 +864,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> eq(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> eq(SFunction<T, ?> column, Object value) {
         sqlBuilder.eq(getColumn(column), value);
         return this;
     }
@@ -890,10 +876,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> ne(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> ne(SFunction<T, ?> column, Object value) {
         sqlBuilder.ne(getColumn(column), value);
         return this;
     }
@@ -903,10 +888,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> gt(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> gt(SFunction<T, ?> column, Object value) {
         sqlBuilder.gt(getColumn(column), value);
         return this;
     }
@@ -916,10 +900,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> ge(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> ge(SFunction<T, ?> column, Object value) {
         sqlBuilder.ge(getColumn(column), value);
         return this;
     }
@@ -929,10 +912,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> lt(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> lt(SFunction<T, ?> column, Object value) {
         sqlBuilder.lt(getColumn(column), value);
         return this;
     }
@@ -942,10 +924,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param value  比较的值
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> le(SFunction<T, R> column, Object value) {
+    protected LambdaSqlBuilder<T> le(SFunction<T, ?> column, Object value) {
         sqlBuilder.le(getColumn(column), value);
         return this;
     }
@@ -1028,10 +1009,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param values 值列表
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, R... values) {
+    protected LambdaSqlBuilder<T> in(SFunction<T, ?> column, Object... values) {
         sqlBuilder.in(getColumn(column), values);
         return this;
     }
@@ -1041,10 +1021,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param values 值集合
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    protected LambdaSqlBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         sqlBuilder.in(getColumn(column), values);
         return this;
     }
@@ -1054,10 +1033,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param values 值列表
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    protected LambdaSqlBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         sqlBuilder.notIn(getColumn(column), values);
         return this;
     }
@@ -1067,10 +1045,9 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      *
      * @param column 列对应的 Lambda 函数
      * @param values 值集合
-     * @param <R>    列类型
      * @return 当前构建器实例，支持链式调用
      */
-    protected <R> LambdaSqlBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    protected LambdaSqlBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         sqlBuilder.notIn(getColumn(column), values);
         return this;
     }

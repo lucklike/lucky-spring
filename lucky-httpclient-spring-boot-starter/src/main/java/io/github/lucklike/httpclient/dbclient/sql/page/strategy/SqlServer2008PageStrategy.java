@@ -50,9 +50,9 @@ public class SqlServer2008PageStrategy extends AbstractPageStrategy {
     private String getPageSQLTemp(Page page) {
         // 没有排序：直接在原始SQL外层套分页
         if (ContainerUtils.isEmptyCollection(page.getOrderColumns())) {
-            return "SELECT t.* FROM (SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn, temp.* FROM (%s %s) temp) t WHERE t.rn BETWEEN %s AND %s";
+            return "SELECT t.* FROM (SELECT temp.*, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn FROM (%s %s) temp) t WHERE t.rn BETWEEN %s AND %s";
         }
         // 有排序：需要两层嵌套，先排序再赋ROWNUM
-        return  "SELECT t.* FROM (SELECT ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn, temp.* FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
+        return  "SELECT t.* FROM (SELECT temp.*, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS rn FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
     }
 }

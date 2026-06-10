@@ -64,7 +64,7 @@ public abstract class Lambda {
         return new LambdaQueryBuilder<>(clazz);
     }
 
-    public static <T> LambdaSingleColumnQueryBuilder<T> column(Class<T> clazz, SFunction<T, ?> selectColumn) {
+    public static <T, R> LambdaSingleColumnQueryBuilder<T, R> column(Class<T> clazz, SFunction<T, R> selectColumn) {
         return new LambdaSingleColumnQueryBuilder<>(clazz, selectColumn);
     }
 

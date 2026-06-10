@@ -50,8 +50,8 @@ public class Db2PageStrategy extends AbstractPageStrategy {
     private String getPageSQLTemp(Page page) {
         // 如果没有指定排序字段，则可以减少一层子查询
         if (ContainerUtils.isEmptyCollection(page.getOrderColumns())) {
-            return "SELECT t.* FROM (SELECT ROW_NUMBER() OVER () AS rn, temp.* FROM (%s  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
+            return "SELECT t.* FROM (SELECT temp.*, ROW_NUMBER() OVER () AS rn FROM (%s  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
         }
-        return "SELECT t.* FROM (SELECT ROW_NUMBER() OVER () AS rn, temp.* FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
+        return "SELECT t.* FROM (SELECT temp.*, ROW_NUMBER() OVER () AS rn FROM (SELECT * FROM (%s)  %s) temp) t WHERE t.rn BETWEEN %s AND %s";
     }
 }

@@ -8,10 +8,7 @@ import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -27,10 +24,10 @@ import java.util.stream.Stream;
  * 使用示例：
  * <pre>{@code
  * // 通过 BaseDBApi 获取条件构建器
- * LambdaClientConditionBuilder<User> condition = baseDBApi.lambdaCondition();
+ * LambdaClientConditionBuilder<Use?> condition = baseDBApi.lambdaCondition();
  *
  * // 构建条件并执行查询
- * List<User> users = condition.eq(User::getStatus, 1)
+ * List<Use?> users = condition.eq(User::getStatus, 1)
  *     .orderByDesc(User::getCreateTime)
  *     .toSelect()
  *     .list();
@@ -98,10 +95,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.eq(condition, column, value);
         return this;
     }
@@ -115,10 +111,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.ne(condition, column, value);
         return this;
     }
@@ -132,10 +127,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.gt(condition, column, value);
         return this;
     }
@@ -149,10 +143,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.ge(condition, column, value);
         return this;
     }
@@ -166,10 +159,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.lt(condition, column, value);
         return this;
     }
@@ -183,10 +175,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         conditionBuilder.le(condition, column, value);
         return this;
     }
@@ -264,11 +255,10 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
     @SafeVarargs
-    public final <R> LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public final LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         conditionBuilder.in(condition, column, values);
         return this;
     }
@@ -282,10 +272,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientConditionBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         conditionBuilder.in(condition, column, values);
         return this;
     }
@@ -299,11 +288,10 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
     @SafeVarargs
-    public final <R> LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public final LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         conditionBuilder.notIn(condition, column, values);
         return this;
     }
@@ -317,10 +305,9 @@ public class LambdaClientConditionBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientConditionBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         conditionBuilder.notIn(condition, column, values);
         return this;
     }
@@ -426,11 +413,11 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
     @SafeVarargs
-    public final <R> LambdaClientConditionBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public final LambdaClientConditionBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         conditionBuilder.notIn(column, values);
         return this;
     }
@@ -443,10 +430,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientConditionBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         conditionBuilder.notIn(column, values);
         return this;
     }
@@ -459,10 +446,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> eq(SFunction<T, ?> column, Object value) {
         conditionBuilder.eq(column, value);
         return this;
     }
@@ -475,10 +462,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> ne(SFunction<T, ?> column, Object value) {
         conditionBuilder.ne(column, value);
         return this;
     }
@@ -491,10 +478,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> gt(SFunction<T, ?> column, Object value) {
         conditionBuilder.gt(column, value);
         return this;
     }
@@ -507,10 +494,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> ge(SFunction<T, ?> column, Object value) {
         conditionBuilder.ge(column, value);
         return this;
     }
@@ -523,10 +510,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> lt(SFunction<T, ?> column, Object value) {
         conditionBuilder.lt(column, value);
         return this;
     }
@@ -539,10 +526,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaClientConditionBuilder<T> le(SFunction<T, ?> column, Object value) {
         conditionBuilder.le(column, value);
         return this;
     }
@@ -639,11 +626,11 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
     @SafeVarargs
-    public final <R> LambdaClientConditionBuilder<T> in(SFunction<T, R> column, R... values) {
+    public final LambdaClientConditionBuilder<T> in(SFunction<T, ?> column, Object... values) {
         conditionBuilder.in(column, values);
         return this;
     }
@@ -656,10 +643,10 @@ public class LambdaClientConditionBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
+
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientConditionBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientConditionBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         conditionBuilder.in(column, values);
         return this;
     }
@@ -814,7 +801,7 @@ public class LambdaClientConditionBuilder<T> {
      * 使用示例：
      * <pre>{@code
      * // 查询所有列
-     * List<User> users = condition.toSelect().list();
+     * List<Use?> users = condition.toSelect().list();
      * }</pre>
      * </p>
      *
@@ -897,7 +884,7 @@ public class LambdaClientConditionBuilder<T> {
         return new LambdaClientUpdateBuilder<>(this.baseDBApi, this.conditionBuilder);
     }
 
-    public final LambdaClientSingleColumnQueryBuilder<T> toColumn(SFunction<T, ?> selectColumn) {
+    public final <R> LambdaClientSingleColumnQueryBuilder<T, R> toColumn(SFunction<T, R> selectColumn) {
         return new LambdaClientSingleColumnQueryBuilder<>(this.baseDBApi, this.conditionBuilder, selectColumn);
     }
 
@@ -912,7 +899,7 @@ public class LambdaClientConditionBuilder<T> {
      * <p>
      * 使用示例：
      * <pre>{@code
-     * List<User> users = baseDBApi.lambdaQuery()
+     * List<Use?> users = baseDBApi.lambdaQuery()
      *     .eq(User::getStatus, 1)
      *     .orderByDesc(User::getCreateTime)
      *     .list();
@@ -959,7 +946,7 @@ public class LambdaClientConditionBuilder<T> {
      * <p>
      * 使用示例：
      * <pre>{@code
-     * try (Stream<User> stream = baseDBApi.lambdaQuery()
+     * try (Stream<Use?> stream = baseDBApi.lambdaQuery()
      *         .gt(User::getAge, 18)
      *         .stream()) {
      *     stream.filter(user -> user.getName().startsWith("张"))
@@ -988,7 +975,7 @@ public class LambdaClientConditionBuilder<T> {
      * 使用示例：
      * <pre>{@code
      * Page page = Page.of(1, 10).desc("create_time");
-     * PageResult<User> result = baseDBApi.lambdaQuery()
+     * PageResult<Use?> result = baseDBApi.lambdaQuery()
      *     .eq(User::getStatus, 1)
      *     .page(page);
      * }
@@ -1049,8 +1036,8 @@ public class LambdaClientConditionBuilder<T> {
      *     .update();
      * }
      * </pre>
-     * @param consumer 需要使用这个消费接口来提供set相关的信息
      *
+     * @param consumer 需要使用这个消费接口来提供set相关的信息
      * @return 被更新的记录行数
      */
     public int update(Consumer<LambdaUpdateBuilder<T>> consumer) {
@@ -1100,129 +1087,90 @@ public class LambdaClientConditionBuilder<T> {
         return toCount().exist();
     }
 
-    public List<String> strs(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).strs();
+    /**
+     * 执行单列查询，返回指定列的结果列表。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询所有用户的姓名列表
+     * List<String> names = baseDBApi.lambdaCondition()
+     *     .eq(User::getStatus, 1)
+     *     .columns(User::getName);
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumn 要查询的列（Lambda表达式）
+     * @param <R>          列类型
+     * @return 指定列的值列表
+     */
+    public <R> List<R> columns(SFunction<T, R> selectColumn) {
+        return toColumn(selectColumn).list();
     }
 
-    public List<Integer> ints(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).ints();
+    /**
+     * 执行单列查询，以流式方式返回指定列的结果。
+     * <p>使用完毕后需关闭Stream以释放资源。</p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * try (Stream<String> stream = baseDBApi.lambdaCondition()
+     *         .eq(User::getStatus, 1)
+     *         .columnsStream(User::getName)) {
+     *     stream.filter(name -> name.startsWith("张")).forEach(System.out::println);
+     * }
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumn 要查询的列（Lambda表达式）
+     * @param <R>          列类型
+     * @return 指定列的值流，使用完毕后需关闭
+     */
+    public <R> Stream<R> columnsStream(SFunction<T, R> selectColumn) {
+        return toColumn(selectColumn).stream();
     }
 
-    public List<Long> longs(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).longs();
+    /**
+     * 执行单列分页查询，返回指定列的分页结果。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * Page page = Page.of(1, 10).desc("age");
+     * PageResult<String> result = baseDBApi.lambdaCondition()
+     *     .eq(User::getStatus, 1)
+     *     .columnsPage(User::getName, page);
+     * List<String> names = result.getRecords();
+     * long total = result.getTotalCount();
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumn 要查询的列（Lambda表达式）
+     * @param page         分页参数
+     * @param <R>          列类型
+     * @return 分页结果，包含列值列表和分页信息
+     */
+    public <R> PageResult<R> columnsPage(SFunction<T, R> selectColumn, @NonNull Page page) {
+        return toColumn(selectColumn).page(page);
     }
 
-    public List<Double> doubles(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).doubles();
-    }
-
-    public List<Date> dates(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).dates();
-    }
-
-    public List<BigDecimal> bigDecimals(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigDecimals();
-    }
-
-    public List<BigInteger> bigInts(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigInts();
-    }
-
-
-    //-------------
-
-    public Stream<String> strStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).strStream();
-    }
-
-    public Stream<Integer> intStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).intStream();
-    }
-
-    public Stream<Long> longStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).longStream();
-    }
-
-    public Stream<Double> doubleStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).doubleStream();
-    }
-
-    public Stream<Date> dateStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).dateStream();
-    }
-
-    public Stream<BigDecimal> bigDecimalStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigDecimalStream();
-    }
-
-    public Stream<BigInteger> bigIntStream(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigIntStream();
-    }
-
-    //-------------
-
-    public PageResult<String> strPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).strPage(page);
-    }
-
-    public PageResult<Integer> intPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).intPage(page);
-    }
-
-    public PageResult<Long> longPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).longPage(page);
-    }
-
-    public PageResult<Double> doublePage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).doublePage(page);
-    }
-
-    public PageResult<Date> datePage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).datePage(page);
-    }
-
-    public PageResult<BigDecimal> bigDecimalPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).bigDecimalPage(page);
-    }
-
-    public PageResult<BigInteger> bigIntPage(SFunction<T, ?> selectColumn, @NonNull Page page) {
-        return toColumn(selectColumn).bigIntPage(page);
-    }
-
-    //-------------
-
+    /**
+     * 执行单列查询，返回指定列的第一条结果。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询第一个状态为1的用户姓名
+     * String name = baseDBApi.lambdaCondition()
+     *     .eq(User::getStatus, 1)
+     *     .column(User::getName);
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumn 要查询的列（Lambda表达式）
+     * @param <R>          列类型
+     * @return 第一条结果，无结果时返回null
+     */
     @Nullable
-    public String str(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).str();
+    public <R> R column(SFunction<T, R> selectColumn) {
+        return toColumn(selectColumn).one();
     }
 
-    @Nullable
-    public Integer aInt(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).aInt();
-    }
-
-    @Nullable
-    public Long aLong(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).aLong();
-    }
-
-    @Nullable
-    public Double aDouble(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).aDouble();
-    }
-
-    @Nullable
-    public Date aDate(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).aDate();
-    }
-
-    @Nullable
-    public BigDecimal bigDecimal(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigDecimal();
-    }
-
-    @Nullable
-    public BigInteger bigInt(SFunction<T, ?> selectColumn) {
-        return toColumn(selectColumn).bigInt();
-    }
 }

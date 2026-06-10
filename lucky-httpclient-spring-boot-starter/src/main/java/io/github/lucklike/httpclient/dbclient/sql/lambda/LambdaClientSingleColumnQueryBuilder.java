@@ -1,17 +1,14 @@
 package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
-import io.github.lucklike.httpclient.dbclient.annotation.SQL;
+import io.github.lucklike.httpclient.dbclient.function.LambdaUtils;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -22,20 +19,30 @@ import java.util.stream.Stream;
  * @version 1.0.0
  * @date 2026/6/10 01:43
  */
-public class LambdaClientSingleColumnQueryBuilder<T> {
+public class LambdaClientSingleColumnQueryBuilder<T, R> {
 
     private final BaseDBApi<T> baseDBApi;
-    private final LambdaSingleColumnQueryBuilder<T> singleColumnQueryBuilder;
+    private final LambdaSingleColumnQueryBuilder<T, R> singleColumnQueryBuilder;
 
-    public LambdaClientSingleColumnQueryBuilder(BaseDBApi<T> baseDBApi, Class<T> clazz, SFunction<T, ?> selectColumn) {
+    public LambdaClientSingleColumnQueryBuilder(BaseDBApi<T> baseDBApi, Class<T> clazz, SFunction<T, R> selectColumn) {
         this.singleColumnQueryBuilder = new LambdaSingleColumnQueryBuilder<>(clazz, selectColumn);
         this.baseDBApi = baseDBApi;
     }
 
-    public LambdaClientSingleColumnQueryBuilder(BaseDBApi<T> baseDBApi, LambdaSqlBuilder<T> sqlBuilder, SFunction<T, ?> selectColumn) {
+    public LambdaClientSingleColumnQueryBuilder(BaseDBApi<T> baseDBApi, LambdaSqlBuilder<T> sqlBuilder, SFunction<T, R> selectColumn) {
         this.singleColumnQueryBuilder = new LambdaSingleColumnQueryBuilder<>(sqlBuilder, selectColumn);
         this.baseDBApi = baseDBApi;
     }
+
+    /**
+     * 获取查询列的类型
+     *
+     * @return 查询列的类型
+     */
+    public Class<?> getSelectColumnType() {
+        return singleColumnQueryBuilder.getSelectColumnType();
+    }
+
 
     // ==================== 关联表方法 ====================
 
@@ -61,7 +68,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param <E>       关联实体类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <E> LambdaClientSingleColumnQueryBuilder<T> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
+    public <E> LambdaClientSingleColumnQueryBuilder<T, R> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
         singleColumnQueryBuilder.join(type, joinClass, alias);
         return this;
     }
@@ -74,7 +81,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param <E>       关联实体类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <E> LambdaClientSingleColumnQueryBuilder<T> innerJoin(Class<E> joinClass, String alias) {
+    public <E> LambdaClientSingleColumnQueryBuilder<T, R> innerJoin(Class<E> joinClass, String alias) {
         singleColumnQueryBuilder.innerJoin(joinClass, alias);
         return this;
     }
@@ -87,7 +94,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param <E>       关联实体类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <E> LambdaClientSingleColumnQueryBuilder<T> leftJoin(Class<E> joinClass, String alias) {
+    public <E> LambdaClientSingleColumnQueryBuilder<T, R> leftJoin(Class<E> joinClass, String alias) {
         singleColumnQueryBuilder.leftJoin(joinClass, alias);
         return this;
     }
@@ -100,7 +107,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param <E>       关联实体类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <E> LambdaClientSingleColumnQueryBuilder<T> rightJoin(Class<E> joinClass, String alias) {
+    public <E> LambdaClientSingleColumnQueryBuilder<T, R> rightJoin(Class<E> joinClass, String alias) {
         singleColumnQueryBuilder.rightJoin(joinClass, alias);
         return this;
     }
@@ -114,7 +121,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition SQL 条件片段，可使用 ? 作为参数占位符
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> on(String condition) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> on(String condition) {
         singleColumnQueryBuilder.on(condition);
         return this;
     }
@@ -130,7 +137,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param <E>         右表实体类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <E> LambdaClientSingleColumnQueryBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
+    public <E> LambdaClientSingleColumnQueryBuilder<T, R> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
         singleColumnQueryBuilder.on(leftColumn, rightColumn);
         return this;
     }
@@ -147,7 +154,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param values    占位符对应的参数值，按顺序匹配
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> where(String condition, Object... values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> where(String condition, Object... values) {
         singleColumnQueryBuilder.where(condition, values);
         return this;
     }
@@ -169,7 +176,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param conditionBuilder 条件构建器函数
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
         singleColumnQueryBuilder.where(conditionBuilder);
         return this;
     }
@@ -180,10 +187,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> eq(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.eq(condition, column, value);
         return this;
     }
@@ -194,10 +200,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> ne(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.ne(condition, column, value);
         return this;
     }
@@ -208,10 +213,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> gt(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.gt(condition, column, value);
         return this;
     }
@@ -222,10 +226,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> ge(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.ge(condition, column, value);
         return this;
     }
@@ -236,10 +239,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> lt(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.lt(condition, column, value);
         return this;
     }
@@ -250,10 +252,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> le(boolean condition, SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.le(condition, column, value);
         return this;
     }
@@ -266,7 +267,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value     匹配值（会自动添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> like(boolean condition, SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.like(condition, column, value);
         return this;
     }
@@ -279,7 +280,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value     匹配值（会自动在前面添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.likeLeft(condition, column, value);
         return this;
     }
@@ -292,7 +293,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value     匹配值（会自动在后面添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> likeRight(boolean condition, SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.likeRight(condition, column, value);
         return this;
     }
@@ -305,7 +306,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value     匹配值（会自动添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notLike(boolean condition, SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.notLike(condition, column, value);
         return this;
     }
@@ -316,11 +317,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientSingleColumnQueryBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> in(boolean condition, SFunction<T, ?> column, Object... values) {
         singleColumnQueryBuilder.in(condition, column, values);
         return this;
     }
@@ -331,10 +330,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         singleColumnQueryBuilder.in(condition, column, values);
         return this;
     }
@@ -345,11 +343,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientSingleColumnQueryBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         singleColumnQueryBuilder.notIn(condition, column, values);
         return this;
     }
@@ -360,10 +356,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         singleColumnQueryBuilder.notIn(condition, column, values);
         return this;
     }
@@ -375,7 +370,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column    表字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> isNull(boolean condition, SFunction<T, ?> column) {
         singleColumnQueryBuilder.isNull(condition, column);
         return this;
     }
@@ -387,7 +382,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column    表字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> isNotNull(boolean condition, SFunction<T, ?> column) {
         singleColumnQueryBuilder.isNotNull(condition, column);
         return this;
     }
@@ -401,7 +396,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value2    结束值
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
         singleColumnQueryBuilder.between(condition, column, value1, value2);
         return this;
     }
@@ -414,7 +409,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param orderType 排序类型
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
         singleColumnQueryBuilder.orderBy(condition, column, orderType);
         return this;
     }
@@ -426,7 +421,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column    排序字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderByAsc(boolean condition, SFunction<T, ?> column) {
         singleColumnQueryBuilder.orderByAsc(condition, column);
         return this;
     }
@@ -438,7 +433,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column    排序字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderByDesc(boolean condition, SFunction<T, ?> column) {
         singleColumnQueryBuilder.orderByDesc(condition, column);
         return this;
     }
@@ -448,11 +443,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientSingleColumnQueryBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notIn(SFunction<T, ?> column, Object... values) {
         singleColumnQueryBuilder.notIn(column, values);
         return this;
     }
@@ -462,10 +455,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> eq(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.eq(column, value);
         return this;
     }
@@ -475,10 +467,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> ne(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.ne(column, value);
         return this;
     }
@@ -488,10 +479,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> gt(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.gt(column, value);
         return this;
     }
@@ -501,10 +491,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> ge(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.ge(column, value);
         return this;
     }
@@ -514,10 +503,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> lt(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.lt(column, value);
         return this;
     }
@@ -527,10 +515,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> le(SFunction<T, ?> column, Object value) {
         singleColumnQueryBuilder.le(column, value);
         return this;
     }
@@ -542,7 +529,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配值（会自动添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> like(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> like(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.like(column, value);
         return this;
     }
@@ -554,7 +541,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配值（会自动在前面添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> likeLeft(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.likeLeft(column, value);
         return this;
     }
@@ -566,7 +553,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配值（会自动在后面添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> likeRight(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> likeRight(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.likeRight(column, value);
         return this;
     }
@@ -578,7 +565,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配模式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> notLikeRight(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notLikeRight(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.notLikeRight(column, value);
         return this;
     }
@@ -590,7 +577,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配模式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> notLikeLeft(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notLikeLeft(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.notLikeLeft(column, value);
         return this;
     }
@@ -602,7 +589,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value  匹配值（会自动添加 % 通配符）
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> notLike(SFunction<T, ?> column, String value) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> notLike(SFunction<T, ?> column, String value) {
         singleColumnQueryBuilder.notLike(column, value);
         return this;
     }
@@ -612,10 +599,9 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientSingleColumnQueryBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> in(SFunction<T, ?> column, Collection<?> values) {
         singleColumnQueryBuilder.in(column, values);
         return this;
     }
@@ -626,7 +612,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column 表字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> isNull(SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> isNull(SFunction<T, ?> column) {
         singleColumnQueryBuilder.isNull(column);
         return this;
     }
@@ -637,7 +623,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column 表字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> isNotNull(SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> isNotNull(SFunction<T, ?> column) {
         singleColumnQueryBuilder.isNotNull(column);
         return this;
     }
@@ -650,7 +636,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param value2 结束值
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> between(SFunction<T, ?> column, Object value1, Object value2) {
         singleColumnQueryBuilder.between(column, value1, value2);
         return this;
     }
@@ -662,7 +648,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param consumer 括号中的表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> or(Consumer<LambdaClientSingleColumnQueryBuilder<T>> consumer) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> or(Consumer<LambdaClientSingleColumnQueryBuilder<T, R>> consumer) {
         orStart();
         consumer.accept(this);
         orEnd();
@@ -675,7 +661,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param consumer 括号中的表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> and(Consumer<LambdaClientSingleColumnQueryBuilder<T>> consumer) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> and(Consumer<LambdaClientSingleColumnQueryBuilder<T, R>> consumer) {
         andStart();
         consumer.accept(this);
         andEnd();
@@ -687,7 +673,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> or() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> or() {
         singleColumnQueryBuilder.or();
         return this;
     }
@@ -697,7 +683,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> and() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> and() {
         singleColumnQueryBuilder.and();
         return this;
     }
@@ -707,7 +693,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> andStart() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> andStart() {
         singleColumnQueryBuilder.andStart();
         return this;
     }
@@ -717,7 +703,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> andEnd() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> andEnd() {
         singleColumnQueryBuilder.andEnd();
         return this;
     }
@@ -727,7 +713,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orStart() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orStart() {
         singleColumnQueryBuilder.orStart();
         return this;
     }
@@ -737,7 +723,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orEnd() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orEnd() {
         singleColumnQueryBuilder.orEnd();
         return this;
     }
@@ -750,7 +736,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param orderType 排序类型
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderBy(SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderBy(SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
         singleColumnQueryBuilder.orderBy(column, orderType);
         return this;
     }
@@ -761,7 +747,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column 排序字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderByAsc(SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderByAsc(SFunction<T, ?> column) {
         singleColumnQueryBuilder.orderByAsc(column);
         return this;
     }
@@ -772,7 +758,7 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      * @param column 排序字段的 Lambda 表达式
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> orderByDesc(SFunction<T, ?> column) {
+    public LambdaClientSingleColumnQueryBuilder<T, R> orderByDesc(SFunction<T, ?> column) {
         singleColumnQueryBuilder.orderByDesc(column);
         return this;
     }
@@ -788,134 +774,32 @@ public class LambdaClientSingleColumnQueryBuilder<T> {
      *
      * @return 当前构建器实例，支持链式调用
      */
-    public LambdaClientSingleColumnQueryBuilder<T> print() {
+    public LambdaClientSingleColumnQueryBuilder<T, R> print() {
         singleColumnQueryBuilder.print();
         return this;
     }
 
     // ==================== 执行方法 ====================
 
-    public List<String> strs() {
-        return this.baseDBApi.strColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<Integer> ints() {
-        return this.baseDBApi.intColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<Long> longs() {
-        return this.baseDBApi.longColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<Double> doubles() {
-        return this.baseDBApi.doubleColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<Date> dates() {
-        return this.baseDBApi.dateColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<BigDecimal> bigDecimals() {
-        return this.baseDBApi.bigDecimalColumns(this.singleColumnQueryBuilder);
-    }
-
-    public List<BigInteger> bigInts() {
-        return this.baseDBApi.bigIntColumns(this.singleColumnQueryBuilder);
+    public List<R> list() {
+        return this.baseDBApi.columns(this.singleColumnQueryBuilder);
     }
 
 
     //-------------
 
-    public Stream<String> strStream() {
-        return this.baseDBApi.strStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<Integer> intStream() {
-        return this.baseDBApi.intStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<Long> longStream() {
-        return this.baseDBApi.longStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<Double> doubleStream() {
-        return this.baseDBApi.doubleStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<Date> dateStream() {
-        return this.baseDBApi.dateStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<BigDecimal> bigDecimalStream() {
-        return this.baseDBApi.bigDecimalStream(this.singleColumnQueryBuilder);
-    }
-
-    public Stream<BigInteger> bigIntStream() {
-        return this.baseDBApi.bigIntStream(this.singleColumnQueryBuilder);
+    public Stream<R> stream() {
+        return this.baseDBApi.columnsStream(this.singleColumnQueryBuilder);
     }
 
     //-------------
 
-    public PageResult<String> strPage(@NonNull Page page) {
-        return this.baseDBApi.strPage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<Integer> intPage(@NonNull Page page) {
-        return this.baseDBApi.intPage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<Long> longPage(@NonNull Page page) {
-        return this.baseDBApi.longPage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<Double> doublePage(@NonNull Page page) {
-        return this.baseDBApi.doublePage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<Date> datePage(@NonNull Page page) {
-        return this.baseDBApi.datePage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<BigDecimal> bigDecimalPage(@NonNull Page page) {
-        return this.baseDBApi.bigDecimalPage(this.singleColumnQueryBuilder, page);
-    }
-
-    public PageResult<BigInteger> bigIntPage(@NonNull Page page) {
-        return this.baseDBApi.bigIntPage(this.singleColumnQueryBuilder, page);
+    public PageResult<R> page(@NonNull Page page) {
+        return this.baseDBApi.columnsPage(this.singleColumnQueryBuilder, page);
     }
 
     @Nullable
-    public String str() {
-        return strs().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public Integer aInt() {
-        return ints().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public Long aLong() {
-        return longs().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public Double aDouble() {
-        return doubles().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public Date aDate() {
-        return dates().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public BigDecimal bigDecimal() {
-        return bigDecimals().stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    public BigInteger bigInt() {
-        return bigInts().stream().findFirst().orElse(null);
+    public R one() {
+        return this.baseDBApi.column(this.singleColumnQueryBuilder);
     }
 }

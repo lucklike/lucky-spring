@@ -79,7 +79,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> set(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> set(boolean condition, SFunction<T, ?> column, Object value) {
         super.set(condition, column, value);
         return this;
     }
@@ -97,7 +97,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> set(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> set(SFunction<T, ?> column, Object value) {
         super.set(column, value);
         return this;
     }
@@ -133,7 +133,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         super.eq(condition, column, value);
         return this;
     }
@@ -142,7 +142,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         super.ne(condition, column, value);
         return this;
     }
@@ -151,7 +151,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         super.gt(condition, column, value);
         return this;
     }
@@ -160,7 +160,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         super.ge(condition, column, value);
         return this;
     }
@@ -169,7 +169,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         super.lt(condition, column, value);
         return this;
     }
@@ -178,7 +178,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         super.le(condition, column, value);
         return this;
     }
@@ -240,9 +240,8 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaUpdateBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaUpdateBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         super.in(condition, column, values);
         return this;
     }
@@ -251,7 +250,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaUpdateBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         super.in(condition, column, values);
         return this;
     }
@@ -259,9 +258,17 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaUpdateBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaUpdateBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
+        super.notIn(column, values);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LambdaUpdateBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -323,9 +330,8 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaUpdateBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaUpdateBuilder<T> notIn(SFunction<T, ?> column ,Collection<?> values) {
         super.notIn(column, values);
         return this;
     }
@@ -334,7 +340,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaUpdateBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -343,16 +349,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
-        super.notIn(column, values);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public <R> LambdaUpdateBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> eq(SFunction<T, ?> column, Object value) {
         super.eq(column, value);
         return this;
     }
@@ -361,7 +358,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> ne(SFunction<T, ?> column, Object value) {
         super.ne(column, value);
         return this;
     }
@@ -370,7 +367,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> gt(SFunction<T, ?> column, Object value) {
         super.gt(column, value);
         return this;
     }
@@ -379,7 +376,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> ge(SFunction<T, ?> column, Object value) {
         super.ge(column, value);
         return this;
     }
@@ -388,7 +385,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> lt(SFunction<T, ?> column, Object value) {
         super.lt(column, value);
         return this;
     }
@@ -397,7 +394,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaUpdateBuilder<T> le(SFunction<T, ?> column, Object value) {
         super.le(column, value);
         return this;
     }
@@ -442,8 +439,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    @SafeVarargs
-    public final <R> LambdaUpdateBuilder<T> in(SFunction<T, R> column, R... values) {
+    public LambdaUpdateBuilder<T> in(SFunction<T, ?> column, Object... values) {
         super.in(column, values);
         return this;
     }
@@ -452,7 +448,7 @@ public class LambdaUpdateBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaUpdateBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaUpdateBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         super.in(column, values);
         return this;
     }

@@ -96,10 +96,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 要更新的字段（Lambda 表达式）
      * @param value  新值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> set(SFunction<T, R> column, Object value) {
+    public  LambdaClientUpdateBuilder<T> set(SFunction<T, ?> column, Object value) {
         updateBuilder.set(column, value);
         return this;
     }
@@ -181,10 +180,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.eq(condition, column, value);
         return this;
     }
@@ -195,10 +193,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.ne(condition, column, value);
         return this;
     }
@@ -209,10 +206,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.gt(condition, column, value);
         return this;
     }
@@ -223,10 +219,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.ge(condition, column, value);
         return this;
     }
@@ -237,10 +232,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.lt(condition, column, value);
         return this;
     }
@@ -251,10 +245,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         updateBuilder.le(condition, column, value);
         return this;
     }
@@ -317,11 +310,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientUpdateBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientUpdateBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         updateBuilder.in(condition, column, values);
         return this;
     }
@@ -332,10 +323,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientUpdateBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         updateBuilder.in(condition, column, values);
         return this;
     }
@@ -346,11 +336,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientUpdateBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientUpdateBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         updateBuilder.notIn(condition, column, values);
         return this;
     }
@@ -438,11 +426,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientUpdateBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaClientUpdateBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         updateBuilder.notIn(column, values);
         return this;
     }
@@ -453,10 +439,9 @@ public class LambdaClientUpdateBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientUpdateBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         updateBuilder.notIn(condition, column, values);
         return this;
     }
@@ -466,10 +451,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientUpdateBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         updateBuilder.notIn(column, values);
         return this;
     }
@@ -479,10 +463,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> eq(SFunction<T, ?> column, Object value) {
         updateBuilder.eq(column, value);
         return this;
     }
@@ -492,10 +475,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> ne(SFunction<T, ?> column, Object value) {
         updateBuilder.ne(column, value);
         return this;
     }
@@ -505,10 +487,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> gt(SFunction<T, ?> column, Object value) {
         updateBuilder.gt(column, value);
         return this;
     }
@@ -518,10 +499,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> ge(SFunction<T, ?> column, Object value) {
         updateBuilder.ge(column, value);
         return this;
     }
@@ -531,10 +511,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> lt(SFunction<T, ?> column, Object value) {
         updateBuilder.lt(column, value);
         return this;
     }
@@ -544,10 +523,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaClientUpdateBuilder<T> le(SFunction<T, ?> column, Object value) {
         updateBuilder.le(column, value);
         return this;
     }
@@ -630,10 +608,9 @@ public class LambdaClientUpdateBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientUpdateBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientUpdateBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         updateBuilder.in(column, values);
         return this;
     }

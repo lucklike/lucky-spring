@@ -177,7 +177,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         super.eq(condition, column, value);
         return this;
     }
@@ -186,7 +186,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         super.ne(condition, column, value);
         return this;
     }
@@ -195,7 +195,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         super.gt(condition, column, value);
         return this;
     }
@@ -204,7 +204,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         super.ge(condition, column, value);
         return this;
     }
@@ -213,7 +213,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         super.lt(condition, column, value);
         return this;
     }
@@ -222,7 +222,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         super.le(condition, column, value);
         return this;
     }
@@ -284,9 +284,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaCountBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public final LambdaCountBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         super.in(condition, column, values);
         return this;
     }
@@ -295,7 +294,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaCountBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         super.in(condition, column, values);
         return this;
     }
@@ -303,9 +302,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaCountBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaCountBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -314,7 +312,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaCountBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         super.notIn(condition, column, values);
         return this;
     }
@@ -376,9 +374,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     /**
      * {@inheritDoc}
      */
-    @SafeVarargs
     @Override
-    public final <R> LambdaCountBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaCountBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         super.notIn(column, values);
         return this;
     }
@@ -387,7 +384,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public LambdaCountBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         super.notIn(column, values);
         return this;
     }
@@ -396,7 +393,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> eq(SFunction<T, ?> column, Object value) {
         super.eq(column, value);
         return this;
     }
@@ -405,7 +402,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> ne(SFunction<T, ?> column, Object value) {
         super.ne(column, value);
         return this;
     }
@@ -414,7 +411,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> gt(SFunction<T, ?> column, Object value) {
         super.gt(column, value);
         return this;
     }
@@ -423,7 +420,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> ge(SFunction<T, ?> column, Object value) {
         super.ge(column, value);
         return this;
     }
@@ -432,7 +429,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> lt(SFunction<T, ?> column, Object value) {
         super.lt(column, value);
         return this;
     }
@@ -441,7 +438,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaCountBuilder<T> le(SFunction<T, ?> column, Object value) {
         super.le(column, value);
         return this;
     }
@@ -486,8 +483,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    @SafeVarargs
-    public final <R> LambdaCountBuilder<T> in(SFunction<T, R> column, R... values) {
+    public LambdaCountBuilder<T> in(SFunction<T, ?> column, Object... values) {
         super.in(column, values);
         return this;
     }
@@ -496,7 +492,7 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
      * {@inheritDoc}
      */
     @Override
-    public <R> LambdaCountBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaCountBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         super.in(column, values);
         return this;
     }

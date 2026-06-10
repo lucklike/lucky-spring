@@ -119,10 +119,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> eq(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.eq(condition, column, value);
         return this;
     }
@@ -133,10 +132,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> ne(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.ne(condition, column, value);
         return this;
     }
@@ -147,10 +145,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> gt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.gt(condition, column, value);
         return this;
     }
@@ -161,10 +158,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> ge(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.ge(condition, column, value);
         return this;
     }
@@ -175,10 +171,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> lt(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.lt(condition, column, value);
         return this;
     }
@@ -189,10 +184,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param value     比较值
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> le(boolean condition, SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
         deleteBuilder.le(condition, column, value);
         return this;
     }
@@ -255,11 +249,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientDeleteBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
         deleteBuilder.in(condition, column, values);
         return this;
     }
@@ -270,10 +262,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> in(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientDeleteBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         deleteBuilder.in(condition, column, values);
         return this;
     }
@@ -284,11 +275,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值列表
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, R... values) {
+    public LambdaClientDeleteBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
         deleteBuilder.notIn(condition, column, values);
         return this;
     }
@@ -299,10 +288,9 @@ public class LambdaClientDeleteBuilder<T> {
      * @param condition 是否添加此条件
      * @param column    表字段的 Lambda 表达式
      * @param values    值集合
-     * @param <R>       字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> notIn(boolean condition, SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientDeleteBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
         deleteBuilder.notIn(condition, column, values);
         return this;
     }
@@ -390,11 +378,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值列表
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    @SafeVarargs
-    public final <R> LambdaClientDeleteBuilder<T> notIn(SFunction<T, R> column, R... values) {
+    public LambdaClientDeleteBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
         deleteBuilder.notIn(column, values);
         return this;
     }
@@ -404,10 +390,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> notIn(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientDeleteBuilder<T> notIn(SFunction<T, ?> column, Collection<?> values) {
         deleteBuilder.notIn(column, values);
         return this;
     }
@@ -417,10 +402,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> eq(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> eq(SFunction<T, ?> column, Object value) {
         deleteBuilder.eq(column, value);
         return this;
     }
@@ -430,10 +414,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> ne(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> ne(SFunction<T, ?> column, Object value) {
         deleteBuilder.ne(column, value);
         return this;
     }
@@ -443,10 +426,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> gt(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> gt(SFunction<T, ?> column, Object value) {
         deleteBuilder.gt(column, value);
         return this;
     }
@@ -456,10 +438,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> ge(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> ge(SFunction<T, ?> column, Object value) {
         deleteBuilder.ge(column, value);
         return this;
     }
@@ -469,10 +450,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> lt(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> lt(SFunction<T, ?> column, Object value) {
         deleteBuilder.lt(column, value);
         return this;
     }
@@ -482,10 +462,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param value  比较值
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> le(SFunction<T, R> column, Object value) {
+    public LambdaClientDeleteBuilder<T> le(SFunction<T, ?> column, Object value) {
         deleteBuilder.le(column, value);
         return this;
     }
@@ -567,10 +546,9 @@ public class LambdaClientDeleteBuilder<T> {
      *
      * @param column 表字段的 Lambda 表达式
      * @param values 值集合
-     * @param <R>    字段类型
      * @return 当前构建器实例，支持链式调用
      */
-    public <R> LambdaClientDeleteBuilder<T> in(SFunction<T, R> column, Collection<R> values) {
+    public LambdaClientDeleteBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
         deleteBuilder.in(column, values);
         return this;
     }

@@ -24,12 +24,9 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -1039,6 +1036,110 @@ public interface BaseDBApi<E> {
     }
 
     /**
+     * 创建单列查询构建器，用于查询指定列。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询所有用户的姓名列表
+     * List<String> names = userDBApi.lambdaColumn(User::getName).list();
+     *
+     * // 分页查询用户ID列表
+     * PageResult<Long> ids = userDBApi.lambdaColumn(User::getId).eq(User::getStatus, 1).page(Page.of(1, 10));
+     *
+     * // 流式查询
+     * try(Stream<Long> stream = userDBApi.lambdaColumn(User::getId).stream()){
+     *     stream.filter(name -> name.startsWith("张")).forEach(System.out::println);
+     * }
+     *
+     * // 查询单个列
+     * Long id = userDBApi.lambdaColumn(User::getId).eq(User::getStatus, 1).one()
+     * }</pre>
+     * </p>
+     *
+     * @param selectColumn 要查询的列（Lambda表达式）
+     * @param <R>         列类型
+     * @return 单列查询构建器
+     */
+    default <R> LambdaClientSingleColumnQueryBuilder<E, R> lambdaColumn(SFunction<E, R> selectColumn) {
+        return new LambdaClientSingleColumnQueryBuilder<>(this, entityClass(), selectColumn);
+    }
+
+    /**
+     * 执行单列查询，返回结果列表。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询所有年龄大于18岁的用户ID列表
+     * List<Long> ids = userDBApi.columns(Lambda.column(User::getId).eq(User::getAge, 18));
+     * }</pre>
+     * </p>
+     *
+     * @param singleColumnQueryBuilder 单列查询构建器
+     * @param <R>                      列类型
+     * @return 指定列的值列表
+     */
+    @SQL(executor = SQL_LAMBDA)
+    <R> List<R> columns(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder);
+
+    /**
+     * 执行单列查询，以流式方式返回结果。
+     * <p>使用完毕后需关闭Stream以释放资源。</p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * try (Stream<String> stream = userDBApi.columnsStream(Lambda.column(User::getName).eq(User::getStatus, 1))) {
+     *     stream.filter(name -> name.startsWith("张")).forEach(System.out::println);
+     * }
+     * }</pre>
+     * </p>
+     *
+     * @param singleColumnQueryBuilder 单列查询构建器
+     * @param <R>                      列类型
+     * @return 指定列的值流
+     */
+    @SQL(executor = SQL_LAMBDA)
+    <R> Stream<R> columnsStream(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder);
+
+    /**
+     * 执行单列分页查询。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * Page page = Page.of(1, 10).desc("age");
+     * PageResult<String> result = userDBApi.columnsPage(Lambda.column(User::getName).eq(User::getStatus, 1),page);
+     * List<String> names = result.getRecords();
+     * long total = result.getTotalCount();
+     * }</pre>
+     * </p>
+     *
+     * @param singleColumnQueryBuilder 单列查询构建器
+     * @param page                     分页参数
+     * @param <R>                      列类型
+     * @return 分页结果（包含列值列表和分页信息）
+     */
+    @SQL(executor = SQL_LAMBDA)
+    <R> PageResult<R> columnsPage(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder, @NonNull Page page);
+
+    /**
+     * 执行单列查询，返回第一条结果。
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询第一个年龄大于18岁的用户姓名
+     * String name = userDBApi.column(Lambda.column(User::getName).eq(User::getAge, 18).gt(18));
+     * }</pre>
+     * </p>
+     *
+     * @param singleColumnQueryBuilder 单列查询构建器
+     * @param <R>                      列类型
+     * @return 第一条结果，无结果时返回null
+     */
+    @Nullable
+    default <R> R column(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder) {
+        return columns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
+    }
+
+    /**
      * 获取实体类类型。
      * <p>
      * 通过泛型参数自动解析实体类的 Class 对象。
@@ -1049,113 +1150,5 @@ public interface BaseDBApi<E> {
     @SuppressWarnings("unchecked")
     default Class<E> entityClass() {
         return (Class<E>) ResolvableType.forClass(BaseDBApi.class, getClass()).getGeneric(0).toClass();
-    }
-
-    default LambdaClientSingleColumnQueryBuilder<E> lambdaColumn(SFunction<E, ?> selectColumn) {
-        return new LambdaClientSingleColumnQueryBuilder<>(this, entityClass(), selectColumn);
-    }
-
-    @SQL(executor = SQL_LAMBDA)
-    List<String> strColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<Integer> intColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<Long> longColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<Double> doubleColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<Date> dateColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<BigDecimal> bigDecimalColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    List<BigInteger> bigIntColumns(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    //-------------
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<String> strStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<Integer> intStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<Long> longStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<Double> doubleStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<Date> dateStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<BigDecimal> bigDecimalStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    @SQL(executor = SQL_LAMBDA)
-    Stream<BigInteger> bigIntStream(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder);
-
-    //-------------
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<String> strPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<Integer> intPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<Long> longPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<Double> doublePage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<Date> datePage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<BigDecimal> bigDecimalPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    @SQL(executor = SQL_LAMBDA)
-    PageResult<BigInteger> bigIntPage(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder, @NonNull Page page);
-
-    //-------------
-
-    @Nullable
-    default String strColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return strColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default Integer intColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return intColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default Long longColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return longColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default Double doubleColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return doubleColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default Date dateColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return dateColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default BigDecimal bigDecimalColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return bigDecimalColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
-    }
-
-    @Nullable
-    default BigInteger bigIntColumn(LambdaSingleColumnQueryBuilder<E> singleColumnQueryBuilder) {
-        return bigIntColumns(singleColumnQueryBuilder).stream().findFirst().orElse(null);
     }
 }
