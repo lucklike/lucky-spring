@@ -2,8 +2,6 @@ package io.github.lucklike.httpclient.dbclient.executor;
 
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -14,8 +12,6 @@ import org.slf4j.LoggerFactory;
  * @date 2026/5/25 00:59
  */
 public class SQLWrapperExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
-
-    private static final Logger logger = LoggerFactory.getLogger(SQLWrapperExecutor.class);
 
     private final SQLWrapper sqlWrapper;
 

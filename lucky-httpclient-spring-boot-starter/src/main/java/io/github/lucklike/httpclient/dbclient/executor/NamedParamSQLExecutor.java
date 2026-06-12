@@ -5,8 +5,6 @@ import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.ParameterContext;
 import io.github.lucklike.httpclient.dbclient.plugin.ContentSpELSqlParameterSource;
 import io.github.lucklike.httpclient.dbclient.sql.SQLType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -25,7 +23,6 @@ import java.util.Map;
  */
 public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(NamedParamSQLExecutor.class);
 
     private final String sqlTemp;
     private final SqlParameterSource sqlParamSource;

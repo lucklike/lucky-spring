@@ -62,7 +62,7 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
         // 参数列表中存在 SQL 执行器时直接使用参数列表中的执行器
         SQLExecutor argExecutor = mc.getArgument(SQLExecutor.class);
         if (argExecutor != null) {
-            argExecutor.execute();
+            return argExecutor.execute();
         }
 
         /* 尝试从@SQL注解中获取 SQL 执行器 */
