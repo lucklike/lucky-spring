@@ -925,16 +925,131 @@ public class SqlBuilder implements SQLWrapper {
     }
 
     public SqlBuilder print() {
+        return print(true);
+    }
+
+    public SqlBuilder print(boolean printFullSql) {
+        System.out.println("========== SQL Debug Info ==========");
         System.out.println("SQL Type: " + sqlType);
-        System.out.println("SQL: " + buildSql());
-        System.out.println("Params: " + getAllParams());
-        if (useBatch) {
-            System.out.println("Batch Params: ");
+        System.out.println("SQL Template: " + buildSql());
+
+        List<Object> allParams = getAllParams();
+        if (!allParams.isEmpty()) {
+            System.out.println("Params: " + allParams);
+        }
+
+        if (printFullSql) {
+            System.out.println("Full SQL: " + buildFullSql());
+        }
+
+        if (useBatch && !batchParams.isEmpty()) {
+            System.out.println("Batch Params (" + batchParams.size() + " rows):");
             for (int i = 0; i < batchParams.size(); i++) {
                 System.out.println("  Row " + (i + 1) + ": " + Arrays.toString(batchParams.get(i)));
             }
+            if (printFullSql) {
+                System.out.println("Batch Full SQL Example (first row):");
+                System.out.println("  " + buildBatchFullSql(0));
+            }
         }
+
+        System.out.println("====================================");
         return this;
+    }
+
+    /**
+     * 构建完整的可执行 SQL（将参数替换到 SQL 中）
+     * 注意：仅用于调试，实际执行请使用参数化查询
+     */
+    private String buildFullSql() {
+        String sql = buildSql();
+        List<Object> params = getAllParams();
+
+        if (params.isEmpty()) {
+            return sql;
+        }
+
+        StringBuilder result = new StringBuilder();
+        int paramIndex = 0;
+        int lastPos = 0;
+        int questionMarkPos;
+
+        while ((questionMarkPos = sql.indexOf('?', lastPos)) != -1) {
+            // 添加 ? 之前的 SQL 片段
+            result.append(sql, lastPos, questionMarkPos);
+
+            // 获取参数值并格式化
+            Object param = params.get(paramIndex++);
+            result.append(formatSqlValue(param));
+
+            lastPos = questionMarkPos + 1;
+        }
+        // 添加剩余的 SQL 片段
+        result.append(sql.substring(lastPos));
+
+        return result.toString();
+    }
+
+    /**
+     * 构建批量 SQL 中某一行的完整可执行 SQL
+     *
+     * @param rowIndex 行索引（从 0 开始）
+     */
+    private String buildBatchFullSql(int rowIndex) {
+        if (!useBatch || rowIndex < 0 || rowIndex >= batchParams.size()) {
+            return null;
+        }
+
+        String sql = buildSql();
+        Object[] params = batchParams.get(rowIndex);
+
+        if (params == null || params.length == 0) {
+            return sql;
+        }
+
+        StringBuilder result = new StringBuilder();
+        int paramIndex = 0;
+        int lastPos = 0;
+        int questionMarkPos;
+
+        while ((questionMarkPos = sql.indexOf('?', lastPos)) != -1) {
+            result.append(sql, lastPos, questionMarkPos);
+
+            Object param = params[paramIndex++];
+            result.append(formatSqlValue(param));
+
+            lastPos = questionMarkPos + 1;
+        }
+        result.append(sql.substring(lastPos));
+
+        return result.toString();
+    }
+
+    /**
+     * 格式化 SQL 值（用于调试输出）
+     */
+    private String formatSqlValue(Object value) {
+        if (value == null) {
+            return "NULL";
+        }
+
+        // 字符串类型需要加引号并转义
+        if (value instanceof String) {
+            String escaped = ((String) value)
+                    .replace("'", "''");  // 单引号转义
+            return "'" + escaped + "'";
+        }
+
+        // 日期时间类型
+        if (value instanceof java.util.Date) {
+            if (value instanceof java.sql.Timestamp) {
+                return "'" + value.toString() + "'";
+            }
+            return "'" + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((java.util.Date) value) + "'";
+        }
+
+        // 其他类型直接返回字符串形式
+        return value.toString();
     }
 
     // ==================== 接口实现 ====================
