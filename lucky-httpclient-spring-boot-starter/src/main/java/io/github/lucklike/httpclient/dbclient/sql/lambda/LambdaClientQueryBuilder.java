@@ -962,4 +962,16 @@ public class LambdaClientQueryBuilder<T> {
     public PageResult<T> page(Page page) {
         return this.baseDBApi.selectPage(this.queryBuilder, page);
     }
+
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param pageNum      查询的页数
+     * @param pageSize     每页的条数
+     * @return 对应页码对的数据
+     */
+    public List<T> simplePage(long pageNum, long pageSize) {
+        return this.baseDBApi.simplePage(this.queryBuilder, pageNum, pageSize);
+    }
 }

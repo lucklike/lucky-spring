@@ -306,6 +306,30 @@ public interface BaseDBApi<E> {
     }
 
     /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param queryBuilder SELECT 查询条件构建器
+     * @param pageNum      查询的页数
+     * @param pageSize     每页的条数
+     * @return 对应页码对的数据
+     */
+    default List<E> simplePage(LambdaQueryBuilder<E> queryBuilder, long pageNum, long pageSize) {
+        return selectPage(queryBuilder, Page.notCount(pageNum, pageSize)).getRecords();
+    }
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param conditionBuilder 条件构建器
+     * @param pageNum          查询的页数
+     * @param pageSize         每页的条数
+     * @return 对应页码对的数据
+     */
+    default List<E> simplePage(LambdaConditionBuilder<E> conditionBuilder, long pageNum, long pageSize) {
+        return selectPage(conditionBuilder, Page.notCount(pageNum, pageSize)).getRecords();
+    }
+
+    /**
      * 执行 SELECT 类型 SQL 并以流式方式返回结果。
      * <p>
      * 返回的 {@link Stream} 需要在使用完毕后关闭（例如通过 try-with-resources 语句），
@@ -377,6 +401,18 @@ public interface BaseDBApi<E> {
     @NonNull
     @SQL(executor = SQL_SELECT_BY_ENTITY)
     PageResult<E> selectPage(@NonNull E queryEntity, @NonNull Page page);
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param queryEntity 查询条件实体对象，仅使用其中的非空属性作为查询条件
+     * @param pageNum     查询的页数
+     * @param pageSize    每页的条数
+     * @return 对应页码对的数据
+     */
+    default List<E> simplePage(@NonNull E queryEntity, long pageNum, long pageSize) {
+        return selectPage(queryEntity, Page.notCount(pageNum, pageSize)).getRecords();
+    }
 
     /**
      * 使用实体对象作为条件进行流式查询。
@@ -917,7 +953,7 @@ public interface BaseDBApi<E> {
      * @return Lambda 查询构建器
      */
     default LambdaClientQueryBuilder<E> lambdaQuery(@NonNull E entity) {
-        return new LambdaClientQueryBuilder<>(this,entity);
+        return new LambdaClientQueryBuilder<>(this, entity);
     }
 
 
@@ -1057,7 +1093,7 @@ public interface BaseDBApi<E> {
      * </p>
      *
      * @param selectColumn 要查询的列（Lambda表达式）
-     * @param <R>         列类型
+     * @param <R>          列类型
      * @return 单列查询构建器
      */
     default <R> LambdaClientSingleColumnQueryBuilder<E, R> lambdaColumn(SFunction<E, R> selectColumn) {
@@ -1119,6 +1155,18 @@ public interface BaseDBApi<E> {
      */
     @SQL(executor = SQL_LAMBDA)
     <R> PageResult<R> columnsPage(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder, @NonNull Page page);
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param singleColumnQueryBuilder 查询条件实体对象，仅使用其中的非空属性作为查询条件
+     * @param pageNum     查询的页数
+     * @param pageSize    每页的条数
+     * @return 对应页码对的数据
+     */
+    default <R> List<R> simpleColumnsPage(LambdaSingleColumnQueryBuilder<E, R> singleColumnQueryBuilder, long pageNum, long pageSize) {
+        return columnsPage(singleColumnQueryBuilder, Page.notCount(pageNum, pageSize)).getRecords();
+    }
 
     /**
      * 执行单列查询，返回第一条结果。

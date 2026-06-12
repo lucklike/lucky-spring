@@ -786,16 +786,16 @@ public class LambdaClientSingleColumnQueryBuilder<T, R> {
     }
 
 
-    //-------------
-
     public Stream<R> stream() {
         return this.baseDBApi.columnsStream(this.singleColumnQueryBuilder);
     }
 
-    //-------------
-
     public PageResult<R> page(@NonNull Page page) {
         return this.baseDBApi.columnsPage(this.singleColumnQueryBuilder, page);
+    }
+
+    public List<R> simplePage(long pageNum, long pageSize) {
+        return this.baseDBApi.simpleColumnsPage(this.singleColumnQueryBuilder, pageNum, pageSize);
     }
 
     @Nullable

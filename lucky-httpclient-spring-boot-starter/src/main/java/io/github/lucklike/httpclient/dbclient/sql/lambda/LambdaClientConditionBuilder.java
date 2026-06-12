@@ -989,6 +989,17 @@ public class LambdaClientConditionBuilder<T> {
     }
 
     /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param pageNum      查询的页数
+     * @param pageSize     每页的条数
+     * @return 对应页码对的数据
+     */
+    public List<T> simplePage(long pageNum, long pageSize) {
+        return toSelect().simplePage(pageNum, pageSize);
+    }
+
+    /**
      * 执行 DELETE 操作并返回影响行数
      * <p>
      * 根据构建器中设置的条件，执行 DELETE 操作。
@@ -1151,6 +1162,18 @@ public class LambdaClientConditionBuilder<T> {
     public <R> PageResult<R> columnsPage(SFunction<T, R> selectColumn, @NonNull Page page) {
         return toColumn(selectColumn).page(page);
     }
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param pageNum      查询的页数
+     * @param pageSize     每页的条数
+     * @return 对应页码对的数据
+     */
+    public <R> List<R> simpleColumnsPage(SFunction<T, R> selectColumn, long pageNum, long pageSize) {
+        return toColumn(selectColumn).simplePage(pageNum, pageSize);
+    }
+
 
     /**
      * 执行单列查询，返回指定列的第一条结果。
