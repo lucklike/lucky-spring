@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.sql.page;
 
+import com.luckyframework.common.ContainerUtils;
 import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageSql;
 import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageStrategy;
 
@@ -128,6 +129,17 @@ public class Page implements Serializable {
     }
 
     /**
+     * 快速创建分页对象，默认每页十条记录
+     * <p>示例：{@code Page.of(1)}
+     *
+     * @param pageNum 页码
+     * @return 分页对象
+     */
+    public static Page of(long pageNum) {
+        return of(pageNum, 10);
+    }
+
+    /**
      * 创建默认分页对象
      * <p>页码：1，每页大小：10
      *
@@ -147,6 +159,16 @@ public class Page implements Serializable {
      */
     public static Page notCount(long pageNum, long pageSize) {
         return of(pageNum, pageSize).setCountTotal(false);
+    }
+
+    /**
+     * 创建不进行COUNT查询的分页对象,默认每页十条数据
+     *
+     * @param pageNum 页码（从1开始）
+     * @return 分页对象
+     */
+    public static Page notCount(long pageNum) {
+        return notCount(pageNum, 10);
     }
 
     /**
@@ -425,7 +447,7 @@ public class Page implements Serializable {
      * @example {@code page.asc("create_time", "id")}
      */
     public Page asc(String... columns) {
-        if (columns != null && columns.length > 0) {
+        if (ContainerUtils.isNotEmptyArray(columns)) {
             if (this.orderColumns.isEmpty()) {
                 this.orderColumns = new ArrayList<>();
             }
@@ -443,7 +465,7 @@ public class Page implements Serializable {
      * @example {@code page.desc("update_time")}
      */
     public Page desc(String... columns) {
-        if (columns != null && columns.length > 0) {
+        if (ContainerUtils.isNotEmptyArray(columns)) {
             if (this.orderColumns.isEmpty()) {
                 this.orderColumns = new ArrayList<>();
             }
