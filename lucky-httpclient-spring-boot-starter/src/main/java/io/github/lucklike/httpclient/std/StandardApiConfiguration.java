@@ -7,6 +7,7 @@ import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
+import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeConfiguration;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.config.mock.MockResult;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -208,6 +209,12 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private SpELImportConf methodMetaSpelImport;
+
+    /**
+     * 用于生成响应对象对应的JavaBean的配置
+     */
+    @NestedConfigurationProperty
+    private GeneratedJavaCodeConfiguration generateResponseJavaBean;
 
     /**
      * 设置的请求头参数
@@ -803,6 +810,24 @@ public class StandardApiConfiguration {
      */
     public void setMethodMetaSpelImport(SpELImportConf methodMetaSpelImport) {
         this.methodMetaSpelImport = methodMetaSpelImport;
+    }
+
+    /**
+     * 获取用于生成响应对象对应的JavaBean的配置
+     *
+     * @return 用于生成响应对象对应的JavaBean的配置
+     */
+    public GeneratedJavaCodeConfiguration getGenerateResponseJavaBean() {
+        return generateResponseJavaBean;
+    }
+
+    /**
+     * 设置用于生成响应对象对应的JavaBean的配置
+     *
+     * @param generateResponseJavaBean 用于生成响应对象对应的JavaBean的配置
+     */
+    public void setGenerateResponseJavaBean(GeneratedJavaCodeConfiguration generateResponseJavaBean) {
+        this.generateResponseJavaBean = generateResponseJavaBean;
     }
 
     /**

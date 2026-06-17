@@ -18,6 +18,9 @@ import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
+import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeConfiguration;
+import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeUtils;
+import com.luckyframework.httpclient.proxy.generator.GeneratedResponseJavaBeanFunction;
 import com.luckyframework.httpclient.proxy.mock.Mock;
 import com.luckyframework.httpclient.proxy.mock.MockResponse;
 import com.luckyframework.httpclient.proxy.mock.config.MockBody;
@@ -27,6 +30,7 @@ import com.luckyframework.httpclient.proxy.mock.config.WhenMockResult;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.httpclient.proxy.spel.Rar;
 import com.luckyframework.httpclient.proxy.spel.SpELImport;
+import com.luckyframework.httpclient.proxy.spel.hook.AsyncHook;
 import com.luckyframework.httpclient.proxy.spel.hook.Lifecycle;
 import com.luckyframework.httpclient.proxy.spel.hook.callback.Callback;
 import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
@@ -44,6 +48,7 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -55,6 +60,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.luckyframework.common.ContainerUtils.mergeCollection;
@@ -75,7 +81,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @HttpClient(func = "__get_http_server_url__")
 @Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
-@SpELImport(StdHttpClient.StandardHttpClientFunctionAndCallback.class)
+@SpELImport({GeneratedResponseJavaBeanFunction.class, StdHttpClient.StandardHttpClientFunctionAndCallback.class})
 public @interface StdHttpClient {
 
     /**
@@ -273,6 +279,35 @@ public @interface StdHttpClient {
             if (lifeCycleManager != null) {
                 lifeCycleManager.responseCompleted(mc, response, apiConfig);
             }
+        }
+
+        /**
+         * 异步钩子方法，在响应生命周期阶段触发生成Java代码。
+         * 此方法由框架自动调用，负责将注解配置转换为内部配置对象，
+         * 并委托给 {@link GeneratedJavaCodeUtils} 执行实际的代码生成逻辑。
+         *
+         * @param mc       方法上下文
+         * @param response HTTP响应对象
+         * @throws IOException 文件写入失败时抛出
+         */
+        @AsyncHook
+        @Callback(enable = "#{__std_generated_java_code_enable__($mc$)}", lifecycle = Lifecycle.RESPONSE, errorInterrupt = false)
+        public static void generatedJavaCode(
+                MethodContext mc,
+                Response response,
+                @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig
+        ) throws Exception {
+            GeneratedJavaCodeConfiguration codeConfig = apiConfig.getGenerateResponseJavaBean();
+            if (codeConfig != null && Objects.equals(Boolean.TRUE, codeConfig.getEnable())) {
+                GeneratedJavaCodeUtils.generatedJavaCode(mc, response, codeConfig);
+            }
+        }
+
+        @FunctionAlias("__std_generated_java_code_enable__")
+        public static boolean stdGeneratedJavaCodeEnable(MethodContext mc) {
+            StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+            GeneratedJavaCodeConfiguration codeConfig = apiConfig.getGenerateResponseJavaBean();
+            return codeConfig != null && Objects.equals(Boolean.TRUE, codeConfig.getEnable());
         }
 
         /**
@@ -530,6 +565,7 @@ public @interface StdHttpClient {
             apiConfig.setResultConvert(blankReturnDefault(methodConfig.getResultConvert(), config.getResultConvert()));
             apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
             apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
+            apiConfig.setGenerateResponseJavaBean(nullReturnDefault(methodConfig.getGenerateResponseJavaBean(), config.getGenerateResponseJavaBean()));
             apiConfig.setSpelImport(methodConfig.getSpelImport());
             apiConfig.setMethodMetaSpelImport(methodConfig.getMethodMetaSpelImport());
 
