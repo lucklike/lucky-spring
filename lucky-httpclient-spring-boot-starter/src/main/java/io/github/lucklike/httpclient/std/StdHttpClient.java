@@ -569,6 +569,13 @@ public @interface StdHttpClient {
             apiConfig.setSpelImport(methodConfig.getSpelImport());
             apiConfig.setMethodMetaSpelImport(methodConfig.getMethodMetaSpelImport());
 
+
+            // 将GeneratedJavaCodeConfiguration的extractExpression设置默认值为resultConvert
+            GeneratedJavaCodeConfiguration generateResponseJavaBean = apiConfig.getGenerateResponseJavaBean();
+            if (generateResponseJavaBean != null && !StringUtils.hasText(generateResponseJavaBean.getExtractExpression())) {
+                generateResponseJavaBean.setExtractExpression(apiConfig.getResultConvert());
+            }
+
             return apiConfig;
         }
 
