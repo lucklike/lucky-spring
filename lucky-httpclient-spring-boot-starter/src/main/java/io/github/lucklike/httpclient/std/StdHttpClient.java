@@ -517,6 +517,12 @@ public @interface StdHttpClient {
                 StandardHttpClientConfiguration apiConfig = new StandardHttpClientConfiguration();
                 BeanUtils.copyProperties(config, apiConfig);
                 apiConfig.getAdditionalParams().setContext(mec);
+
+                // 将GeneratedJavaCodeConfiguration的extractExpression设置默认值为resultConvert
+                GeneratedJavaCodeConfiguration codeConfiguration = apiConfig.getGenerateResponseJavaBean();
+                if (codeConfiguration != null && !StringUtils.hasText(codeConfiguration.getExtractExpression())) {
+                    codeConfiguration.setExtractExpression(apiConfig.getResultConvert());
+                }
                 return apiConfig;
             }
 
@@ -571,9 +577,9 @@ public @interface StdHttpClient {
 
 
             // 将GeneratedJavaCodeConfiguration的extractExpression设置默认值为resultConvert
-            GeneratedJavaCodeConfiguration generateResponseJavaBean = apiConfig.getGenerateResponseJavaBean();
-            if (generateResponseJavaBean != null && !StringUtils.hasText(generateResponseJavaBean.getExtractExpression())) {
-                generateResponseJavaBean.setExtractExpression(apiConfig.getResultConvert());
+            GeneratedJavaCodeConfiguration codeConfiguration = apiConfig.getGenerateResponseJavaBean();
+            if (codeConfiguration != null && !StringUtils.hasText(codeConfiguration.getExtractExpression())) {
+                codeConfiguration.setExtractExpression(apiConfig.getResultConvert());
             }
 
             return apiConfig;

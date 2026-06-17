@@ -164,7 +164,7 @@ public class SQLFunctions {
     @SuppressWarnings("unchecked")
     public static SQLExecutor selectByMap(MethodContext mc) {
         Map<String, Object> queryMap = (Map<String, Object>) mc.getArguments()[0];
-        Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
+        Class<?> entityClass = mc.getResultResolvableType().getGeneric(0).toClass();
         SqlBuilder sqlBuilder = SqlBuilder.builder().select().from(EntityUtils.getTableName(entityClass));
         queryMap.forEach((key, value) -> {
             if (value != null) {
