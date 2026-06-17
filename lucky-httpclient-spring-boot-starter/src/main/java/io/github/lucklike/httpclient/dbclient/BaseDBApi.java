@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -116,6 +117,14 @@ public interface BaseDBApi<E> {
      * </p>
      */
     String SQL_SELECT_BY_ENTITY = "#{selectByEntity($mc$)}";
+
+    /**
+     * {@link SQLFunctions#selectByMap(MethodContext)} 执行的 SQL 模板
+     * <p>
+     * 用于根据Map的非空元素作为等值条件进行查询。
+     * </p>
+     */
+    String SQL_SELECT_BY_MAP = "#{selectByMap($mc$)}";
 
     /**
      * {@link SQLFunctions#deleteById(MethodContext)} 执行的 SQL 模板
@@ -402,6 +411,43 @@ public interface BaseDBApi<E> {
     @SQL(executor = SQL_SELECT_BY_ENTITY)
     PageResult<E> selectPage(@NonNull E queryEntity, @NonNull Page page);
 
+
+    /**
+     * 使用Map作为条件进行分页查询。
+     * <p>
+     * 查询条件规则：
+     * <ul>
+     *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
+     *     <li>多个条件之间使用 {@code AND} 连接</li>
+     *     <li>{@code null} 值属性会被自动忽略</li>
+     *     <li>支持通过 {@link Page} 对象进行分页和排序</li>
+     * </ul>
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 创建查询条件实体
+     * Map<String, Object> conditionMap = new HashMap();
+     * conditionMap.put("status", 1);
+     * conditionMap.put("age", 18);
+     *
+     * // 创建分页对象
+     * Page page = Page.of(1, 10).desc("create_time");
+     *
+     * // 执行分页查询
+     * PageResult<User> result = mapper.selectPage(conditionMap, page);
+     * }</pre>
+     * </p>
+     *
+     * @param queryMap 查询条件实体对象，仅使用其中的非空属性作为查询条件
+     * @param page        分页参数对象
+     * @return 分页结果，包含数据列表和分页信息
+     * @throws IllegalArgumentException 如果 queryEntity 为 null 时抛出
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_MAP)
+    PageResult<E> selectPage(@NonNull Map<String, Object> queryMap, @NonNull Page page);
+
     /**
      * 简单分页查询，不进行COUNT查询，只返回记录
      *
@@ -412,6 +458,18 @@ public interface BaseDBApi<E> {
      */
     default List<E> simplePage(@NonNull E queryEntity, long pageNum, long pageSize) {
         return selectPage(queryEntity, Page.notCount(pageNum, pageSize)).getRecords();
+    }
+
+    /**
+     * 简单分页查询，不进行COUNT查询，只返回记录
+     *
+     * @param queryMap 查询条件Map，仅使用其中的非空属性作为查询条件
+     * @param pageNum     查询的页数
+     * @param pageSize    每页的条数
+     * @return 对应页码对的数据
+     */
+    default List<E> simplePage(@NonNull Map<String, Object> queryMap, long pageNum, long pageSize) {
+        return selectPage(queryMap, Page.notCount(pageNum, pageSize)).getRecords();
     }
 
     /**
@@ -452,6 +510,40 @@ public interface BaseDBApi<E> {
     Stream<E> stream(@NonNull E queryEntity);
 
     /**
+     * 使用Map作为条件进行流式查询。
+     * <p>
+     * 查询条件规则：
+     * <ul>
+     *     <li>仅使用实体中 {@code 非 null} 的属性作为等值条件</li>
+     *     <li>多个条件之间使用 {@code AND} 连接</li>
+     *     <li>{@code null} 值属性会被自动忽略</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <b>注意：</b> 返回的 {@link Stream} 必须在使用完毕后关闭（例如通过 try-with-resources 语句），
+     * 以避免数据库连接和游标资源泄漏。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询年龄为 18 岁的用户（name 为 null 会被忽略）
+     * Map<String, Object> conditionMap = new HashMaap();
+     * conditionMap.put("age", 18);
+     *
+     * try (Stream<User> stream = mapper.stream(conditionMap)) {
+     *     stream.forEach(System.out::println);
+     * }
+     * }</pre>
+     * </p>
+     *
+     * @param queryMap 查询条件Map，仅使用其中的非空属性作为查询条件
+     * @return 包含映射对象的 Stream，必须在使用完毕后关闭
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_MAP)
+    Stream<E> stream(@NonNull Map<String, Object> queryMap);
+
+    /**
      * 使用实体对象作为条件进行查询。
      * <p>
      * 查询条件规则：
@@ -483,6 +575,38 @@ public interface BaseDBApi<E> {
     @NonNull
     @SQL(executor = SQL_SELECT_BY_ENTITY)
     List<E> selectList(@NonNull E queryEntity);
+
+
+    /**
+     * 使用Map作为条件进行查询。
+     * <p>
+     * 查询条件规则：
+     * <ul>
+     *     <li>仅使用Map中 {@code 非 null} 的属性作为等值条件</li>
+     *     <li>多个条件之间使用 {@code AND} 连接</li>
+     *     <li>{@code null} 值属性会被自动忽略</li>
+     *     <li>如果所有属性都为 {@code null}，则会查询全表（请谨慎使用）</li>
+     * </ul>
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询状态为1且年龄为18岁的用户列表
+     * Map<String, Object> conditionMap = new HashMap<>();
+     * conditionMap.put("status", 1);
+     * conditionMap.put("age", 18);
+     *
+     * List<User> users = mapper.selectList(conditionMap);
+     * }</pre>
+     * </p>
+     *
+     * @param queryMap 查询条件Map，仅使用其中的非空属性作为查询条件
+     * @return 查询结果列表，永远不为 {@code null}
+     * @throws IllegalArgumentException 如果 queryEntity 为 null 时抛出
+     */
+    @NonNull
+    @SQL(executor = SQL_SELECT_BY_MAP)
+    List<E> selectList(@NonNull Map<String, Object> queryMap);
 
     /**
      * 执行 UPDATE 类型的 SQL 并返回影响行数。

@@ -22,6 +22,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -151,6 +152,27 @@ public class SQLFunctions {
             }
         });
         return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+    /**
+     * 根据Map中的非空值作为条件进行查询
+     * <p>遍历Map的所有元素，将值不为空的字段作为WHERE条件构建SELECT语句</p>
+     *
+     * @param mc 方法上下文对象，包含实体参数信息
+     * @return SQL执行器，用于执行根据实体条件查询的SQL语句
+     */
+    @SuppressWarnings("unchecked")
+    public static SQLExecutor selectByMap(MethodContext mc) {
+        Map<String, Object> queryMap = (Map<String, Object>) mc.getArguments()[0];
+        Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
+        SqlBuilder sqlBuilder = SqlBuilder.builder().select().from(EntityUtils.getTableName(entityClass));
+        queryMap.forEach((key, value) -> {
+            if (value != null) {
+                sqlBuilder.eq(key, value);
+            }
+        });
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+
     }
 
     /**
