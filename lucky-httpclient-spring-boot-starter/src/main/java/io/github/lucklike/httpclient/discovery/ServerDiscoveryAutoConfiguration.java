@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.discovery;
 
 import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
@@ -19,8 +20,8 @@ public class ServerDiscoveryAutoConfiguration {
     static class SpringCloudAutoConfiguration {
 
         @Bean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME)
-        public SpringCloudBaseUrlGetter springCloudDomainNameGetter() {
-            return new SpringCloudBaseUrlGetter();
+        public SpringCloudBaseUrlGetter springCloudDomainNameGetter(LoadBalancerClient loadBalancerClient) {
+            return new SpringCloudBaseUrlGetter(loadBalancerClient);
         }
     }
 

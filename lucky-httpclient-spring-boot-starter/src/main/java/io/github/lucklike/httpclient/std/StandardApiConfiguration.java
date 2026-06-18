@@ -26,10 +26,11 @@ import java.util.Map;
  * @date 2026/5/9 23:38
  */
 public class StandardApiConfiguration {
+
     /**
-     * 服务地址
+     * 接口路径
      */
-    private String url;
+    private String path;
 
     /**
      * 接口表述信息
@@ -217,6 +218,24 @@ public class StandardApiConfiguration {
     private GeneratedJavaCodeConfiguration generateResponseJavaBean;
 
     /**
+     * 接口路径
+     *
+     * @return 接口路径
+     */
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * 接口路径
+     *
+     * @param path 接口路径
+     */
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    /**
      * 设置的请求头参数
      *
      * @param headerParams 公共的请求头参数
@@ -268,24 +287,6 @@ public class StandardApiConfiguration {
      */
     public Map<String, Object> getQueryParams() {
         return queryParams;
-    }
-
-    /**
-     * 获取URL地址
-     *
-     * @return URL地址
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * 设置URL地址
-     *
-     * @param url URL地址
-     */
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     /**

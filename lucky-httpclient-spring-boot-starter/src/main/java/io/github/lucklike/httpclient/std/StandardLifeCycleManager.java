@@ -55,8 +55,8 @@ import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_
 public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
-    public String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
-        return apiConfig.getUrl();
+    public String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception {
+        return config.getUrl();
     }
 
     @Override
@@ -322,11 +322,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param apiConfig 配置信息
      */
     protected void setUrlPath(Request request, StandardApiConfiguration apiConfig) {
-        if (!(apiConfig instanceof StandardHttpClientConfiguration)) {
-            if (StringUtils.hasText(apiConfig.getUrl())) {
-                request.setPath(apiConfig.getUrl());
-            }
-        }
+        request.setPath(apiConfig.getPath());
     }
 
     /**

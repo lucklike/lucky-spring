@@ -41,10 +41,10 @@ public interface LifeCycleManager {
      * 构建基本 Url
      *
      * @param mc        方法上下文对象
-     * @param apiConfig 配置信息
+     * @param config 配置信息
      * @return 基本 URL
      */
-    String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
+    String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception;
 
     /**
      * 请求对象刚完成初始化时执行

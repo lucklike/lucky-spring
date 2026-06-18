@@ -32,10 +32,12 @@ public class CommonBaseUrlGetter implements BaseURLGetter {
             return StringUtils.joinUrlPath(url, path);
         }
 
-        // 存在url函数时
+        // 存在url函数时，而且url函数计算结果不为空或者空字符时
         if (StringUtils.hasText(func)) {
             String _url = autoInjectParamExecuteUrlFunction(context.getContext(), func);
-            return StringUtils.joinUrlPath(_url, path);
+            if (StringUtils.hasText(_url)) {
+                return StringUtils.joinUrlPath(_url, path);
+            }
         }
 
         // url和service均为配置时返回空字符串
@@ -43,9 +45,9 @@ public class CommonBaseUrlGetter implements BaseURLGetter {
             return path;
         }
 
-        // 尝试使用server配置进行解析，server解析需要依赖SpringCloud环境，如果不在SprigCloud环境时将无法解析，会直接返回空字符串
+        // 尝试使用server配置进行解析，server解析需要依赖SpringCloud环境，如果不在SprigCloud环境时将无法解析
         if (!ApplicationContextUtils.containsBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME)) {
-            return path;
+            throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service ['{}'] information cannot be obtained", serviceName);
         }
         return ApplicationContextUtils
                 .getBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME, SpringCloudBaseUrlGetter.class)

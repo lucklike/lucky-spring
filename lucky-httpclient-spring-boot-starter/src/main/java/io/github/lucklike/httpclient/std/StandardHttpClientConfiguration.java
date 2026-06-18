@@ -14,6 +14,16 @@ import java.util.Map;
 public class StandardHttpClientConfiguration extends StandardApiConfiguration {
 
     /**
+     * 服务地址
+     */
+    private String url;
+
+    /**
+     * 服务名称，用于从注册中心获取服务地址
+     */
+    private String service;
+
+    /**
      * 生命周期管理器
      */
     @NestedConfigurationProperty
@@ -29,6 +39,42 @@ public class StandardHttpClientConfiguration extends StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private SpELImportConf methodSpelImport;
+
+    /**
+     * 获取URL地址
+     *
+     * @return URL地址
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * 设置URL地址
+     *
+     * @param url URL地址
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    /**
+     * 服务名称，用于从注册中心获取服务地址
+     *
+     * @return 服务名
+     */
+    public String getService() {
+        return service;
+    }
+
+    /**
+     * 服务名称，用于从注册中心获取服务地址
+     *
+     * @param service 服务名
+     */
+    public void setService(String service) {
+        this.service = service;
+    }
 
     /**
      * 获取生命周期管理器对象

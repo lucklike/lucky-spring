@@ -78,7 +78,7 @@ import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_N
 @Inherited
 @ApiConfig
 @HttpRequest
-@HttpClient(func = "__get_http_server_url__")
+@HttpClient(func = "__get_http_server_url__", service = "#{__get_http_service_name__($mc$)}")
 @Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
 @SpELImport({GeneratedResponseJavaBeanFunction.class, StdHttpClient.StandardHttpClientFunctionAndCallback.class})
@@ -314,17 +314,29 @@ public @interface StdHttpClient {
          * 用于获取HTTP服务地址的函数
          *
          * @param mc               方法上下文
-         * @param apiConfig        当前HTTP客户端的配置
+         * @param config        当前HTTP客户端的配置
          * @param lifeCycleManager 生命周期管理器对象
          * @return 目标HTTP服务地址
          */
         @FunctionAlias("__get_http_server_url__")
         public static String getHttpServerUrl(
                 MethodContext mc,
-                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
         ) throws Exception {
-            return lifeCycleManager.buildBaseUrl(mc, apiConfig);
+            return lifeCycleManager.buildBaseUrl(mc, config);
+        }
+
+        /**
+         * 获取服务名，用于从注册中心获取URL
+         *
+         * @param mc 方法上下文
+         * @return 服务名
+         */
+        @FunctionAlias("__get_http_service_name__")
+        public static String getHttpServiceName(MethodContext mc) {
+            StandardHttpClientConfiguration config = mc.getRootVar(STANDARD_HTTP_CLIENT_CONFIG_NAME, StandardHttpClientConfiguration.class);
+            return config.getService();
         }
 
         /**
@@ -504,16 +516,18 @@ public @interface StdHttpClient {
             String apiId = getApiId(mec);
             StandardApiConfiguration methodConfig = config.getMethodConfigs().get(apiId);
 
+            // 检查URL和Service配置
+            if (!StringUtils.hasText(config.getUrl())  && !StringUtils.hasText(config.getService())) {
+                throw new ConfigurationParserException(
+                        "@StdHttpClient('{0}')[{1}] Missing the necessary configuration, at least one of the following configurations should be configured：['lucky.http-client.standard-client-configs.{0}.url'] or ['lucky.http-client.standard-client-configs.{0}.service'] ",
+                        CommonFunctions.getApiConfigId(mec.getParentContext()),
+                        mec.getParentContext().getCurrentAnnotatedElement().getName(),
+                        apiId
+                ).error(logger);
+            }
+
             // 只有类配置，没有方法配置
             if (methodConfig == null) {
-                // 检查URL
-                if (!StringUtils.hasText(config.getUrl())) {
-                    throw new ConfigurationParserException(
-                            "@StdHttpClient('{0}')[{1}] Missing the necessary configuration: 'lucky.http-client.standard-client-configs.{0}.url'",
-                            CommonFunctions.getApiConfigId(mec.getParentContext()),
-                            mec.getParentContext().getCurrentAnnotatedElement().getName()
-                    );
-                }
                 StandardHttpClientConfiguration apiConfig = new StandardHttpClientConfiguration();
                 BeanUtils.copyProperties(config, apiConfig);
                 apiConfig.getAdditionalParams().setContext(mec);
@@ -526,18 +540,8 @@ public @interface StdHttpClient {
                 return apiConfig;
             }
 
-            // 检查URL
-            if (!StringUtils.hasText(config.getUrl()) && !StringUtils.hasText(methodConfig.getUrl())) {
-                throw new ConfigurationParserException(
-                        "@StdHttpClient('{0}')[{1}] Missing the necessary configuration, at least one of the following configurations should be configured：'lucky.http-client.standard-client-configs.{0}.url' or 'lucky.http-client.standard-client-configs.{0}.{2}.url'",
-                        CommonFunctions.getApiConfigId(mec.getParentContext()),
-                        mec.getParentContext().getCurrentAnnotatedElement().getName(),
-                        apiId
-                );
-            }
-
             StandardApiConfiguration apiConfig = new StandardApiConfiguration();
-            apiConfig.setUrl(methodConfig.getUrl());
+            apiConfig.setPath(StringUtils.joinUrlPath(config.getPath(), methodConfig.getPath()));
             apiConfig.setDescription(blankReturnDefault(config.getDescription(), "") + blankReturnDefault(methodConfig.getDescription(), ""));
             apiConfig.setMethod(nullReturnDefault(methodConfig.getMethod(), config.getMethod()));
             apiConfig.setConnectTimeout(nullReturnDefault(methodConfig.getConnectTimeout(), config.getConnectTimeout()));

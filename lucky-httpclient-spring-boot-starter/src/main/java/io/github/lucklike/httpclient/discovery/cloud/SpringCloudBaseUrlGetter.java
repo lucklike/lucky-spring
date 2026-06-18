@@ -6,7 +6,6 @@ import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import io.github.lucklike.httpclient.discovery.HttpClient;
 import io.github.lucklike.httpclient.discovery.ServerDiscoveryConfigurationException;
 import io.github.lucklike.httpclient.discovery.ServiceInstanceNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
@@ -19,8 +18,11 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
  */
 public class SpringCloudBaseUrlGetter implements BaseURLGetter {
 
-    @Autowired
-    private LoadBalancerClient loadBalancerClient;
+    private final LoadBalancerClient loadBalancerClient;
+
+    public SpringCloudBaseUrlGetter(LoadBalancerClient loadBalancerClient) {
+        this.loadBalancerClient = loadBalancerClient;
+    }
 
     @Override
     public String getBaseUrl(DomainNameContext context) throws Exception {
@@ -35,7 +37,7 @@ public class SpringCloudBaseUrlGetter implements BaseURLGetter {
 
     public String getBaseUrl(String serviceName, String path) {
         if (loadBalancerClient == null) {
-            throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service information cannot be obtained");
+            throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service ['{}'] information cannot be obtained", serviceName);
         }
 
         // 解析注解配置
