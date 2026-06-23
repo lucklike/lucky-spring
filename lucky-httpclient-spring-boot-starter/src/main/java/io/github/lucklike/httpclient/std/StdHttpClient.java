@@ -542,7 +542,7 @@ public @interface StdHttpClient {
 
             StandardApiConfiguration apiConfig = new StandardApiConfiguration();
             apiConfig.setPath(StringUtils.joinUrlPath(config.getPath(), methodConfig.getPath()));
-            apiConfig.setDescription(blankReturnDefault(config.getDescription(), "") + blankReturnDefault(methodConfig.getDescription(), ""));
+            apiConfig.setDesc(blankReturnDefault(config.getDesc(), "") + blankReturnDefault(methodConfig.getDesc(), ""));
             apiConfig.setMethod(nullReturnDefault(methodConfig.getMethod(), config.getMethod()));
             apiConfig.setConnectTimeout(nullReturnDefault(methodConfig.getConnectTimeout(), config.getConnectTimeout()));
             apiConfig.setReadTimeout(nullReturnDefault(methodConfig.getReadTimeout(), config.getReadTimeout()));

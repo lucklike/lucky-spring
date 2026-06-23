@@ -310,8 +310,8 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param apiConfig 配置信息
      */
     private void setApiInfo(MethodContext mc, StandardApiConfiguration apiConfig) {
-        if (StringUtils.hasText(apiConfig.getDescription())) {
-            mc.getApiDescribe().setName(apiConfig.getDescription());
+        if (StringUtils.hasText(apiConfig.getDesc())) {
+            mc.getApiDescribe().setName(apiConfig.getDesc());
         }
     }
 

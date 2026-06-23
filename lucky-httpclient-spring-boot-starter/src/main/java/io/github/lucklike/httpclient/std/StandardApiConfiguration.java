@@ -35,7 +35,7 @@ public class StandardApiConfiguration {
     /**
      * 接口表述信息
      */
-    private String description;
+    private String desc;
 
     /**
      * 请求方法，默认 POST
@@ -294,17 +294,17 @@ public class StandardApiConfiguration {
      *
      * @return 接口描述信息
      */
-    public String getDescription() {
-        return description;
+    public String getDesc() {
+        return desc;
     }
 
     /**
      * 设置接口描述信息
      *
-     * @param description 接口描述信息
+     * @param desc 接口描述信息
      */
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     /**
