@@ -562,10 +562,10 @@ public @interface StdHttpClient {
             apiConfig.setConditionQueryParams(mergeCollection(config.getConditionQueryParams(), methodConfig.getConditionQueryParams()));
             apiConfig.setConditionFormParams(mergeCollection(config.getConditionFormParams(), methodConfig.getConditionFormParams()));
             apiConfig.setConditionMultipartFormParams(mergeCollection(config.getConditionMultipartFormParams(), methodConfig.getConditionMultipartFormParams()));
-            apiConfig.setConditionBody(mergeCollection(config.getConditionBody(), methodConfig.getConditionBody()));
-            apiConfig.setConditionConvert(mergeCollection(config.getConditionConvert(), methodConfig.getConditionConvert()));
-            apiConfig.setConditionMetaType(mergeCollection(config.getConditionMetaType(), methodConfig.getConditionMetaType()));
-            apiConfig.setConditionRespContentType(mergeCollection(config.getConditionRespContentType(), methodConfig.getConditionRespContentType()));
+            apiConfig.setConditionBody(mergeCollection(methodConfig.getConditionBody(), config.getConditionBody()));
+            apiConfig.setConditionConvert(mergeCollection( methodConfig.getConditionConvert(), config.getConditionConvert()));
+            apiConfig.setConditionMetaType(mergeCollection(methodConfig.getConditionMetaType(), config.getConditionMetaType()));
+            apiConfig.setConditionRespContentType(mergeCollection(methodConfig.getConditionRespContentType(), config.getConditionRespContentType()));
 
             apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
             apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));
