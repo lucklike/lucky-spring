@@ -9,7 +9,7 @@ import org.springframework.lang.Nullable;
 import java.util.List;
 
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.spelInitCopy;
-import static io.github.lucklike.httpclient.std.StdHttpClient.StandardHttpClientFunctionAndCallback.STANDARD_API_CONFIG_NAME;
+import static io.github.lucklike.httpclient.std.StdHttpClientFunction.STANDARD_API_CONFIG_NAME;
 
 /**
  * 标准化初始化参数绑定
