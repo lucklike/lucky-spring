@@ -114,6 +114,28 @@ public interface LifeCycleManager {
     }
 
     /**
+     * 方法返回结果转化成功之后调用
+     *
+     * @param mc        方法上下文对象
+     * @param result    方法返回结果
+     * @param apiConfig 配置信息
+     */
+    default void methodResult(MethodContext mc, Object result, StandardApiConfiguration apiConfig) throws Exception {
+
+    }
+
+    /**
+     * 销毁上下文时调用
+     *
+     * @param mc        方法上下文对象
+     * @param apiConfig 配置信息
+     */
+    default void destroy(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+
+    }
+
+
+    /**
      * 获取 Body 对象
      *
      * @param mc  方法上下文对象

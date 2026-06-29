@@ -54,6 +54,7 @@ import static com.luckyframework.common.ContainerUtils.mergeMap;
 import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
+import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_METHOD_RESULT_$;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -244,6 +245,53 @@ public class StdHttpClientFunction {
             GeneratedJavaCodeUtils.generatedJavaCode(mc, response, codeConfig);
         }
     }
+
+    /**
+     * 方法结果转换完成之后调用
+     *
+     * @param mc               方法上下文
+     * @param result           方法运行结果
+     * @param apiConfig        当前HTTP客户端的配置
+     * @param lifeCycleManager 生命周期管理器对象
+     */
+    @Callback(lifecycle = Lifecycle.METHOD_RESULT)
+    public static void methodResult(
+            MethodContext mc,
+            @Rar($_METHOD_RESULT_$) Object result,
+            @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+            @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+    ) throws Exception {
+        // 运行表达式
+        for (String expression : apiConfig.getMethodResultRunning()) {
+            mc.parseExpression(expression);
+        }
+        if (lifeCycleManager != null) {
+            lifeCycleManager.methodResult(mc, result, apiConfig);
+        }
+    }
+
+    /**
+     * 方法结果转换完成之后调用
+     *
+     * @param mc               方法上下文
+     * @param apiConfig        当前HTTP客户端的配置
+     * @param lifeCycleManager 生命周期管理器对象
+     */
+    @Callback(lifecycle = Lifecycle.DESTROY, errorInterrupt = false)
+    public static void destroy(
+            MethodContext mc,
+            @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+            @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+    ) throws Exception {
+        // 运行表达式
+        for (String expression : apiConfig.getDestroyRunning()) {
+            mc.parseExpression(expression);
+        }
+        if (lifeCycleManager != null) {
+            lifeCycleManager.destroy(mc, apiConfig);
+        }
+    }
+
 
     @FunctionAlias("__std_generated_java_code_enable__")
     public static boolean stdGeneratedJavaCodeEnable(MethodContext mc) {
@@ -508,6 +556,9 @@ public class StdHttpClientFunction {
         apiConfig.setConditionConvert(mergeCollection(methodConfig.getConditionConvert(), config.getConditionConvert()));
         apiConfig.setConditionMetaType(mergeCollection(methodConfig.getConditionMetaType(), config.getConditionMetaType()));
         apiConfig.setConditionRespContentType(mergeCollection(methodConfig.getConditionRespContentType(), config.getConditionRespContentType()));
+        apiConfig.setMethodResultRunning(mergeCollection(methodConfig.getMethodResultRunning(), config.getMethodResultRunning()));
+        apiConfig.setDestroyRunning(mergeCollection(methodConfig.getDestroyRunning(), config.getDestroyRunning()));
+
 
         apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
         apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));

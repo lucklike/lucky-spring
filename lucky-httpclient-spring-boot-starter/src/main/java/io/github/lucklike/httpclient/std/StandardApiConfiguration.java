@@ -212,6 +212,16 @@ public class StandardApiConfiguration {
     private SpELImportConf methodMetaSpelImport;
 
     /**
+     * 方法结果转换完成后调用
+     */
+    private List<String> methodResultRunning = new ArrayList<>();
+
+    /**
+     * 销毁上下文时进行调用
+     */
+    private List<String> destroyRunning = new ArrayList<>();
+
+    /**
      * 用于生成响应对象对应的JavaBean的配置
      */
     @NestedConfigurationProperty
@@ -811,6 +821,42 @@ public class StandardApiConfiguration {
      */
     public void setMethodMetaSpelImport(SpELImportConf methodMetaSpelImport) {
         this.methodMetaSpelImport = methodMetaSpelImport;
+    }
+
+    /**
+     * 方法结果转换完成后调用
+     *
+     * @return 方法结果转换完成后调用
+     */
+    public List<String> getMethodResultRunning() {
+        return methodResultRunning;
+    }
+
+    /**
+     * 方法结果转换完成后调用
+     *
+     * @param methodResultRunning 方法结果转换完成后调用
+     */
+    public void setMethodResultRunning(List<String> methodResultRunning) {
+        this.methodResultRunning = methodResultRunning;
+    }
+
+    /**
+     * 销毁上下文时进行调用
+     *
+     * @return 销毁上下文时进行调用
+     */
+    public List<String> getDestroyRunning() {
+        return destroyRunning;
+    }
+
+    /**
+     * 销毁上下文时进行调用
+     *
+     * @param destroyRunning 销毁上下文时进行调用
+     */
+    public void setDestroyRunning(List<String> destroyRunning) {
+        this.destroyRunning = destroyRunning;
     }
 
     /**
