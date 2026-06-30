@@ -4,6 +4,7 @@ import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
+import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
 import org.springframework.core.ResolvableType;
 
 import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_RESPONSE_BODY_$;
@@ -40,7 +41,7 @@ public interface LifeCycleManager {
     /**
      * 构建基本 Url
      *
-     * @param mc        方法上下文对象
+     * @param mc     方法上下文对象
      * @param config 配置信息
      * @return 基本 URL
      */
@@ -134,6 +135,16 @@ public interface LifeCycleManager {
 
     }
 
+    /**
+     * 异常处理
+     *
+     * @param mc        方法上下文
+     * @param request   请求对象
+     * @param th        异常
+     * @param apiConfig 配置信息
+     * @return 异常后返回的结果
+     */
+    Object exceptionHandler(MethodContext mc, Request request, Throwable th, StandardApiConfiguration apiConfig) throws Throwable;
 
     /**
      * 获取 Body 对象

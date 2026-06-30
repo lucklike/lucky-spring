@@ -18,6 +18,7 @@ import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
 import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
+import com.luckyframework.httpclient.proxy.handle.DefaultHttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.spel.SpELVariate;
@@ -33,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -53,6 +55,8 @@ import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_
  * @date 2026/5/9 22:10
  */
 public class StandardLifeCycleManager implements LifeCycleManager {
+
+    private final DefaultHttpExceptionHandle exceptionHandle = new DefaultHttpExceptionHandle();
 
     @Override
     public String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception {
@@ -90,7 +94,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
     public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
         for (ConditionMetaType conditionMetaType : apiConfig.getConditionMetaType()) {
             if (mc.parseExpression(conditionMetaType.getCondition(), boolean.class)) {
-                return mc.parseExpression(conditionMetaType.getMetaType(),  ResolvableType.class);
+                return mc.parseExpression(conditionMetaType.getMetaType(), ResolvableType.class);
             }
         }
         String metaType = apiConfig.getMetaType();
@@ -147,6 +151,62 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
         // 没有进行任何配置时
         return response.getEntity(mc.getResultType());
+    }
+
+    @Override
+    public Object exceptionHandler(MethodContext mc, Request request, Throwable th, StandardApiConfiguration apiConfig) throws Throwable {
+        for (ExceptionHandlerConfig exceptionHandlerConfig : apiConfig.getExceptionHandlerConfigs()) {
+            if (canExHandler(mc, th, exceptionHandlerConfig)) {
+                return exHandler(mc, request, th, exceptionHandlerConfig);
+            }
+        }
+        return exceptionHandle.exceptionHandler(mc, request, th);
+    }
+
+
+    private boolean canExHandler(MethodContext mc, Throwable th, ExceptionHandlerConfig exceptionHandlerConfig) {
+        String condition = exceptionHandlerConfig.getCondition();
+        if (StringUtils.hasText(condition)) {
+            return mc.parseExpression(condition, boolean.class);
+        }
+
+        Set<Class<? extends Throwable>> exceptionClasses = exceptionHandlerConfig.getExceptionClasses();
+        if (ContainerUtils.isNotEmptyCollection(exceptionClasses)) {
+            ExceptionHandlerConfig.Compare exceptionCompare = exceptionHandlerConfig.getExceptionCompare();
+            if (exceptionCompare == ExceptionHandlerConfig.Compare.EQUALS) {
+                for (Class<? extends Throwable> exceptionClass : exceptionClasses) {
+                    if (Objects.equals(exceptionClass, th.getClass())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            for (Class<? extends Throwable> exceptionClass : exceptionClasses) {
+                if (exceptionClass.isInstance(th)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    public Object exHandler(MethodContext mc, Request request, Throwable th, ExceptionHandlerConfig exceptionHandlerConfig) throws Throwable {
+        List<String> running = exceptionHandlerConfig.getRunning();
+        if (ContainerUtils.isNotEmptyCollection(running)) {
+            for (String ex : running) {
+                mc.parseExpression(ex);
+            }
+        }
+
+        String result = exceptionHandlerConfig.getResult();
+        if (StringUtils.hasText(result) && !mc.isVoidMethod()) {
+            return mc.parseExpression(result, mc.getResultResolvableType());
+        }
+
+        return exceptionHandle.exceptionHandler(mc, request, th);
     }
 
     /**

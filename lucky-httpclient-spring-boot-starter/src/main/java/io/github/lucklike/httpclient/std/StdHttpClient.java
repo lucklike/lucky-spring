@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.httpclient.proxy.annotations.ExceptionHandle;
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.RespConvert;
@@ -28,6 +29,7 @@ import java.lang.annotation.Target;
 @HttpClient(func = "__get_http_server_url__", service = "#{__get_http_service_name__($mc$)}")
 @Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
 @RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
+@ExceptionHandle(condition = "#{__std_enable_exception_handler__($mc$)}", excHandleExp = "#{__std_exception_handler__($mc$)}", exceptions = Throwable.class)
 @SpELImport({GeneratedResponseJavaBeanFunction.class, StdHttpClientFunction.class})
 public @interface StdHttpClient {
 

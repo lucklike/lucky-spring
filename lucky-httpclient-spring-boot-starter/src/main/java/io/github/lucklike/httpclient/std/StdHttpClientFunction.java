@@ -55,6 +55,8 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_METHOD_RESULT_$;
+import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_REQUEST_$;
+import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_THROWABLE_$;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -418,6 +420,33 @@ public class StdHttpClientFunction {
     }
 
     /**
+     * 是否启用异常处理
+     *
+     * @param mc 方法上下文
+     * @return 是否启用异常处理
+     */
+    @FunctionAlias("__std_enable_exception_handler__")
+    public static boolean enableExceptionHandler(MethodContext mc) {
+        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        List<ExceptionHandlerConfig> exceptionHandlerConfigs = apiConfig.getExceptionHandlerConfigs();
+        return ContainerUtils.isNotEmptyCollection(exceptionHandlerConfigs);
+    }
+
+    /**
+     * 异常处理
+     *
+     * @return 异常处理
+     */
+    @FunctionAlias("__std_exception_handler__")
+    public static Object exceptionHandler(MethodContext mc) throws Throwable {
+        Request request = mc.getRootVar($_REQUEST_$, Request.class);
+        Throwable th = mc.getRootVar($_THROWABLE_$, Throwable.class);
+        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+        return lifeCycleManager.exceptionHandler(mc, request, th, apiConfig);
+    }
+
+    /**
      * 创建{@link LifeCycleManager}对象
      *
      * @param cc     类上下文
@@ -558,7 +587,7 @@ public class StdHttpClientFunction {
         apiConfig.setConditionRespContentType(mergeCollection(methodConfig.getConditionRespContentType(), config.getConditionRespContentType()));
         apiConfig.setMethodResultRunning(mergeCollection(methodConfig.getMethodResultRunning(), config.getMethodResultRunning()));
         apiConfig.setDestroyRunning(mergeCollection(methodConfig.getDestroyRunning(), config.getDestroyRunning()));
-
+        apiConfig.setExceptionHandlerConfigs(mergeCollection(methodConfig.getExceptionHandlerConfigs(), config.getExceptionHandlerConfigs()));
 
         apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
         apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));

@@ -222,6 +222,11 @@ public class StandardApiConfiguration {
     private List<String> destroyRunning = new ArrayList<>();
 
     /**
+     * 异常处理配置
+     */
+    private List<ExceptionHandlerConfig> exceptionHandlerConfigs = new ArrayList<>();
+
+    /**
      * 用于生成响应对象对应的JavaBean的配置
      */
     @NestedConfigurationProperty
@@ -860,6 +865,24 @@ public class StandardApiConfiguration {
     }
 
     /**
+     * 异常处理配置
+     *
+     * @return 异常处理配置
+     */
+    public List<ExceptionHandlerConfig> getExceptionHandlerConfigs() {
+        return exceptionHandlerConfigs;
+    }
+
+    /**
+     * 设置异常处理配置
+     *
+     * @param exceptionHandlerConfigs 异常处理配置
+     */
+    public void setExceptionHandlerConfigs(List<ExceptionHandlerConfig> exceptionHandlerConfigs) {
+        this.exceptionHandlerConfigs = exceptionHandlerConfigs;
+    }
+
+    /**
      * 获取用于生成响应对象对应的JavaBean的配置
      *
      * @return 用于生成响应对象对应的JavaBean的配置
@@ -890,5 +913,6 @@ public class StandardApiConfiguration {
         conditionConvert.removeIf(config -> !config.effective());
         conditionMetaType.removeIf(config -> !config.effective());
         conditionRespContentType.removeIf(config -> !config.effective());
+        exceptionHandlerConfigs.removeIf(config -> !config.effective());
     }
 }
