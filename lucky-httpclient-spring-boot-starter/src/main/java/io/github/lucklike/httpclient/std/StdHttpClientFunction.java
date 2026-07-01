@@ -8,7 +8,6 @@ import com.luckyframework.httpclient.core.util.BeanUtils;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
-import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
@@ -573,14 +572,14 @@ public class StdHttpClientFunction {
         apiConfig.setPathParams(mergeMap(config.getPathParams(), methodConfig.getPathParams()));
         apiConfig.setQueryParams(mergeMap(config.getQueryParams(), methodConfig.getQueryParams()));
         apiConfig.setFormParams(mergeMap(config.getFormParams(), methodConfig.getFormParams()));
-        apiConfig.setMultipartFormParams(mergeMultipartFormData(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
+        apiConfig.setMultipartFormParams(mergeMap(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
         apiConfig.setBody(blankReturnDefault(methodConfig.getBody(), config.getBody()));
 
-        apiConfig.setConditionHeaderParams(mergeCollection(config.getConditionHeaderParams(), methodConfig.getConditionHeaderParams()));
-        apiConfig.setConditionPathParams(mergeCollection(config.getConditionPathParams(), methodConfig.getConditionPathParams()));
-        apiConfig.setConditionQueryParams(mergeCollection(config.getConditionQueryParams(), methodConfig.getConditionQueryParams()));
-        apiConfig.setConditionFormParams(mergeCollection(config.getConditionFormParams(), methodConfig.getConditionFormParams()));
-        apiConfig.setConditionMultipartFormParams(mergeCollection(config.getConditionMultipartFormParams(), methodConfig.getConditionMultipartFormParams()));
+        apiConfig.setConditionHeaderParams(mergeCollection(methodConfig.getConditionHeaderParams(), config.getConditionHeaderParams()));
+        apiConfig.setConditionPathParams(mergeCollection(methodConfig.getConditionPathParams(), config.getConditionPathParams()));
+        apiConfig.setConditionQueryParams(mergeCollection(methodConfig.getConditionQueryParams(), config.getConditionQueryParams()));
+        apiConfig.setConditionFormParams(mergeCollection(methodConfig.getConditionFormParams(), config.getConditionFormParams()));
+        apiConfig.setConditionMultipartFormParams(mergeCollection(methodConfig.getConditionMultipartFormParams(), config.getConditionMultipartFormParams()));
         apiConfig.setConditionBody(mergeCollection(methodConfig.getConditionBody(), config.getConditionBody()));
         apiConfig.setConditionConvert(mergeCollection(methodConfig.getConditionConvert(), config.getConditionConvert()));
         apiConfig.setConditionMetaType(mergeCollection(methodConfig.getConditionMetaType(), config.getConditionMetaType()));
@@ -692,21 +691,6 @@ public class StdHttpClientFunction {
         initBindParams.setBindClasses(mergeCollection(cibp.getBindClasses(), mibp.getBindClasses()));
         initBindParams.setBindParams(mergeMap(cibp.getBindParams(), mibp.getBindParams()));
         return initBindParams;
-    }
-
-    /**
-     * 合并MultipartFormData配置
-     *
-     * @param cf Class 级别配置
-     * @param mf Method 级别配置
-     * @return 合并后的配置
-     */
-    @SuppressWarnings("unchecked")
-    private static MultipartFormData mergeMultipartFormData(MultipartFormData cf, MultipartFormData mf) {
-        MultipartFormData multipartFormData = new MultipartFormData();
-        multipartFormData.setTxt(mergeMap(cf.getTxt(), mf.getTxt()));
-        multipartFormData.setFile(mergeMap(cf.getFile(), mf.getFile()));
-        return multipartFormData;
     }
 
     /**

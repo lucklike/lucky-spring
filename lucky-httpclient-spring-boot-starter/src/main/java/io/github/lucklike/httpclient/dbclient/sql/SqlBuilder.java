@@ -1,8 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.sql;
 
 import com.luckyframework.common.ContainerUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

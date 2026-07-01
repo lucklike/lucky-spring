@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
@@ -90,8 +89,7 @@ public class StandardApiConfiguration {
     /**
      * multipart/form-data类型请求参数
      */
-    @NestedConfigurationProperty
-    private MultipartFormData multipartFormParams = new MultipartFormData();
+    private Map<String, Object> multipartFormParams = new LinkedHashMap<>();
 
     /**
      * 请求体
@@ -123,10 +121,10 @@ public class StandardApiConfiguration {
     private List<ConditionConfig> conditionFormParams = new ArrayList<>();
 
     /**
-     * 支持条件的application/x-www-form-urlencoded请求参数
+     * 支持条件的multipart/form-data请求参数
      */
     @NestedConfigurationProperty
-    private List<ConditionMultipartFormData> conditionMultipartFormParams = new ArrayList<>();
+    private List<ConditionConfig> conditionMultipartFormParams = new ArrayList<>();
 
     /**
      * 支持条件的请求体
@@ -354,7 +352,7 @@ public class StandardApiConfiguration {
      *
      * @return multipart/form-data类型请求参数
      */
-    public MultipartFormData getMultipartFormParams() {
+    public Map<String, Object> getMultipartFormParams() {
         return multipartFormParams;
     }
 
@@ -372,7 +370,7 @@ public class StandardApiConfiguration {
      *
      * @param multipartFormParams multipart/form-data类型请求参数
      */
-    public void setMultipartFormParams(MultipartFormData multipartFormParams) {
+    public void setMultipartFormParams(Map<String, Object> multipartFormParams) {
         this.multipartFormParams = multipartFormParams;
     }
 
@@ -703,20 +701,20 @@ public class StandardApiConfiguration {
     }
 
     /**
-     * 获取支持条件的application/x-www-form-urlencoded请求参数
+     * 获取支持条件的multipart/form-data请求参数
      *
-     * @return 支持条件的application/x-www-form-urlencoded请求参数
+     * @return 支持条件的multipart/form-data请求参数
      */
-    public List<ConditionMultipartFormData> getConditionMultipartFormParams() {
+    public List<ConditionConfig> getConditionMultipartFormParams() {
         return conditionMultipartFormParams;
     }
 
     /**
-     * 设置支持条件的application/x-www-form-urlencoded请求参数
+     * 设置支持条件的multipart/form-data请求参数
      *
-     * @param conditionMultipartFormParams 支持条件的application/x-www-form-urlencoded请求参数
+     * @param conditionMultipartFormParams 支持条件的multipart/form-data请求参数
      */
-    public void setConditionMultipartFormParams(List<ConditionMultipartFormData> conditionMultipartFormParams) {
+    public void setConditionMultipartFormParams(List<ConditionConfig> conditionMultipartFormParams) {
         this.conditionMultipartFormParams = conditionMultipartFormParams;
     }
 

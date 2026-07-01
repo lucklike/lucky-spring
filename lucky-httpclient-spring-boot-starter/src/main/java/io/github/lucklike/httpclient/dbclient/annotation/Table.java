@@ -1,7 +1,5 @@
 package io.github.lucklike.httpclient.dbclient.annotation;
 
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

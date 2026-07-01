@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.ContentType;
 import com.luckyframework.httpclient.core.meta.Request;
@@ -13,13 +12,10 @@ import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryWrap;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
-import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
-import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
 import com.luckyframework.httpclient.proxy.handle.DefaultHttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
@@ -249,7 +245,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         setParameter(mc, request, apiConfig.getFormParams(), req -> req.getRequest().addFormParameter(req.getName(), req.getValue()));
 
         // MultipartFormData param setter
-        setMultipartFormData(mc, request, apiConfig.getMultipartFormParams());
+        setParameter(mc, request, apiConfig.getMultipartFormParams(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
     }
 
     /**
@@ -273,7 +269,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         setConditionParameter(mc, request, apiConfig.getConditionFormParams(), req -> req.getRequest().addFormParameter(req.getName(), req.getValue()));
 
         // Condition multipartFormData param setter
-        setConditionMultipartFormData(mc, request, apiConfig.getConditionMultipartFormParams());
+        setConditionParameter(mc, request, apiConfig.getConditionMultipartFormParams(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
     }
 
     /**
@@ -438,43 +434,6 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         }
     }
 
-    /**
-     * 设置MultipartFormData类型的参数
-     *
-     * @param mc                方法上下文
-     * @param request           请求对象
-     * @param multipartFormData MultipartFormData配置
-     */
-    protected void setConditionMultipartFormData(MethodContext mc, Request request, List<ConditionMultipartFormData> multipartFormData) {
-        if (ContainerUtils.isEmptyCollection(multipartFormData)) {
-            return;
-        }
-        for (ConditionMultipartFormData conditionMultipartFormDatum : multipartFormData) {
-            String condition = conditionMultipartFormDatum.getCondition();
-            if (StringUtils.hasText(condition) && mc.parseExpression(condition, boolean.class)) {
-                // Txt param setter
-                setParameter(mc, request, conditionMultipartFormDatum.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
-
-                // File param setter
-                setParameter(mc, request, conditionMultipartFormDatum.getFile(),  req -> {
-                    Request httpReq = req.getRequest();
-                    String name = req.getName();
-                    Object value = req.getValue();
-
-                    if (HttpExecutor.isResourceParam(value)) {
-                        httpReq.addMultipartFormParameter(name, value);
-                    } else if (value instanceof String) {
-                        httpReq.addResources(name, ResourceFunctions.resources((String) value));
-                    } else {
-                        throw new ConfigurationParserException("['multipart/form-data'] format parameter parsing exception: '{}' is not a resource class.", name);
-                    }
-
-                });
-            }
-        }
-
-
-    }
 
     /**
      * 设置参数
@@ -497,35 +456,6 @@ public class StandardLifeCycleManager implements LifeCycleManager {
             } else {
                 requestConsumer.accept(RequestParameter.of(pName, mc.parseExpression(String.valueOf(value)), request));
             }
-        });
-    }
-
-
-    /**
-     * 设置MultipartFormData类型的参数
-     *
-     * @param mc                方法上下文
-     * @param request           请求对象
-     * @param multipartFormData MultipartFormData配置
-     */
-    protected void setMultipartFormData(MethodContext mc, Request request, MultipartFormData multipartFormData) {
-        // Txt param setter
-        setParameter(mc, request, multipartFormData.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
-
-        // File param setter
-        setParameter(mc, request, multipartFormData.getFile(), req -> {
-            Request httpReq = req.getRequest();
-            String name = req.getName();
-            Object value = req.getValue();
-
-            if (HttpExecutor.isResourceParam(value)) {
-                httpReq.addMultipartFormParameter(name, value);
-            } else if (value instanceof String) {
-                httpReq.addResources(name, ResourceFunctions.resources((String) value));
-            } else {
-                throw new ConfigurationParserException("['multipart/form-data'] format parameter parsing exception: '{}' is not a resource class.", name);
-            }
-
         });
     }
 

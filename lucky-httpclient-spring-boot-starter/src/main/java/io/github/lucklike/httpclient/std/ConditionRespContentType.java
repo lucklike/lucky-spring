@@ -1,8 +1,6 @@
 package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.httpclient.proxy.function.CommonFunctions;
-import org.springframework.core.ResolvableType;
 
 public class ConditionRespContentType {
     /**

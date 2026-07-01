@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.sql.lambda;
 
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
-import io.github.lucklike.httpclient.dbclient.function.LambdaUtils;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
