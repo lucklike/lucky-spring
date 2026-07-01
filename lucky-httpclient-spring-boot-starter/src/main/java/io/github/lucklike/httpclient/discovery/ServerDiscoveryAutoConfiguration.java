@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.discovery;
 
 import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +15,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRA
 public class ServerDiscoveryAutoConfiguration {
 
     @Role(ROLE_INFRASTRUCTURE)
-    @ConditionalOnClass(name = {
+    @ConditionalOnBean(type = {
             "org.springframework.cloud.client.loadbalancer.LoadBalancerClient"
     })
     static class SpringCloudAutoConfiguration {

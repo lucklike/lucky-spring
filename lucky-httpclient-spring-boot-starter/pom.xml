@@ -45,8 +45,7 @@
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
         <lucky-version>3.0.2</lucky-version>
-        <spring-cloud-common>3.1.8</spring-cloud-common>
-        <spring-cloud-nacos>0.2.12</spring-cloud-nacos>
+        <spring-cloud>3.1.8</spring-cloud>
     </properties>
 
     <dependencies>
@@ -78,11 +77,11 @@
             <version>${lucky-version}</version>
         </dependency>
 
-        <!--Spring Cloud-->
+        <!--Spring Cloud Commons-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-commons</artifactId>
-            <version>${spring-cloud-common}</version>
+            <version>${spring-cloud}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -214,7 +213,6 @@
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>ossrh</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
                         </configuration>
                     </plugin>
                 </plugins>
