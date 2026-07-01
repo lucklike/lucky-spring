@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.core.executor.HttpExecutor;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.ContentType;
 import com.luckyframework.httpclient.core.meta.Request;
@@ -12,6 +13,7 @@ import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryWrap;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
+import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
 import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
@@ -454,7 +456,20 @@ public class StandardLifeCycleManager implements LifeCycleManager {
                 setParameter(mc, request, conditionMultipartFormDatum.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
 
                 // File param setter
-                setParameter(mc, request, conditionMultipartFormDatum.getFile(), req -> req.getRequest().addResources(req.getName(), ResourceFunctions.resource(String.valueOf(req.getValue()))));
+                setParameter(mc, request, conditionMultipartFormDatum.getFile(),  req -> {
+                    Request httpReq = req.getRequest();
+                    String name = req.getName();
+                    Object value = req.getValue();
+
+                    if (HttpExecutor.isResourceParam(value)) {
+                        httpReq.addMultipartFormParameter(name, value);
+                    } else if (value instanceof String) {
+                        httpReq.addResources(name, ResourceFunctions.resources((String) value));
+                    } else {
+                        throw new ConfigurationParserException("['multipart/form-data'] format parameter parsing exception: '{}' is not a resource class.", name);
+                    }
+
+                });
             }
         }
 
@@ -498,7 +513,20 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         setParameter(mc, request, multipartFormData.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
 
         // File param setter
-        setParameter(mc, request, multipartFormData.getFile(), req -> req.getRequest().addResources(req.getName(), ResourceFunctions.resource(String.valueOf(req.getValue()))));
+        setParameter(mc, request, multipartFormData.getFile(), req -> {
+            Request httpReq = req.getRequest();
+            String name = req.getName();
+            Object value = req.getValue();
+
+            if (HttpExecutor.isResourceParam(value)) {
+                httpReq.addMultipartFormParameter(name, value);
+            } else if (value instanceof String) {
+                httpReq.addResources(name, ResourceFunctions.resources((String) value));
+            } else {
+                throw new ConfigurationParserException("['multipart/form-data'] format parameter parsing exception: '{}' is not a resource class.", name);
+            }
+
+        });
     }
 
     /**
