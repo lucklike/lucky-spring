@@ -40,4 +40,6 @@ public class Constant {
 
     public static final String SPRING_ENV_CONFIG_SOURCE = "__springEnvConfigSource__";
 
+    public static final String LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME = "__luckyComponentProxyObjectFactory__";
+
 }
