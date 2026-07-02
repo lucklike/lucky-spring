@@ -1,11 +1,8 @@
-package io.github.lucklike.httpclient.discovery.cloud;
+package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
-import io.github.lucklike.httpclient.discovery.HttpClient;
-import io.github.lucklike.httpclient.discovery.ServerDiscoveryConfigurationException;
-import io.github.lucklike.httpclient.discovery.ServiceInstanceNotFoundException;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
@@ -16,11 +13,11 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
  * @version 1.0.0
  * @date 2025/3/13 14:58
  */
-public class SpringCloudBaseUrlGetter implements BaseURLGetter {
+public class LoadBalancerClientUrlGetter implements BaseURLGetter {
 
     private final LoadBalancerClient loadBalancerClient;
 
-    public SpringCloudBaseUrlGetter(LoadBalancerClient loadBalancerClient) {
+    public LoadBalancerClientUrlGetter(LoadBalancerClient loadBalancerClient) {
         this.loadBalancerClient = loadBalancerClient;
     }
 
@@ -37,7 +34,7 @@ public class SpringCloudBaseUrlGetter implements BaseURLGetter {
 
     public String getBaseUrl(String serviceName, String path) {
         if (loadBalancerClient == null) {
-            throw new ServerDiscoveryConfigurationException("It is detected that the current Spring Cloud environment is not available and service ['{}'] information cannot be obtained", serviceName);
+            throw new ServerDiscoveryConfigurationException("LoadBalancerClient bean not found in Spring container, unable to get service information for: ['{}']", serviceName);
         }
 
         // 解析注解配置

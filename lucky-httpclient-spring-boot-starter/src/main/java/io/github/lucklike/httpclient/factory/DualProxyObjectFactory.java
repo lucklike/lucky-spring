@@ -9,10 +9,12 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 /**
  * 双重代理的对象工厂
  */
+@SuppressWarnings("unchecked")
 public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory{
 
     public final HttpClientProxyObjectFactory httpClientProxyObjectFactory;
@@ -25,11 +27,22 @@ public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory{
         return httpClientProxyObjectFactory;
     }
 
-    @SuppressWarnings("unchecked")
+
     public <T> T getProxyObject(Class<T> clazz) {
         httpClientProxyObjectFactory.getProxyObject(clazz);
-        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(clazz));
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getProxyObject(clazz)));
+    }
 
+    @Override
+    public <T> T getCglibProxyObject(Class<T> clazz) {
+        httpClientProxyObjectFactory.getCglibProxyObject(clazz);
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getCglibProxyObject(clazz)));
+    }
+
+    @Override
+    public <T> T getJdkProxyObject(Class<T> clazz) {
+        httpClientProxyObjectFactory.getJdkProxyObject(clazz);
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getJdkProxyObject(clazz)));
     }
 
     public void shutdown() {
@@ -37,19 +50,17 @@ public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory{
     }
 
 
-    class HttpClientProxyMethodInterceptor implements MethodInterceptor {
+    static class HttpClientProxyMethodInterceptor implements MethodInterceptor {
+        public final Supplier<Object> proxyObjectSupplier;
 
-        public final Class<?> targetClass;
-
-        HttpClientProxyMethodInterceptor(Class<?> targetClass) {
-            this.targetClass = targetClass;
+        HttpClientProxyMethodInterceptor(Supplier<Object> proxyObjectSupplier) {
+            this.proxyObjectSupplier = proxyObjectSupplier;
         }
 
         @Override
         public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
             try {
-                Object httppProxyObject = httpClientProxyObjectFactory.getProxyObject(targetClass);
-                return MethodUtils.invoke(httppProxyObject, method, objects);
+                return MethodUtils.invoke(proxyObjectSupplier.get(), method, objects);
             } catch (LuckyInvocationTargetException e) {
                 throw e.getCause();
             }

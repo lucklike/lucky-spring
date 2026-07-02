@@ -16,6 +16,17 @@ public class DefaultProxyObjectFactory implements LuckyComponentProxyObjectFacto
     }
 
     @Override
+    public <T> T getCglibProxyObject(Class<T> clazz) {
+        return httpClientProxyObjectFactory.getCglibProxyObject(clazz);
+    }
+
+    @Override
+    public <T> T getJdkProxyObject(Class<T> clazz) {
+        return httpClientProxyObjectFactory.getJdkProxyObject(clazz);
+    }
+
+
+    @Override
     public void shutdown() {
         httpClientProxyObjectFactory.shutdown();
     }

@@ -85,6 +85,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!--Spring Cloud Context-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-context</artifactId>
+            <version>${spring-cloud}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Validation api-->
         <dependency>
             <groupId>jakarta.validation</groupId>

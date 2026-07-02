@@ -91,6 +91,9 @@ import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverte
 import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
+import io.github.lucklike.httpclient.factory.DefaultProxyObjectFactory;
+import io.github.lucklike.httpclient.factory.DualProxyObjectFactory;
+import io.github.lucklike.httpclient.factory.LuckyComponentProxyObjectFactory;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.injection.WrapTypeHolder;
@@ -99,6 +102,7 @@ import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import io.github.lucklike.httpclient.retry.ConfigurationBackoffWaitingBeforeRetryContext;
 import io.github.lucklike.httpclient.retry.ConfigurationRetryDeciderContext;
+import io.github.lucklike.httpclient.std.StdConfigRefreshApplicationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -106,6 +110,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -142,11 +147,13 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEA
 import static io.github.lucklike.httpclient.Constant.DEFAULT_VALIDATION_PLUGIN_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
+import static io.github.lucklike.httpclient.Constant.LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
+import static io.github.lucklike.httpclient.Constant.STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 /**
@@ -537,9 +544,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void slowResponseHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
-        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 ) {
+        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0) {
             AbstractSlowResponseHandler slowResponseHandler;
-            if (slowResponseConfig.getHandler() != null){
+            if (slowResponseConfig.getHandler() != null) {
                 SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
                 slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
             } else {
@@ -695,7 +702,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = cookieManageConfig.getCookieStore();
             Integer priority = cookieManageConfig.getPriority();
             if (cookieStoreGenerate != null) {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store",cookieStoreGenerate)), priority);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store", cookieStoreGenerate)), priority);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
@@ -1159,4 +1166,43 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
 
     }
+
+    /********************** LuckyComponentProxyObjectFactory *********************************/
+
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnMissingClass({"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
+    static class DefaultProxyObjectFactoryConfig {
+
+        @Primary
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
+        public DefaultProxyObjectFactory luckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
+            return new DefaultProxyObjectFactory(httpClientProxyObjectFactory);
+        }
+    }
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
+    static class DualProxyObjectFactoryConfig {
+
+        @Primary
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
+        public DualProxyObjectFactory luckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
+            return new DualProxyObjectFactory(httpClientProxyObjectFactory);
+        }
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
+        public StdConfigRefreshApplicationListener stdConfigRefreshApplicationListener(
+                ApplicationContext applicationContext,
+                DualProxyObjectFactory dualProxyObjectFactory
+        ) {
+            return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
+        }
+
+    }
+
+
 }

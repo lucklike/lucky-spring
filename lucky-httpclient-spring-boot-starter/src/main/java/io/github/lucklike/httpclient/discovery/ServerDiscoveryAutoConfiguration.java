@@ -1,28 +1,24 @@
 package io.github.lucklike.httpclient.discovery;
 
-import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
 
-import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME;
+import static io.github.lucklike.httpclient.discovery.Constant.LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 @Configuration
 public class ServerDiscoveryAutoConfiguration {
 
     @Role(ROLE_INFRASTRUCTURE)
-    @ConditionalOnBean(type = {
-            "org.springframework.cloud.client.loadbalancer.LoadBalancerClient"
-    })
+    @ConditionalOnClass(name = {"org.springframework.cloud.client.loadbalancer.LoadBalancerClient"})
     static class SpringCloudAutoConfiguration {
 
-        @Bean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME)
-        public SpringCloudBaseUrlGetter springCloudDomainNameGetter(LoadBalancerClient loadBalancerClient) {
-            return new SpringCloudBaseUrlGetter(loadBalancerClient);
+        @Bean(LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME)
+        public LoadBalancerClientUrlGetter springCloudDomainNameGetter(LoadBalancerClient loadBalancerClient) {
+            return new LoadBalancerClientUrlGetter(loadBalancerClient);
         }
     }
 

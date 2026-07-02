@@ -1,7 +1,7 @@
 package io.github.lucklike.httpclient.annotation;
 
-import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import io.github.lucklike.httpclient.LuckyHttpClientImportBeanDefinitionRegistrar;
+import io.github.lucklike.httpclient.factory.LuckyComponentProxyObjectFactory;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 
@@ -11,7 +11,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME;
 
 /**
  * lucky-httpclient自动导入注解
@@ -44,9 +44,9 @@ public @interface LuckyHttpClientScan {
     Class<?>[] basePackageClasses() default {};
 
     /**
-     * Http接口代理对象是依赖{@link HttpClientProxyObjectFactory}来生成的，这里需要配置这个Bean的名称
+     * Http接口代理对象是依赖{@link LuckyComponentProxyObjectFactory}来生成的，这里需要配置这个Bean的名称
      */
-    String proxyFactoryName() default PROXY_FACTORY_BEAN_NAME;
+    String proxyFactoryName() default LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME;
 
     /**
      * 代理模式，默认使用Jdk代理方式
