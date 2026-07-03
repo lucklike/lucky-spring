@@ -1031,12 +1031,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public PackTypeParser reactorFluxMethodPackTypeParser() {
+            log.info("[⚛️] PackTypeParser registered | type: [FluxMethodPackTypeParser], reactive support: [Project Reactor Flux]");
             return new FluxMethodPackTypeParser();
         }
 
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public PackTypeParser reactorMonoMethodPackTypeParser() {
+            log.info("[⚛️] PackTypeParser registered | type: [MonoMethodPackTypeParser], reactive support: [Project Reactor Mono]");
             return new MonoMethodPackTypeParser();
         }
 
@@ -1052,6 +1054,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor brotliContentEncodingConvertor() {
+            log.info("[📦] ContentEncodingConvertor registered | encoding: [br], implementation: [BrotliContentEncodingConvertor]");
             return new BrotliContentEncodingConvertor();
         }
     }
@@ -1063,6 +1066,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor zstdContentEncodingConvertor() {
+            log.info("[📦] ContentEncodingConvertor registered | encoding: [zstd], implementation: [ZstdContentEncodingConvertor]");
             return new ZstdContentEncodingConvertor();
         }
     }
@@ -1076,6 +1080,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert protobufAutoConvert() {
+            log.info("[🎯] Response.AutoConvert registered | type: [Protobuf], parser: [com.google.protobuf.Parser]");
             return new ProtobufAutoConvert();
         }
     }
@@ -1086,6 +1091,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert springMultipartFileAutoConvert() {
+            log.info("[📁] Response.AutoConvert registered | type: [SpringMultipartFile], not-auto-close resource types: [Spring MultipartFile]");
             HttpClientProxyObjectFactory.addNotAutoCloseResourceTypes(ClassUtils.getClass("org.springframework.web.multipart.MultipartFile"));
             return new SpringMultipartFileAutoConvert();
         }
@@ -1093,6 +1099,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ParameterConvert springMultipartFileParameterConvert() {
+            log.info("[📁] ParameterConvert registered | type: [SpringMultipartFileParameterConvert], parameter type: [Spring MultipartFile]");
             return new SpringMultipartFileParameterConvert();
         }
     }
@@ -1160,8 +1167,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_VALIDATION_PLUGIN_BEAN_NAME)
         public ValidationPlugin validationPlugin(@Autowired(required = false) Validator validator) {
             if (validator == null) {
+                log.info("[🫆] ValidationPlugin bean registered | beanName: [{}], validator: [default (no Validator bean found)], condition: [javax.validation.Validator present]",
+                        DEFAULT_VALIDATION_PLUGIN_BEAN_NAME);
                 return new ValidationPluginProvider(new ValidationPlugin());
             }
+            log.info("[🫆] ValidationPlugin bean registered | beanName: [{}], validator: [{}], condition: [javax.validation.Validator present]",
+                    DEFAULT_VALIDATION_PLUGIN_BEAN_NAME, validator.getClass().getSimpleName());
             return new ValidationPluginProvider(new ValidationPlugin(validator));
         }
 
@@ -1190,6 +1201,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Role(ROLE_INFRASTRUCTURE)
         @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
         public DualProxyObjectFactory luckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
+            log.info("[🔥] DualProxyObjectFactory bean [{}] initialized, delegating to HttpClientProxyObjectFactory: {}",
+                    LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
+                    httpClientProxyObjectFactory.getClass().getSimpleName());
             return new DualProxyObjectFactory(httpClientProxyObjectFactory);
         }
 
@@ -1199,6 +1213,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 ApplicationContext applicationContext,
                 DualProxyObjectFactory dualProxyObjectFactory
         ) {
+            log.info("[🔥] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+                    STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
             return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
         }
 
