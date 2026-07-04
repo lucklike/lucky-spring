@@ -1193,6 +1193,16 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         }
     }
 
+    /**
+     * SpringBoot 环境
+     * 1.需要自行导入rg.springframework.cloud:spring-cloud-context
+     * 2.执行实现对应配置中心的监听器
+     * 3.监听器逻辑中必须包含发布EnvironmentChangeEvent事件的逻辑
+     *
+     * Spring Cloud 环境
+     * Nacos 会自动监听配置变化而且会发布EnvironmentChangeEvent事件
+     * Apollo 需要自行实现监听器
+     */
     @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
     static class DualProxyObjectFactoryConfig {
