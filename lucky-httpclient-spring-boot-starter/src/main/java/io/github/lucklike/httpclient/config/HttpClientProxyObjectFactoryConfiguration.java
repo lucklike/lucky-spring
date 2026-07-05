@@ -4,7 +4,6 @@ import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import io.github.lucklike.httpclient.config.mock.MockConfiguration;
 import io.github.lucklike.httpclient.std.StandardHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -176,14 +175,14 @@ public class HttpClientProxyObjectFactoryConfiguration {
     private RequestMethod autoDerivationDefMethod = RequestMethod.POST;
 
     /**
-     * 模拟配置
-     */
-    private Map<String, MockConfiguration> mockConfigs = new LinkedHashMap<>();
-
-    /**
      * 全局标准HTTP客户端配置集合
      */
     private Map<String, StandardHttpClientConfiguration> standardClientConfigs = new LinkedHashMap<>();
+
+    /**
+     * 开启标准客户端初始化配置校验
+     */
+    private boolean enableStdClientInitCheck = true;
 
 
     //------------------------------------------------------------------------------------------------
@@ -394,21 +393,21 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 设置模拟配置
-     *
-     * @param mockConfigs 模拟配置
-     */
-    public void setMockConfigs(Map<String, MockConfiguration> mockConfigs) {
-        this.mockConfigs = mockConfigs;
-    }
-
-    /**
      * 设置全局标准HTTP客户端配置集合
      *
      * @param standardClientConfigs 全局标准HTTP客户端配置集合
      */
     public void setStandardClientConfigs(Map<String, StandardHttpClientConfiguration> standardClientConfigs) {
         this.standardClientConfigs = standardClientConfigs;
+    }
+
+    /**
+     * 设置是否开启标准客户端初始化配置校验
+     *
+     * @param enableStdClientInitCheck 是否开启标准客户端初始化配置校验
+     */
+    public void setEnableStdClientInitCheck(boolean enableStdClientInitCheck) {
+        this.enableStdClientInitCheck = enableStdClientInitCheck;
     }
 
     //------------------------------------------------------------------------------------------------
@@ -608,20 +607,20 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
-     * 获取模拟配置
-     *
-     * @return 模拟配置
-     */
-    public Map<String, MockConfiguration> getMockConfigs() {
-        return mockConfigs;
-    }
-
-    /**
      * 获取全局标准HTTP客户端配置集合
      *
      * @return 全局标准HTTP客户端配置集合
      */
     public Map<String, StandardHttpClientConfiguration> getStandardClientConfigs() {
         return standardClientConfigs;
+    }
+
+    /**
+     * 是否开启标准客户端初始化配置校验
+     *
+     * @return 是否开启标准客户端初始化配置校验
+     */
+    public boolean isEnableStdClientInitCheck() {
+        return enableStdClientInitCheck;
     }
 }

@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.annotation;
 import io.github.lucklike.httpclient.LuckyAutoInjectionAutoConfiguration;
 import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
 import io.github.lucklike.httpclient.discovery.ServerDiscoveryAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.Documented;
@@ -23,6 +24,7 @@ import java.lang.annotation.Target;
 @Documented
 @Import({
         LuckyHttpAutoConfiguration.class,
+        ConfigurationPropertiesAutoConfiguration.class,
         ServerDiscoveryAutoConfiguration.class,
         LuckyAutoInjectionAutoConfiguration.class
 })

@@ -17,7 +17,7 @@ public class MockResult {
     /**
      * 是否启用当前 Mock 结果
      */
-    private boolean enable = true;
+    private Boolean enable;
 
     /**
      * 模拟延时配置，单位毫秒
@@ -51,7 +51,7 @@ public class MockResult {
      *
      * @return 是否启用当前 Mock 结果
      */
-    public boolean isEnable() {
+    public Boolean isEnable() {
         return enable;
     }
 
@@ -60,7 +60,7 @@ public class MockResult {
      *
      * @param enable 是否启用当前 Mock 结果
      */
-    public void setEnable(boolean enable) {
+    public void setEnable(Boolean enable) {
         this.enable = enable;
     }
 

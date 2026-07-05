@@ -1,6 +1,5 @@
 package io.github.lucklike.httpclient.config;
 
-import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import sun.net.ConnectionResetException;

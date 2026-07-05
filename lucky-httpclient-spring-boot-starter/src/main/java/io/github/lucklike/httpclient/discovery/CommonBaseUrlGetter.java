@@ -4,10 +4,9 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
-import io.github.lucklike.httpclient.discovery.cloud.SpringCloudBaseUrlGetter;
 
 import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.autoInjectParamExecuteUrlFunction;
-import static io.github.lucklike.httpclient.discovery.Constant.SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME;
+import static io.github.lucklike.httpclient.discovery.Constant.LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME;
 
 /**
  * 通用的域名获取器，目前支持SpringCloud环境和原生环境的域名获取
@@ -32,10 +31,12 @@ public class CommonBaseUrlGetter implements BaseURLGetter {
             return StringUtils.joinUrlPath(url, path);
         }
 
-        // 存在url函数时
+        // 存在url函数时，而且url函数计算结果不为空或者空字符时
         if (StringUtils.hasText(func)) {
             String _url = autoInjectParamExecuteUrlFunction(context.getContext(), func);
-            return StringUtils.joinUrlPath(_url, path);
+            if (StringUtils.hasText(_url)) {
+                return StringUtils.joinUrlPath(_url, path);
+            }
         }
 
         // url和service均为配置时返回空字符串
@@ -43,12 +44,12 @@ public class CommonBaseUrlGetter implements BaseURLGetter {
             return path;
         }
 
-        // 尝试使用server配置进行解析，server解析需要依赖SpringCloud环境，如果不在SprigCloud环境时将无法解析，会直接返回空字符串
-        if (!ApplicationContextUtils.containsBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME)) {
-            return path;
+        // 尝试使用server配置进行解析，server解析需要依赖SpringCloud环境，如果不在SprigCloud环境时将无法解析
+        if (!ApplicationContextUtils.containsBean(LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME)) {
+            throw new ServerDiscoveryConfigurationException("LoadBalancerClient bean not found in Spring container, unable to get service information for: ['{}']", serviceName);
         }
         return ApplicationContextUtils
-                .getBean(SPRING_CLOUD_DOMAIN_GETTER_BEAN_NAME, SpringCloudBaseUrlGetter.class)
+                .getBean(LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME, LoadBalancerClientUrlGetter.class)
                 .getBaseUrl(serviceName, path);
     }
 

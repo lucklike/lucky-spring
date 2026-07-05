@@ -2,7 +2,6 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
-import com.luckyframework.httpclient.proxy.context.ClassContext;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import org.springframework.core.ResolvableType;
@@ -41,11 +40,11 @@ public interface LifeCycleManager {
     /**
      * 构建基本 Url
      *
-     * @param mc        方法上下文对象
-     * @param apiConfig 配置信息
+     * @param mc     方法上下文对象
+     * @param config 配置信息
      * @return 基本 URL
      */
-    String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception;
+    String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception;
 
     /**
      * 请求对象刚完成初始化时执行
@@ -65,7 +64,7 @@ public interface LifeCycleManager {
      * @param request   请求对象
      * @param apiConfig 配置信息
      */
-    default void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+    default void requestInitCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
 
     }
 
@@ -78,6 +77,17 @@ public interface LifeCycleManager {
      */
     default ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
         return ResolvableType.forClass(Object.class);
+    }
+
+    /**
+     * 强制指定响应体的的Content-Type
+     *
+     * @param mc        方法上下文
+     * @param apiConfig 配置信息
+     * @return 响应体的的Content-Type
+     */
+    default String mandatoryDesignationResponseContentType(MethodContext mc, StandardApiConfiguration apiConfig) {
+        return "";
     }
 
     /**
@@ -102,6 +112,38 @@ public interface LifeCycleManager {
     default Object resultConvert(MethodContext mc, Response response, StandardApiConfiguration apiConfig) throws Exception {
         return response.getEntity(mc.getResultType());
     }
+
+    /**
+     * 方法返回结果转化成功之后调用
+     *
+     * @param mc        方法上下文对象
+     * @param result    方法返回结果
+     * @param apiConfig 配置信息
+     */
+    default void methodResult(MethodContext mc, Object result, StandardApiConfiguration apiConfig) throws Exception {
+
+    }
+
+    /**
+     * 销毁上下文时调用
+     *
+     * @param mc        方法上下文对象
+     * @param apiConfig 配置信息
+     */
+    default void destroy(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+
+    }
+
+    /**
+     * 异常处理
+     *
+     * @param mc        方法上下文
+     * @param request   请求对象
+     * @param th        异常
+     * @param apiConfig 配置信息
+     * @return 异常后返回的结果
+     */
+    Object exceptionHandler(MethodContext mc, Request request, Throwable th, StandardApiConfiguration apiConfig) throws Throwable;
 
     /**
      * 获取 Body 对象

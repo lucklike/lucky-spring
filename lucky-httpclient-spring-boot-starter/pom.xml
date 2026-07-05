@@ -6,7 +6,7 @@
 
     <groupId>io.github.lucklike</groupId>
     <artifactId>lucky-httpclient-spring-boot-starter</artifactId>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
 
     <name>lucky-httpclient-spring-boot-starter</name>
     <description>lucky-httpclient模块与SpringBoot整合</description>
@@ -44,9 +44,8 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <javadocExecutable>${java.home}/../bin/javadoc</javadocExecutable>
         <spring-version>2.7.14</spring-version>
-        <lucky-version>3.0.2</lucky-version>
-        <spring-cloud-common>3.1.8</spring-cloud-common>
-        <spring-cloud-nacos>0.2.12</spring-cloud-nacos>
+        <lucky-version>3.0.3</lucky-version>
+        <spring-cloud>3.1.8</spring-cloud>
     </properties>
 
     <dependencies>
@@ -78,11 +77,19 @@
             <version>${lucky-version}</version>
         </dependency>
 
-        <!--Spring Cloud-->
+        <!--Spring Cloud Commons-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-commons</artifactId>
-            <version>${spring-cloud-common}</version>
+            <version>${spring-cloud}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--Spring Cloud Context-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-context</artifactId>
+            <version>${spring-cloud}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -91,6 +98,13 @@
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>2.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <version>${spring-version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -203,11 +217,10 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.4.0</version>
+                        <version>0.9.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>ossrh</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
                         </configuration>
                     </plugin>
                 </plugins>

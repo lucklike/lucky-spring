@@ -1,8 +1,5 @@
 package io.github.lucklike.httpclient.std;
 
-import com.luckyframework.httpclient.proxy.annotations.ValueUnpack;
-import com.luckyframework.reflect.Combination;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -15,17 +12,11 @@ import java.lang.annotation.Target;
  * @author fukang
  * @version 1.0.0
  * @date 2026/5/7 00:58
- * @see InitContextValueUnpack
+ * @see StdInitBindParameterConvert
  */
-@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@ValueUnpack(unpackClass = InitContextValueUnpack.class)
-@Combination(ValueUnpack.class)
 public @interface Init {
 
-    /**
-     * 指定需要绑定的参数配置项
-     */
-    String[] value() default {};
 }

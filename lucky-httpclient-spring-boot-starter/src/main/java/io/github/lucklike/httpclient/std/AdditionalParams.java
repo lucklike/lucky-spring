@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.httpclient.proxy.context.Context;
+import com.luckyframework.httpclient.proxy.context.ContextAware;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.serializable.SerializationTypeToken;
 import org.springframework.core.ResolvableType;
@@ -16,7 +17,20 @@ import java.util.List;
  * @version 1.0.0
  * @date 2026/5/13 00:56
  */
-public class AdditionalParams extends LinkedHashMap<String, Object> {
+public class AdditionalParams extends LinkedHashMap<String, Object> implements ContextAware {
+
+    private Context context;
+
+    /**
+     * 将当前参数整体绑定到指定类型的结果，绑定过程支持 SpEL 计算
+     *
+     * @param clazz 结果类型
+     * @param <T>   结果类型泛型
+     * @return 对应结果类型的值
+     */
+    public <T> T spelBindTo(Class<T> clazz) {
+        return CommonFunctions.spelConvert(context, clazz, this);
+    }
 
     /**
      * 将当前参数整体绑定到指定类型的结果，绑定过程支持 SpEL 计算
@@ -97,6 +111,19 @@ public class AdditionalParams extends LinkedHashMap<String, Object> {
     public <T> T convertTo(SerializationTypeToken<T> typeToken) {
         return ConversionUtils.conversion(this, typeToken);
     }
+
+    /**
+     * 获取参数值，并将其绑定到指定的类型，绑定过程支持 SpEL 表达式计算
+     *
+     * @param key   参数名
+     * @param clazz 结果类型
+     * @param <T>   结果类型泛型
+     * @return 对应结果类型的值
+     */
+    public <T> T spelBindValue(String key, Class<T> clazz) {
+        return CommonFunctions.spelConvert(context, clazz, get(key));
+    }
+
 
     /**
      * 获取参数值，并将其绑定到指定的类型，绑定过程支持 SpEL 表达式计算
@@ -309,5 +336,10 @@ public class AdditionalParams extends LinkedHashMap<String, Object> {
 
     public List<Character> getCharList(String key) {
         return getList(key, Character.class);
+    }
+
+    @Override
+    public void setContext(Context context) {
+        this.context = context;
     }
 }

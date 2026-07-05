@@ -39,10 +39,7 @@ import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
 import com.luckyframework.httpclient.proxy.plugin.PluginGenerate;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
-import com.luckyframework.httpclient.proxy.retry.ExceptionModel;
 import com.luckyframework.httpclient.proxy.retry.RetryActuator;
-import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
-import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.slow.AbstractSlowResponseHandler;
 import com.luckyframework.httpclient.proxy.slow.ResponseTimeSpent;
 import com.luckyframework.httpclient.proxy.spel.ClassStaticElement;
@@ -58,8 +55,6 @@ import com.luckyframework.httpclient.proxy.unpack.ContextValueUnpack;
 import com.luckyframework.httpclient.proxy.unpack.ParameterConvert;
 import com.luckyframework.httpclient.proxy.unpack.SpringMultipartFileParameterConvert;
 import com.luckyframework.reflect.ClassUtils;
-import com.luckyframework.retry.BackoffWaitBeforeRetry;
-import com.luckyframework.retry.TaskResult;
 import com.luckyframework.spel.ParamWrapper;
 import com.luckyframework.spel.SpELRuntime;
 import com.luckyframework.threadpool.ThreadPoolFactory;
@@ -96,6 +91,9 @@ import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverte
 import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.SpELRuntimeFactoryInstanceConverter;
+import io.github.lucklike.httpclient.factory.DefaultProxyObjectFactory;
+import io.github.lucklike.httpclient.factory.DualProxyObjectFactory;
+import io.github.lucklike.httpclient.factory.LuckyComponentProxyObjectFactory;
 import io.github.lucklike.httpclient.function.BeanFunction;
 import io.github.lucklike.httpclient.function.SimpleHttpExecutorFunction;
 import io.github.lucklike.httpclient.injection.WrapTypeHolder;
@@ -104,6 +102,7 @@ import io.github.lucklike.httpclient.plugin.HttpPlugin;
 import io.github.lucklike.httpclient.plugin.ValidationPluginProvider;
 import io.github.lucklike.httpclient.retry.ConfigurationBackoffWaitingBeforeRetryContext;
 import io.github.lucklike.httpclient.retry.ConfigurationRetryDeciderContext;
+import io.github.lucklike.httpclient.std.StdConfigRefreshApplicationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -111,6 +110,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -147,11 +147,13 @@ import static io.github.lucklike.httpclient.Constant.DEFAULT_OKHTTP_EXECUTOR_BEA
 import static io.github.lucklike.httpclient.Constant.DEFAULT_VALIDATION_PLUGIN_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
+import static io.github.lucklike.httpclient.Constant.LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
 import static io.github.lucklike.httpclient.Constant.SPRING_ENV_CONFIG_SOURCE;
 import static io.github.lucklike.httpclient.Constant.SPRING_FUNCTION_SPACE;
+import static io.github.lucklike.httpclient.Constant.STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
 /**
@@ -226,7 +228,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
     public HttpClientProxyObjectFactory luckyHttpClientProxyFactory(@Qualifier(PROXY_FACTORY_CONFIG_BEAN_NAME) HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         HttpClientProxyObjectFactory factory = new HttpClientProxyObjectFactory();
         registeredSpace(factoryConfig);
-        registeredWapType(factoryConfig);
+        registeredWapType();
         registeredUniversalFunction(factory);
         registeredPackTypeParser(factory);
         objectCreateSetting(factory, factoryConfig);
@@ -271,10 +273,8 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /**
      * 注册 WapType
-     *
-     * @param factoryConfig 工厂配置
      */
-    private void registeredWapType(HttpClientProxyObjectFactoryConfiguration factoryConfig) {
+    private void registeredWapType() {
         ObjectProvider<WrapTypeHolder> beanProvider = applicationContext.getBeanProvider(WrapTypeHolder.class);
         beanProvider.stream().forEach(wth -> WrapType.registerWrapType(wth.getBaseType(), wth.wrapFunction()));
     }
@@ -544,9 +544,9 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      */
     private void slowResponseHandlerSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
         SlowResponseHandlerConfiguration slowResponseConfig = factoryConfig.getSlowResponseConfig();
-        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0 ) {
+        if (slowResponseConfig != null && slowResponseConfig.getSlowTime() > 0) {
             AbstractSlowResponseHandler slowResponseHandler;
-            if (slowResponseConfig.getHandler() != null){
+            if (slowResponseConfig.getHandler() != null) {
                 SimpleGenerateEntry<? extends AbstractSlowResponseHandler> handler = slowResponseConfig.getHandler();
                 slowResponseHandler = createObject("lucky.http-client.slow-response-config.handler", handler);
             } else {
@@ -702,7 +702,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             SimpleGenerateEntry<CookieStore> cookieStoreGenerate = cookieManageConfig.getCookieStore();
             Integer priority = cookieManageConfig.getPriority();
             if (cookieStoreGenerate != null) {
-                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store",cookieStoreGenerate)), priority);
+                factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, cmi -> cmi.setCookieStore(createObject("lucky.http-client.cookie-manage.cookie-store", cookieStoreGenerate)), priority);
             } else {
                 factory.addInterceptor(CookieManagerInterceptor.class, Scope.SINGLETON, priority);
             }
@@ -964,9 +964,6 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
      * @param factoryConfig 工厂配置
      */
     private void pluginSetting(HttpClientProxyObjectFactory factory, HttpClientProxyObjectFactoryConfiguration factoryConfig) {
-        // 注册Spring容器中的插件
-        applicationContext.getBeanProvider(ProxyPlugin.class).forEach(factory::addPlugin);
-
         // 注册Spring容器中由@HttpPlugin注解声明的插件
         String[] annPluginBeanNames = applicationContext.getBeanNamesForAnnotation(HttpPlugin.class);
         for (String pluginBeanName : annPluginBeanNames) {
@@ -1034,12 +1031,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public PackTypeParser reactorFluxMethodPackTypeParser() {
+            log.info("[⚛️] PackTypeParser registered | type: [FluxMethodPackTypeParser], reactive support: [Project Reactor Flux]");
             return new FluxMethodPackTypeParser();
         }
 
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public PackTypeParser reactorMonoMethodPackTypeParser() {
+            log.info("[⚛️] PackTypeParser registered | type: [MonoMethodPackTypeParser], reactive support: [Project Reactor Mono]");
             return new MonoMethodPackTypeParser();
         }
 
@@ -1055,6 +1054,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor brotliContentEncodingConvertor() {
+            log.info("[📦] ContentEncodingConvertor registered | encoding: [br], implementation: [BrotliContentEncodingConvertor]");
             return new BrotliContentEncodingConvertor();
         }
     }
@@ -1066,6 +1066,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ContentEncodingConvertor zstdContentEncodingConvertor() {
+            log.info("[📦] ContentEncodingConvertor registered | encoding: [zstd], implementation: [ZstdContentEncodingConvertor]");
             return new ZstdContentEncodingConvertor();
         }
     }
@@ -1079,6 +1080,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert protobufAutoConvert() {
+            log.info("[🎯] Response.AutoConvert registered | type: [Protobuf], parser: [com.google.protobuf.Parser]");
             return new ProtobufAutoConvert();
         }
     }
@@ -1089,6 +1091,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public Response.AutoConvert springMultipartFileAutoConvert() {
+            log.info("[📁] Response.AutoConvert registered | type: [SpringMultipartFile], not-auto-close resource types: [Spring MultipartFile]");
             HttpClientProxyObjectFactory.addNotAutoCloseResourceTypes(ClassUtils.getClass("org.springframework.web.multipart.MultipartFile"));
             return new SpringMultipartFileAutoConvert();
         }
@@ -1096,6 +1099,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean
         @Role(ROLE_INFRASTRUCTURE)
         public ParameterConvert springMultipartFileParameterConvert() {
+            log.info("[📁] ParameterConvert registered | type: [SpringMultipartFileParameterConvert], parameter type: [Spring MultipartFile]");
             return new SpringMultipartFileParameterConvert();
         }
     }
@@ -1163,10 +1167,68 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(DEFAULT_VALIDATION_PLUGIN_BEAN_NAME)
         public ValidationPlugin validationPlugin(@Autowired(required = false) Validator validator) {
             if (validator == null) {
+                log.info("[🫆] ValidationPlugin bean registered | beanName: [{}], validator: [default (no Validator bean found)], condition: [javax.validation.Validator present]",
+                        DEFAULT_VALIDATION_PLUGIN_BEAN_NAME);
                 return new ValidationPluginProvider(new ValidationPlugin());
             }
+            log.info("[🫆] ValidationPlugin bean registered | beanName: [{}], validator: [{}], condition: [javax.validation.Validator present]",
+                    DEFAULT_VALIDATION_PLUGIN_BEAN_NAME, validator.getClass().getSimpleName());
             return new ValidationPluginProvider(new ValidationPlugin(validator));
         }
 
     }
+
+    /********************** LuckyComponentProxyObjectFactory *********************************/
+
+
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnMissingClass({"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
+    static class DefaultProxyObjectFactoryConfig {
+
+        @Primary
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
+        public DefaultProxyObjectFactory luckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
+            return new DefaultProxyObjectFactory(httpClientProxyObjectFactory);
+        }
+    }
+
+    /**
+     * SpringBoot 环境
+     * 1.需要自行导入rg.springframework.cloud:spring-cloud-context
+     * 2.执行实现对应配置中心的监听器
+     * 3.监听器逻辑中必须包含发布EnvironmentChangeEvent事件的逻辑
+     *
+     * Spring Cloud 环境
+     * Nacos 会自动监听配置变化而且会发布EnvironmentChangeEvent事件
+     * Apollo 需要自行实现监听器
+     */
+    @Role(ROLE_INFRASTRUCTURE)
+    @ConditionalOnClass(name = {"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
+    static class DualProxyObjectFactoryConfig {
+
+        @Primary
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
+        public DualProxyObjectFactory luckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
+            log.info("[🔥] DualProxyObjectFactory bean [{}] initialized, delegating to HttpClientProxyObjectFactory: {}",
+                    LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
+                    httpClientProxyObjectFactory.getClass().getSimpleName());
+            return new DualProxyObjectFactory(httpClientProxyObjectFactory);
+        }
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
+        public StdConfigRefreshApplicationListener stdConfigRefreshApplicationListener(
+                ApplicationContext applicationContext,
+                DualProxyObjectFactory dualProxyObjectFactory
+        ) {
+            log.info("[🔥] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+                    STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
+            return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
+        }
+
+    }
+
+
 }

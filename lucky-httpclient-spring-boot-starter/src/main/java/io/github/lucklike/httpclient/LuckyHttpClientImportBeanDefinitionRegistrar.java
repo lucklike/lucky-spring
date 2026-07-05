@@ -53,7 +53,7 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
         Map<String, Object> attributes = importingClassMetadata.getAnnotationAttributes(LuckyHttpClientScan.class.getName());
         ProxyModel globalProxyModel = (ProxyModel) attributes.get("proxyModel");
         String proxyFactoryName = (String) attributes.get("proxyFactoryName");
-        log.info("[⚙️] HttpClientProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, globalProxyModel);
+        log.info("[⚙️] LuckyComponentProxyObjectFactory bean object '{}' is registered, and the proxy object will be created using the '{}' method", proxyFactoryName, globalProxyModel);
         LuckyHttpClientBeanDefinitionGenerator beanDefinitionGenerator =
                 new LuckyHttpClientBeanDefinitionGenerator(proxyFactoryName, globalProxyModel);
 
@@ -87,15 +87,15 @@ public class LuckyHttpClientImportBeanDefinitionRegistrar implements ImportBeanD
                 String beanName = generateBeanName(annotationMetadata);
                 if (!registry.containsBeanDefinition(beanName)) {
                     registry.registerBeanDefinition(beanName, definition);
-                    log.debug("[🍀] @HttpClientComponent [{}] '{}' is registered", beanName, beanClassName);
+                    log.debug("[🍀] @LuckyComponent [{}] '{}' is registered", beanName, beanClassName);
                     s.getAndIncrement();
                 } else {
-                    throw new BeanCreationException("There are multiple @HttpClientComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
+                    throw new BeanCreationException("There are multiple @LuckyComponent named '" + beanName + "' : [" + registry.getBeanDefinition(beanName).getBeanClassName() + ", " + beanClassName + "]");
                 }
             }
         });
 
-        log.info("[✅] lucky-httpclient scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
+        log.info("[✅] lucky component scanning was completed. total of {} components were discovered and registered, time consumption: {}", s.get(), UnitUtils.millisToTime(System.currentTimeMillis() - start));
 
         // 打印版本信息和logo
         printVersion();

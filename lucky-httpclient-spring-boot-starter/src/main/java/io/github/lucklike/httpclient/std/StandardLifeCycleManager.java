@@ -12,12 +12,11 @@ import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryWrap;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.convert.ActivelyThrownException;
-import com.luckyframework.httpclient.proxy.function.ResourceFunctions;
+import com.luckyframework.httpclient.proxy.handle.DefaultHttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.spel.SpELVariate;
@@ -33,6 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -54,9 +54,11 @@ import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_
  */
 public class StandardLifeCycleManager implements LifeCycleManager {
 
+    private final DefaultHttpExceptionHandle exceptionHandle = new DefaultHttpExceptionHandle();
+
     @Override
-    public String buildBaseUrl(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
-        return apiConfig.getUrl();
+    public String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception {
+        return config.getUrl();
     }
 
     @Override
@@ -66,7 +68,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
     }
 
     @Override
-    public void requestCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
+    public void requestInitCompleted(MethodContext mc, Request request, StandardApiConfiguration apiConfig) throws Exception {
         // 设置Api信息
         setApiInfo(mc, apiConfig);
         // 设置URL的Path部分
@@ -88,11 +90,30 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
     public ResolvableType getResponseMetaType(MethodContext mc, StandardApiConfiguration apiConfig) throws Exception {
+        for (ConditionMetaType conditionMetaType : apiConfig.getConditionMetaType()) {
+            if (mc.parseExpression(conditionMetaType.getCondition(), boolean.class)) {
+                return mc.parseExpression(conditionMetaType.getMetaType(), ResolvableType.class);
+            }
+        }
         String metaType = apiConfig.getMetaType();
         if (StringUtils.hasText(metaType)) {
             return mc.parseExpression(metaType, ResolvableType.class);
         }
         return ResolvableType.forClass(Object.class);
+    }
+
+    @Override
+    public String mandatoryDesignationResponseContentType(MethodContext mc, StandardApiConfiguration apiConfig) {
+        for (ConditionRespContentType conditionRespContentType : apiConfig.getConditionRespContentType()) {
+            if (mc.parseExpression(conditionRespContentType.getCondition(), boolean.class)) {
+                return mc.parseExpression(conditionRespContentType.getResponseContentType(), String.class);
+            }
+        }
+        String responseContentType = apiConfig.getResponseContentType();
+        if (StringUtils.hasText(responseContentType)) {
+            return mc.parseExpression(responseContentType, String.class);
+        }
+        return "";
     }
 
     @Override
@@ -128,6 +149,62 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
         // 没有进行任何配置时
         return response.getEntity(mc.getResultType());
+    }
+
+    @Override
+    public Object exceptionHandler(MethodContext mc, Request request, Throwable th, StandardApiConfiguration apiConfig) throws Throwable {
+        for (ExceptionHandlerConfig exceptionHandlerConfig : apiConfig.getExceptionHandlerConfigs()) {
+            if (canExHandler(mc, th, exceptionHandlerConfig)) {
+                return exHandler(mc, request, th, exceptionHandlerConfig);
+            }
+        }
+        return exceptionHandle.exceptionHandler(mc, request, th);
+    }
+
+
+    private boolean canExHandler(MethodContext mc, Throwable th, ExceptionHandlerConfig exceptionHandlerConfig) {
+        String condition = exceptionHandlerConfig.getCondition();
+        if (StringUtils.hasText(condition)) {
+            return mc.parseExpression(condition, boolean.class);
+        }
+
+        Set<Class<? extends Throwable>> exceptionClasses = exceptionHandlerConfig.getExceptionClasses();
+        if (ContainerUtils.isNotEmptyCollection(exceptionClasses)) {
+            ExceptionHandlerConfig.Compare exceptionCompare = exceptionHandlerConfig.getExceptionCompare();
+            if (exceptionCompare == ExceptionHandlerConfig.Compare.EQUALS) {
+                for (Class<? extends Throwable> exceptionClass : exceptionClasses) {
+                    if (Objects.equals(exceptionClass, th.getClass())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            for (Class<? extends Throwable> exceptionClass : exceptionClasses) {
+                if (exceptionClass.isInstance(th)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    public Object exHandler(MethodContext mc, Request request, Throwable th, ExceptionHandlerConfig exceptionHandlerConfig) throws Throwable {
+        List<String> running = exceptionHandlerConfig.getRunning();
+        if (ContainerUtils.isNotEmptyCollection(running)) {
+            for (String ex : running) {
+                mc.parseExpression(ex);
+            }
+        }
+
+        String result = exceptionHandlerConfig.getResult();
+        if (StringUtils.hasText(result) && !mc.isVoidMethod()) {
+            return mc.parseExpression(result, mc.getResultResolvableType());
+        }
+
+        return exceptionHandle.exceptionHandler(mc, request, th);
     }
 
     /**
@@ -168,7 +245,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         setParameter(mc, request, apiConfig.getFormParams(), req -> req.getRequest().addFormParameter(req.getName(), req.getValue()));
 
         // MultipartFormData param setter
-        setMultipartFormData(mc, request, apiConfig.getMultipartFormParams());
+        setParameter(mc, request, apiConfig.getMultipartFormParams(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
     }
 
     /**
@@ -192,7 +269,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         setConditionParameter(mc, request, apiConfig.getConditionFormParams(), req -> req.getRequest().addFormParameter(req.getName(), req.getValue()));
 
         // Condition multipartFormData param setter
-        setConditionMultipartFormData(mc, request, apiConfig.getConditionMultipartFormParams());
+        setConditionParameter(mc, request, apiConfig.getConditionMultipartFormParams(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
     }
 
     /**
@@ -291,8 +368,8 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param apiConfig 配置信息
      */
     private void setApiInfo(MethodContext mc, StandardApiConfiguration apiConfig) {
-        if (StringUtils.hasText(apiConfig.getDescription())) {
-            mc.getApiDescribe().setName(apiConfig.getDescription());
+        if (StringUtils.hasText(apiConfig.getDesc())) {
+            mc.getApiDescribe().setName(apiConfig.getDesc());
         }
     }
 
@@ -303,11 +380,7 @@ public class StandardLifeCycleManager implements LifeCycleManager {
      * @param apiConfig 配置信息
      */
     protected void setUrlPath(Request request, StandardApiConfiguration apiConfig) {
-        if (!(apiConfig instanceof StandardHttpClientConfiguration)) {
-            if (StringUtils.hasText(apiConfig.getUrl())) {
-                request.setPath(apiConfig.getUrl());
-            }
-        }
+        request.setPath(apiConfig.getPath());
     }
 
     /**
@@ -361,30 +434,6 @@ public class StandardLifeCycleManager implements LifeCycleManager {
         }
     }
 
-    /**
-     * 设置MultipartFormData类型的参数
-     *
-     * @param mc                方法上下文
-     * @param request           请求对象
-     * @param multipartFormData MultipartFormData配置
-     */
-    protected void setConditionMultipartFormData(MethodContext mc, Request request, List<ConditionMultipartFormData> multipartFormData) {
-        if (ContainerUtils.isEmptyCollection(multipartFormData)) {
-            return;
-        }
-        for (ConditionMultipartFormData conditionMultipartFormDatum : multipartFormData) {
-            String condition = conditionMultipartFormDatum.getCondition();
-            if (StringUtils.hasText(condition) && mc.parseExpression(condition, boolean.class)) {
-                // Txt param setter
-                setParameter(mc, request, conditionMultipartFormDatum.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
-
-                // File param setter
-                setParameter(mc, request, conditionMultipartFormDatum.getFile(), req -> req.getRequest().addResources(req.getName(), ResourceFunctions.resource(String.valueOf(req.getValue()))));
-            }
-        }
-
-
-    }
 
     /**
      * 设置参数
@@ -408,22 +457,6 @@ public class StandardLifeCycleManager implements LifeCycleManager {
                 requestConsumer.accept(RequestParameter.of(pName, mc.parseExpression(String.valueOf(value)), request));
             }
         });
-    }
-
-
-    /**
-     * 设置MultipartFormData类型的参数
-     *
-     * @param mc                方法上下文
-     * @param request           请求对象
-     * @param multipartFormData MultipartFormData配置
-     */
-    protected void setMultipartFormData(MethodContext mc, Request request, MultipartFormData multipartFormData) {
-        // Txt param setter
-        setParameter(mc, request, multipartFormData.getTxt(), req -> req.getRequest().addMultipartFormParameter(req.getName(), req.getValue()));
-
-        // File param setter
-        setParameter(mc, request, multipartFormData.getFile(), req -> req.getRequest().addResources(req.getName(), ResourceFunctions.resource(String.valueOf(req.getValue()))));
     }
 
     /**

@@ -27,8 +27,19 @@
 
 ```java
 
+import io.github.lucklike.httpclient.LuckyHttpAutoConfiguration;
+import io.github.lucklike.httpclient.LuckyHttpClientImportBeanDefinitionRegistrar;
+import io.github.lucklike.httpclient.factory.LuckyComponentProxyObjectFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /*
     添加@EnableLuckyHttpClient注解来开启lucky-httpclient的注解开发的功能    
@@ -80,7 +91,7 @@ public @interface EnableLuckyHttpClient {
     Class<?>[] basePackageClasses() default {};
 
     /**
-     * Http接口代理对象是依赖{@link HttpClientProxyObjectFactory}来生成的，这里需要配置这个Bean的名称
+     * Http接口代理对象是依赖{@link LuckyComponentProxyObjectFactory}来生成的，这里需要配置这个Bean的名称
      */
     String proxyFactoryName() default PROXY_FACTORY_BEAN_NAME;
 

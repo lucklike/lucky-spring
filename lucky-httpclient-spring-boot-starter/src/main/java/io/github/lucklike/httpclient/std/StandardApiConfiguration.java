@@ -2,10 +2,15 @@ package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
-import com.luckyframework.httpclient.proxy.configapi.MultipartFormData;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
+import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
+import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
+import com.luckyframework.httpclient.proxy.function.CommonFunctions;
+import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeConfiguration;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
+import io.github.lucklike.httpclient.config.mock.MockResult;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.core.ResolvableType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,15 +25,16 @@ import java.util.Map;
  * @date 2026/5/9 23:38
  */
 public class StandardApiConfiguration {
+
     /**
-     * 服务地址
+     * 接口路径
      */
-    private String url;
+    private String path;
 
     /**
      * 接口表述信息
      */
-    private String description;
+    private String desc;
 
     /**
      * 请求方法，默认 POST
@@ -83,8 +89,7 @@ public class StandardApiConfiguration {
     /**
      * multipart/form-data类型请求参数
      */
-    @NestedConfigurationProperty
-    private MultipartFormData multipartFormParams = new MultipartFormData();
+    private Map<String, Object> multipartFormParams = new LinkedHashMap<>();
 
     /**
      * 请求体
@@ -116,10 +121,10 @@ public class StandardApiConfiguration {
     private List<ConditionConfig> conditionFormParams = new ArrayList<>();
 
     /**
-     * 支持条件的application/x-www-form-urlencoded请求参数
+     * 支持条件的multipart/form-data请求参数
      */
     @NestedConfigurationProperty
-    private List<ConditionMultipartFormData> conditionMultipartFormParams = new ArrayList<>();
+    private List<ConditionConfig> conditionMultipartFormParams = new ArrayList<>();
 
     /**
      * 支持条件的请求体
@@ -127,11 +132,11 @@ public class StandardApiConfiguration {
     @NestedConfigurationProperty
     private List<ConditionBody> conditionBody = new ArrayList<>();
 
-
     /**
      * 初始化参数
      */
-    private Map<String, Object> initParams = new LinkedHashMap<>();
+    @NestedConfigurationProperty
+    private InitBindParams initBindParams = new InitBindParams();
 
     /**
      * 额外的自定义请求参数
@@ -140,9 +145,28 @@ public class StandardApiConfiguration {
     private AdditionalParams additionalParams = new AdditionalParams();
 
     /**
-     * 转化元类型表达式
+     * 转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
+     *
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     private String metaType;
+
+    /**
+     * 强制指定响应体的Content-Type
+     */
+    private String responseContentType;
+
+    /**
+     * 支持条件表达式的强制指定响应体的Content-Type
+     */
+    @NestedConfigurationProperty
+    private List<ConditionRespContentType> conditionRespContentType = new ArrayList<>();
+
+    /**
+     * 支持条件表达式的转化元类型表达式
+     */
+    @NestedConfigurationProperty
+    private List<ConditionMetaType> conditionMetaType = new ArrayList<>();
 
     /**
      * 响应转换表达式
@@ -166,6 +190,63 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private SSLConf sslConfig;
+
+    /**
+     * Mock相关配置
+     */
+    @NestedConfigurationProperty
+    private MockResult mockConfig;
+
+    /**
+     * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    @NestedConfigurationProperty
+    private SpELImportConf spelImport;
+
+    /**
+     * {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    @NestedConfigurationProperty
+    private SpELImportConf methodMetaSpelImport;
+
+    /**
+     * 方法结果转换完成后调用
+     */
+    private List<String> methodResultRunning = new ArrayList<>();
+
+    /**
+     * 销毁上下文时进行调用
+     */
+    private List<String> destroyRunning = new ArrayList<>();
+
+    /**
+     * 异常处理配置
+     */
+    private List<ExceptionHandlerConfig> exceptionHandlerConfigs = new ArrayList<>();
+
+    /**
+     * 用于生成响应对象对应的JavaBean的配置
+     */
+    @NestedConfigurationProperty
+    private GeneratedJavaCodeConfiguration generateResponseJavaBean;
+
+    /**
+     * 接口路径
+     *
+     * @return 接口路径
+     */
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * 接口路径
+     *
+     * @param path 接口路径
+     */
+    public void setPath(String path) {
+        this.path = path;
+    }
 
     /**
      * 设置的请求头参数
@@ -222,39 +303,21 @@ public class StandardApiConfiguration {
     }
 
     /**
-     * 获取URL地址
-     *
-     * @return URL地址
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * 设置URL地址
-     *
-     * @param url URL地址
-     */
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    /**
      * 获取接口描述信息
      *
      * @return 接口描述信息
      */
-    public String getDescription() {
-        return description;
+    public String getDesc() {
+        return desc;
     }
 
     /**
      * 设置接口描述信息
      *
-     * @param description 接口描述信息
+     * @param desc 接口描述信息
      */
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     /**
@@ -289,7 +352,7 @@ public class StandardApiConfiguration {
      *
      * @return multipart/form-data类型请求参数
      */
-    public MultipartFormData getMultipartFormParams() {
+    public Map<String, Object> getMultipartFormParams() {
         return multipartFormParams;
     }
 
@@ -307,7 +370,7 @@ public class StandardApiConfiguration {
      *
      * @param multipartFormParams multipart/form-data类型请求参数
      */
-    public void setMultipartFormParams(MultipartFormData multipartFormParams) {
+    public void setMultipartFormParams(Map<String, Object> multipartFormParams) {
         this.multipartFormParams = multipartFormParams;
     }
 
@@ -316,17 +379,17 @@ public class StandardApiConfiguration {
      *
      * @return 初始化参数
      */
-    public Map<String, Object> getInitParams() {
-        return initParams;
+    public InitBindParams getInitBindParams() {
+        return initBindParams;
     }
 
     /**
      * 设置初始化参数
      *
-     * @param initParams 初始化参数
+     * @param initBindParams 初始化参数
      */
-    public void setInitParams(Map<String, Object> initParams) {
-        this.initParams = initParams;
+    public void setInitBindParams(InitBindParams initBindParams) {
+        this.initBindParams = initBindParams;
     }
 
     /**
@@ -456,21 +519,77 @@ public class StandardApiConfiguration {
     }
 
     /**
-     * 获取转化元类型表达式
+     * 强制指定响应体的Content-Type
+     *
+     * @return 强制指定响应体的Content-Type
+     */
+    public String getResponseContentType() {
+        return responseContentType;
+    }
+
+    /**
+     * 设置强制指定响应体的Content-Type
+     *
+     * @param responseContentType 强制指定响应体的Content-Type
+     */
+    public void setResponseContentType(String responseContentType) {
+        this.responseContentType = responseContentType;
+    }
+
+    /**
+     * 支持条件表达式的强制指定响应体的Content-Type
+     *
+     * @return 支持条件表达式的强制指定响应体的Content-Type
+     */
+    public List<ConditionRespContentType> getConditionRespContentType() {
+        return conditionRespContentType;
+    }
+
+    /**
+     * 设置支持条件表达式的强制指定响应体的Content-Type
+     *
+     * @param conditionRespContentType 支持条件表达式的强制指定响应体的Content-Type
+     */
+    public void setConditionRespContentType(List<ConditionRespContentType> conditionRespContentType) {
+        this.conditionRespContentType = conditionRespContentType;
+    }
+
+    /**
+     * 获取转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
      *
      * @return 转化元类型表达式
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     public String getMetaType() {
         return metaType;
     }
 
     /**
-     * 设置转化元类型表达式
+     * 设置转化元类型表达式，表达式结果必须为{@link ResolvableType}类型
      *
      * @param metaType 转化元类型表达式
+     * @see CommonFunctions#typeOf(Object, Object...)
      */
     public void setMetaType(String metaType) {
         this.metaType = metaType;
+    }
+
+    /**
+     * 获取支持条件表达式的转化元类型表达式
+     *
+     * @return 支持条件表达式的转化元类型表达式
+     */
+    public List<ConditionMetaType> getConditionMetaType() {
+        return conditionMetaType;
+    }
+
+    /**
+     * 设置支持条件表达式的转化元类型表达式
+     *
+     * @param conditionMetaType 支持条件表达式的转化元类型表达式
+     */
+    public void setConditionMetaType(List<ConditionMetaType> conditionMetaType) {
+        this.conditionMetaType = conditionMetaType;
     }
 
     /**
@@ -582,20 +701,20 @@ public class StandardApiConfiguration {
     }
 
     /**
-     * 获取支持条件的application/x-www-form-urlencoded请求参数
+     * 获取支持条件的multipart/form-data请求参数
      *
-     * @return 支持条件的application/x-www-form-urlencoded请求参数
+     * @return 支持条件的multipart/form-data请求参数
      */
-    public List<ConditionMultipartFormData> getConditionMultipartFormParams() {
+    public List<ConditionConfig> getConditionMultipartFormParams() {
         return conditionMultipartFormParams;
     }
 
     /**
-     * 设置支持条件的application/x-www-form-urlencoded请求参数
+     * 设置支持条件的multipart/form-data请求参数
      *
-     * @param conditionMultipartFormParams 支持条件的application/x-www-form-urlencoded请求参数
+     * @param conditionMultipartFormParams 支持条件的multipart/form-data请求参数
      */
-    public void setConditionMultipartFormParams(List<ConditionMultipartFormData> conditionMultipartFormParams) {
+    public void setConditionMultipartFormParams(List<ConditionConfig> conditionMultipartFormParams) {
         this.conditionMultipartFormParams = conditionMultipartFormParams;
     }
 
@@ -619,6 +738,7 @@ public class StandardApiConfiguration {
 
     /**
      * 重试相关配置
+     *
      * @return 重试相关配置
      */
     public RetryConfiguration getRetryConfig() {
@@ -627,6 +747,7 @@ public class StandardApiConfiguration {
 
     /**
      * 设置重试相关配置
+     *
      * @param retryConfig 重试相关配置
      */
     public void setRetryConfig(RetryConfiguration retryConfig) {
@@ -652,6 +773,132 @@ public class StandardApiConfiguration {
     }
 
     /**
+     * 获取模拟相关配置
+     *
+     * @return 模拟相关配置
+     */
+    public MockResult getMockConfig() {
+        return mockConfig;
+    }
+
+    /**
+     * 设置模拟相关配置
+     *
+     * @param mockConfig 模拟相关配置
+     */
+    public void setMockConfig(MockResult mockConfig) {
+        this.mockConfig = mockConfig;
+    }
+
+    /**
+     * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @return 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public SpELImportConf getSpelImport() {
+        return spelImport;
+    }
+
+    /**
+     * 设置当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @param spelImport 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public void setSpelImport(SpELImportConf spelImport) {
+        this.spelImport = spelImport;
+    }
+
+    /**
+     * {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @return {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public SpELImportConf getMethodMetaSpelImport() {
+        return methodMetaSpelImport;
+    }
+
+    /**
+     * 设置{@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     *
+     * @param methodMetaSpelImport {@link MethodMetaContext}级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
+     */
+    public void setMethodMetaSpelImport(SpELImportConf methodMetaSpelImport) {
+        this.methodMetaSpelImport = methodMetaSpelImport;
+    }
+
+    /**
+     * 方法结果转换完成后调用
+     *
+     * @return 方法结果转换完成后调用
+     */
+    public List<String> getMethodResultRunning() {
+        return methodResultRunning;
+    }
+
+    /**
+     * 方法结果转换完成后调用
+     *
+     * @param methodResultRunning 方法结果转换完成后调用
+     */
+    public void setMethodResultRunning(List<String> methodResultRunning) {
+        this.methodResultRunning = methodResultRunning;
+    }
+
+    /**
+     * 销毁上下文时进行调用
+     *
+     * @return 销毁上下文时进行调用
+     */
+    public List<String> getDestroyRunning() {
+        return destroyRunning;
+    }
+
+    /**
+     * 销毁上下文时进行调用
+     *
+     * @param destroyRunning 销毁上下文时进行调用
+     */
+    public void setDestroyRunning(List<String> destroyRunning) {
+        this.destroyRunning = destroyRunning;
+    }
+
+    /**
+     * 异常处理配置
+     *
+     * @return 异常处理配置
+     */
+    public List<ExceptionHandlerConfig> getExceptionHandlerConfigs() {
+        return exceptionHandlerConfigs;
+    }
+
+    /**
+     * 设置异常处理配置
+     *
+     * @param exceptionHandlerConfigs 异常处理配置
+     */
+    public void setExceptionHandlerConfigs(List<ExceptionHandlerConfig> exceptionHandlerConfigs) {
+        this.exceptionHandlerConfigs = exceptionHandlerConfigs;
+    }
+
+    /**
+     * 获取用于生成响应对象对应的JavaBean的配置
+     *
+     * @return 用于生成响应对象对应的JavaBean的配置
+     */
+    public GeneratedJavaCodeConfiguration getGenerateResponseJavaBean() {
+        return generateResponseJavaBean;
+    }
+
+    /**
+     * 设置用于生成响应对象对应的JavaBean的配置
+     *
+     * @param generateResponseJavaBean 用于生成响应对象对应的JavaBean的配置
+     */
+    public void setGenerateResponseJavaBean(GeneratedJavaCodeConfiguration generateResponseJavaBean) {
+        this.generateResponseJavaBean = generateResponseJavaBean;
+    }
+
+    /**
      * 移除无效配置
      */
     public void removeNonEffectiveConfig() {
@@ -662,5 +909,8 @@ public class StandardApiConfiguration {
         conditionMultipartFormParams.removeIf(config -> !config.effective());
         conditionBody.removeIf(config -> !config.effective());
         conditionConvert.removeIf(config -> !config.effective());
+        conditionMetaType.removeIf(config -> !config.effective());
+        conditionRespContentType.removeIf(config -> !config.effective());
+        exceptionHandlerConfigs.removeIf(config -> !config.effective());
     }
 }
