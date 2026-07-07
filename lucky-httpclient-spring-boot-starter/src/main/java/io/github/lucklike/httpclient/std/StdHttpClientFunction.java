@@ -427,8 +427,9 @@ public class StdHttpClientFunction {
     @FunctionAlias("__std_enable_exception_handler__")
     public static boolean enableExceptionHandler(MethodContext mc) {
         StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
-        List<ExceptionHandlerConfig> exceptionHandlerConfigs = apiConfig.getExceptionHandlerConfigs();
-        return ContainerUtils.isNotEmptyCollection(exceptionHandlerConfigs);
+        ExceptionHandlerConfig exceptionHandlerConfig = apiConfig.getExceptionHandler();
+        List<ConditionExceptionHandlerConfig> exceptionHandlerConfigs = apiConfig.getConditionExceptionHandler();
+        return (exceptionHandlerConfig != null && exceptionHandlerConfig.effective()) || ContainerUtils.isNotEmptyCollection(exceptionHandlerConfigs);
     }
 
     /**
@@ -574,6 +575,7 @@ public class StdHttpClientFunction {
         apiConfig.setFormParams(mergeMap(config.getFormParams(), methodConfig.getFormParams()));
         apiConfig.setMultipartFormParams(mergeMap(config.getMultipartFormParams(), methodConfig.getMultipartFormParams()));
         apiConfig.setBody(blankReturnDefault(methodConfig.getBody(), config.getBody()));
+        apiConfig.setExceptionHandler(nullReturnDefault(methodConfig.getExceptionHandler(), config.getExceptionHandler()));
 
         apiConfig.setConditionHeaderParams(mergeCollection(methodConfig.getConditionHeaderParams(), config.getConditionHeaderParams()));
         apiConfig.setConditionPathParams(mergeCollection(methodConfig.getConditionPathParams(), config.getConditionPathParams()));
@@ -586,7 +588,7 @@ public class StdHttpClientFunction {
         apiConfig.setConditionRespContentType(mergeCollection(methodConfig.getConditionRespContentType(), config.getConditionRespContentType()));
         apiConfig.setMethodResultRunning(mergeCollection(methodConfig.getMethodResultRunning(), config.getMethodResultRunning()));
         apiConfig.setDestroyRunning(mergeCollection(methodConfig.getDestroyRunning(), config.getDestroyRunning()));
-        apiConfig.setExceptionHandlerConfigs(mergeCollection(methodConfig.getExceptionHandlerConfigs(), config.getExceptionHandlerConfigs()));
+        apiConfig.setConditionExceptionHandler(mergeCollection(methodConfig.getConditionExceptionHandler(), config.getConditionExceptionHandler()));
 
         apiConfig.setInitBindParams(mergeInitBindParams(config.getInitBindParams(), methodConfig.getInitBindParams()));
         apiConfig.setAdditionalParams(mergeAdditionalParams(mec, config.getAdditionalParams(), methodConfig.getAdditionalParams()));

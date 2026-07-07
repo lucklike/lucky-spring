@@ -4,7 +4,6 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.common.StringUtils;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * 异常处理配置类
@@ -12,84 +11,19 @@ import java.util.Set;
 public class ExceptionHandlerConfig {
 
     /**
-     * 条件表达式
-     */
-    private String condition;
-
-    /**
-     * 异常类型
-     */
-    private Set<Class<? extends Throwable>> exceptionClasses;
-
-    /**
-     * 异常比较算法
-     */
-    private Compare exceptionCompare = Compare.EQUALS;
-
-    /**
      * 需要执行的命令
      */
-    private List<String> running;
+    protected List<String> running;
 
     /**
      * 异常返回
      */
-    private String result;
-
-
-    /**
-     * 条件表达式
-     *
-     * @return 条件表达式
-     */
-    public String getCondition() {
-        return condition;
-    }
+    protected String result;
 
     /**
-     * 设置条件表达式
-     *
-     * @param condition 条件表达式
+     * 转成自定义异常
      */
-    public void setCondition(String condition) {
-        this.condition = condition;
-    }
-
-    /**
-     * 可以处理的异常类型
-     *
-     * @return 异常类型
-     */
-    public Set<Class<? extends Throwable>> getExceptionClasses() {
-        return exceptionClasses;
-    }
-
-    /**
-     * 设置异常类型
-     *
-     * @param exceptionClasses 异常类型
-     */
-    public void setExceptionClasses(Set<Class<? extends Throwable>> exceptionClasses) {
-        this.exceptionClasses = exceptionClasses;
-    }
-
-    /**
-     * 异常比较算法
-     *
-     * @return 异常比较算法
-     */
-    public Compare getExceptionCompare() {
-        return exceptionCompare;
-    }
-
-    /**
-     * 设置异常比较算法
-     *
-     * @param exceptionCompare 异常比较算法
-     */
-    public void setExceptionCompare(Compare exceptionCompare) {
-        this.exceptionCompare = exceptionCompare;
-    }
+    protected String exception;
 
     /**
      * 需要执行的命令，SpEL表达式
@@ -127,6 +61,23 @@ public class ExceptionHandlerConfig {
         this.result = result;
     }
 
+    /**
+     * 自定义异常
+     *
+     * @return 自定义异常
+     */
+    public String getException() {
+        return exception;
+    }
+
+    /**
+     * 自定义异常
+     *
+     * @param exception 自定义异常
+     */
+    public void setException(String exception) {
+        this.exception = exception;
+    }
 
     /**
      * 是否是有效的配置
@@ -134,22 +85,6 @@ public class ExceptionHandlerConfig {
      * @return 是否是有效配置
      */
     public boolean effective() {
-        return ContainerUtils.isNotEmptyCollection(running) || StringUtils.hasText(result);
+        return ContainerUtils.isNotEmptyCollection(running) || StringUtils.hasText(result) || StringUtils.hasText(exception);
     }
-
-    /**
-     * 类型限制比较算法
-     */
-    public enum Compare {
-        /**
-         * 通过{@link Class#equals(Object)}方法进行比较
-         */
-        EQUALS,
-
-        /**
-         * 通过{@link Class#isAssignableFrom(Class)}方法进行比较
-         */
-        EXTEND,
-    }
-
 }

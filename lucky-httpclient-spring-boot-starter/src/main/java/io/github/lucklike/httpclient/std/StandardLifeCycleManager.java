@@ -1,6 +1,7 @@
 package io.github.lucklike.httpclient.std;
 
 import com.luckyframework.common.ContainerUtils;
+import com.luckyframework.common.FontUtil;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.BodyObject;
 import com.luckyframework.httpclient.core.meta.ContentType;
@@ -21,14 +22,18 @@ import com.luckyframework.httpclient.proxy.retry.RetryDeciderContext;
 import com.luckyframework.httpclient.proxy.retry.RunBeforeRetryContext;
 import com.luckyframework.httpclient.proxy.spel.SpELVariate;
 import com.luckyframework.httpclient.proxy.ssl.SSLSocketFactoryBuilder;
+import com.luckyframework.reflect.MethodUtils;
 import io.github.lucklike.httpclient.config.RetryConfiguration;
 import io.github.lucklike.httpclient.retry.ConfigurationBackoffWaitingBeforeRetryContext;
 import io.github.lucklike.httpclient.retry.ConfigurationRetryDeciderContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.io.Resource;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,7 +59,7 @@ import static com.luckyframework.httpclient.proxy.spel.InternalVarName.__$RETRY_
  */
 public class StandardLifeCycleManager implements LifeCycleManager {
 
-    private final DefaultHttpExceptionHandle exceptionHandle = new DefaultHttpExceptionHandle();
+    private static final Logger logger = LoggerFactory.getLogger(StandardLifeCycleManager.class);
 
     @Override
     public String buildBaseUrl(MethodContext mc, StandardHttpClientConfiguration config) throws Exception {
@@ -153,16 +158,22 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
     @Override
     public Object exceptionHandler(MethodContext mc, Request request, Throwable th, StandardApiConfiguration apiConfig) throws Throwable {
-        for (ExceptionHandlerConfig exceptionHandlerConfig : apiConfig.getExceptionHandlerConfigs()) {
+        for (ConditionExceptionHandlerConfig exceptionHandlerConfig : apiConfig.getConditionExceptionHandler()) {
             if (canExHandler(mc, th, exceptionHandlerConfig)) {
                 return exHandler(mc, request, th, exceptionHandlerConfig);
             }
         }
-        return exceptionHandle.exceptionHandler(mc, request, th);
+
+        ExceptionHandlerConfig exceptionHandlerConfig = apiConfig.getExceptionHandler();
+        if (exceptionHandlerConfig != null && exceptionHandlerConfig.effective()) {
+            return exHandler(mc, request, th, exceptionHandlerConfig);
+        }
+
+        return getRootCause(mc, th);
     }
 
 
-    private boolean canExHandler(MethodContext mc, Throwable th, ExceptionHandlerConfig exceptionHandlerConfig) {
+    private boolean canExHandler(MethodContext mc, Throwable th, ConditionExceptionHandlerConfig exceptionHandlerConfig) {
         String condition = exceptionHandlerConfig.getCondition();
         if (StringUtils.hasText(condition)) {
             return mc.parseExpression(condition, boolean.class);
@@ -170,8 +181,8 @@ public class StandardLifeCycleManager implements LifeCycleManager {
 
         Set<Class<? extends Throwable>> exceptionClasses = exceptionHandlerConfig.getExceptionClasses();
         if (ContainerUtils.isNotEmptyCollection(exceptionClasses)) {
-            ExceptionHandlerConfig.Compare exceptionCompare = exceptionHandlerConfig.getExceptionCompare();
-            if (exceptionCompare == ExceptionHandlerConfig.Compare.EQUALS) {
+            ConditionExceptionHandlerConfig.Compare exceptionCompare = exceptionHandlerConfig.getExceptionCompare();
+            if (exceptionCompare == ConditionExceptionHandlerConfig.Compare.EQUALS) {
                 for (Class<? extends Throwable> exceptionClass : exceptionClasses) {
                     if (Objects.equals(exceptionClass, th.getClass())) {
                         return true;
@@ -204,7 +215,23 @@ public class StandardLifeCycleManager implements LifeCycleManager {
             return mc.parseExpression(result, mc.getResultResolvableType());
         }
 
-        return exceptionHandle.exceptionHandler(mc, request, th);
+        String exception = exceptionHandlerConfig.getException();
+        if (StringUtils.hasText(exception)) {
+            Object exObj = mc.parseExpression(exception);
+            if (exObj instanceof Throwable) {
+                return exObj;
+            }
+
+            return new ActivelyThrownException(String.valueOf(exObj));
+        }
+
+        return getRootCause(mc, th);
+    }
+
+    public Throwable getRootCause(MethodContext mc, Throwable th) {
+        Throwable rootCause = ActivelyThrownException.getRootCause(th);
+        logger.error("HTTP proxy method ['{}'] execution failed.", FontUtil.getBlueUnderline(MethodUtils.getLocation(mc.getCurrentAnnotatedElement())), rootCause);
+        return rootCause;
     }
 
     /**
