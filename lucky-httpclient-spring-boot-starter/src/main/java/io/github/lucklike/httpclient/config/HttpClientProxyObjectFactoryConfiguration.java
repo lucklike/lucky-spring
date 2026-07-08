@@ -2,6 +2,7 @@ package io.github.lucklike.httpclient.config;
 
 import com.luckyframework.common.ConfigurationMap;
 import com.luckyframework.httpclient.core.meta.RequestMethod;
+import com.luckyframework.httpclient.proxy.configapi.parse.RetryConfiguration;
 import com.luckyframework.httpclient.proxy.handle.HttpExceptionHandle;
 import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.std.StandardHttpClientConfiguration;
