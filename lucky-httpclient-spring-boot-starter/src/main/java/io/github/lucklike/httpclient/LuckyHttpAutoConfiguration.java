@@ -995,6 +995,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         factory.setHeaders(factoryConfig.getHeaderParams());
         factory.setPathParameters(factoryConfig.getPathParams());
         factory.setQueryParameters(factoryConfig.getQueryParams());
+        factory.setRunning(factoryConfig.getRunning());
         parameterConvertSetting(factoryConfig);
     }
 

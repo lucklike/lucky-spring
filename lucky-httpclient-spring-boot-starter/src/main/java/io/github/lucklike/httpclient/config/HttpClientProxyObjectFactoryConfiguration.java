@@ -8,7 +8,9 @@ import com.luckyframework.httpclient.proxy.plugin.ProxyPlugin;
 import io.github.lucklike.httpclient.std.StandardHttpClientConfiguration;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,7 +46,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *            key: value
      * </pre>
      */
-    private final Map<String, Object> headerParams = new ConfigurationMap();
+    private Map<String, Object> headerParams = new ConfigurationMap();
 
     /**
      * 公共路径请求参数
@@ -59,7 +61,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *            key: value
      * </pre>
      */
-    private final Map<String, Object> pathParams = new ConfigurationMap();
+    private Map<String, Object> pathParams = new ConfigurationMap();
 
     /**
      * 公共Query请求参数
@@ -74,7 +76,12 @@ public class HttpClientProxyObjectFactoryConfiguration {
      *            key: value
      * </pre>
      */
-    private final Map<String, Object> queryParams = new ConfigurationMap();
+    private Map<String, Object> queryParams = new ConfigurationMap();
+
+    /**
+     * 所有 API 接口方法运行前都需要执行的命令
+     */
+    private List<String> running = new ArrayList<>();
 
     /**
      * Http执行器相关额配置
@@ -200,6 +207,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     }
 
     /**
+     * 所有 API 接口方法运行前都需要执行的命令
+     *
+     * @param running 所有 API 接口方法运行前都需要执行的命令
+     */
+    public void setRunning(List<String> running) {
+        this.running = running;
+    }
+
+    /**
      * Http执行器相关的设置
      *
      * @param httpExecutor Http执行器配置
@@ -254,7 +270,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * @param headerParams 公共的请求头参数
      */
     public void setHeaderParams(Map<String, Object> headerParams) {
-        this.headerParams.putAll(headerParams);
+        this.headerParams = headerParams;
     }
 
     /**
@@ -263,7 +279,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * @param pathParams 公共的路径参数
      */
     public void setPathParams(Map<String, Object> pathParams) {
-        this.pathParams.putAll(pathParams);
+        this.pathParams = pathParams;
     }
 
     /**
@@ -272,7 +288,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
      * @param queryParams 公共的URL参数
      */
     public void setQueryParams(Map<String, Object> queryParams) {
-        this.queryParams.putAll(queryParams);
+        this.queryParams = queryParams;
     }
 
     /**
@@ -422,6 +438,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
      */
     public ObjectCreatorFactory getObjectCreatorFactory() {
         return objectCreatorFactory;
+    }
+
+    /**
+     * 所有 API 接口方法运行前都需要执行的命令
+     *
+     * @return 所有 API 接口方法运行前都需要执行的命令
+     */
+    public List<String> getRunning() {
+        return running;
     }
 
     /**
