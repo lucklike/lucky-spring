@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.dbclient;
 import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
+import io.github.lucklike.httpclient.dbclient.function.EntityUtils;
 import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.Lambda;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBuilder;
@@ -21,9 +22,12 @@ import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
 import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 import org.springframework.core.ResolvableType;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -762,11 +766,46 @@ public interface BaseDBApi<E> {
      * </p>
      *
      * @param entity 要插入的实体对象
+     * @param keyHolder 自增 ID 持有者
      * @return 影响的行数
      * @throws IllegalArgumentException 如果 entity 为 null 时抛出
      */
     @SQL(executor = SQL_INSERT_SQL)
-    int insert(@NonNull E entity);
+    int _insert_(@NonNull E entity, KeyHolder keyHolder);
+
+
+    /**
+     * 插入单条数据。
+     * <p>
+     * 使用实体中所有非空属性作为插入字段，
+     * 如果字段值为 null，则使用数据库默认值或不插入该字段（取决于配置）。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 插入新用户
+     * User user = new User();
+     * user.setName("张三");
+     * user.setAge(18);
+     * int rows = mapper.insert(user);
+     * }</pre>
+     * </p>
+     *
+     * @param entity 要插入的实体对象
+     * @return 影响的行数
+     * @throws IllegalArgumentException 如果 entity 为 null 时抛出
+     */
+    default int insert(@NonNull E entity) {
+        EntityUtils.AutoIncrementField autoIncrementIdField = EntityUtils.getAutoIncrementIdField(entityClass());
+        if (autoIncrementIdField.hasAutoIncrementId()) {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            int row = _insert_(entity, keyHolder);
+            autoIncrementIdField.setId(entity, keyHolder);
+            return row;
+        } else {
+            return _insert_(entity, null);
+        }
+    }
 
     /**
      * 批量插入数据（内部批量操作方法）。

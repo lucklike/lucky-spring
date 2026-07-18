@@ -24,4 +24,11 @@ public @interface Id {
 
     @AliasFor(annotation = Column.class, attribute = "value")
     String value() default "";
+
+    Type type() default Type.MANUAL_SETTINGS;
+
+    enum Type {
+        AUTO_INCREMENT,
+        MANUAL_SETTINGS
+    }
 }
