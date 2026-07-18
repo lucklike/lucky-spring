@@ -1,11 +1,12 @@
 package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.common.StringUtils;
+import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
 import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 
-import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.autoInjectParamExecuteUrlFunction;
+import static com.luckyframework.httpclient.proxy.url.SpELURLGetter.analysisSpELAndFunc;
 import static io.github.lucklike.httpclient.discovery.Constant.LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME;
 
 /**
@@ -20,24 +21,19 @@ public class CommonBaseUrlGetter implements BaseURLGetter {
     @Override
     public String getBaseUrl(DomainNameContext context) {
         HttpClient httpClientAnn = context.toAnnotation(HttpClient.class);
+        MethodContext mc = context.getContext();
 
-        String url = context.parseExpression(httpClientAnn.url(), String.class);
-        String serviceName = context.parseExpression(httpClientAnn.service(), String.class);
-        String path = context.parseExpression(httpClientAnn.path(), String.class);
-        String func = context.parseExpression(httpClientAnn.func(), String.class);
+        // 获取 URL 和 Path
+        String url = analysisSpELAndFunc(mc, httpClientAnn.url(), httpClientAnn.urlFunc());
+        String path = analysisSpELAndFunc(mc, httpClientAnn.path(), httpClientAnn.pathFunc());
 
         // 存在url配置时优先使用url配置
         if (StringUtils.hasText(url)) {
             return StringUtils.joinUrlPath(url, path);
         }
 
-        // 存在url函数时，而且url函数计算结果不为空或者空字符时
-        if (StringUtils.hasText(func)) {
-            String _url = autoInjectParamExecuteUrlFunction(context.getContext(), func);
-            if (StringUtils.hasText(_url)) {
-                return StringUtils.joinUrlPath(_url, path);
-            }
-        }
+        // 尝试通过服务名获取 URL
+        String serviceName = analysisSpELAndFunc(mc, httpClientAnn.service(), httpClientAnn.serviceFunc());
 
         // url和service均为配置时返回空字符串
         if (!StringUtils.hasText(serviceName)) {

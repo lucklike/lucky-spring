@@ -1,8 +1,6 @@
 package io.github.lucklike.httpclient.discovery;
 
 import com.luckyframework.common.StringUtils;
-import com.luckyframework.httpclient.proxy.url.BaseURLGetter;
-import com.luckyframework.httpclient.proxy.url.DomainNameContext;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
@@ -13,23 +11,12 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
  * @version 1.0.0
  * @date 2025/3/13 14:58
  */
-public class LoadBalancerClientUrlGetter implements BaseURLGetter {
+public class LoadBalancerClientUrlGetter {
 
     private final LoadBalancerClient loadBalancerClient;
 
     public LoadBalancerClientUrlGetter(LoadBalancerClient loadBalancerClient) {
         this.loadBalancerClient = loadBalancerClient;
-    }
-
-    @Override
-    public String getBaseUrl(DomainNameContext context) throws Exception {
-        // 获取注解实例并检验配置
-        HttpClient httpclientAnn = context.toAnnotation(HttpClient.class);
-
-        String serviceName = context.parseExpression(httpclientAnn.service(), String.class);
-        String path = context.parseExpression(httpclientAnn.path(), String.class);
-
-        return getBaseUrl(serviceName, path);
     }
 
     public String getBaseUrl(String serviceName, String path) {

@@ -39,13 +39,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.luckyframework.common.ContainerUtils.mergeCollection;
@@ -54,8 +48,6 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_METHOD_RESULT_$;
-import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_REQUEST_$;
-import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_THROWABLE_$;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -309,7 +301,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 目标HTTP服务地址
      */
-    @FunctionAlias("__get_http_server_url__")
+    @FunctionAlias("__std_http_server_url__")
     public static String getHttpServerUrl(
             MethodContext mc,
             @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
@@ -321,12 +313,11 @@ public class StdHttpClientFunction {
     /**
      * 获取服务名，用于从注册中心获取URL
      *
-     * @param mc 方法上下文
+     * @param config 当前HTTP客户端的配置
      * @return 服务名
      */
-    @FunctionAlias("__get_http_service_name__")
-    public static String getHttpServiceName(MethodContext mc) {
-        StandardHttpClientConfiguration config = mc.getRootVar(STANDARD_HTTP_CLIENT_CONFIG_NAME, StandardHttpClientConfiguration.class);
+    @FunctionAlias("__std_http_service_name__")
+    public static String getHttpServiceName(@Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config) {
         return config.getService();
     }
 
@@ -338,7 +329,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 响应元类型
      */
-    @FunctionAlias("__get_response_meta_type__")
+    @FunctionAlias("__std_response_meta_type__")
     public static Object getResponseMetaType(
             MethodContext mc,
             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
@@ -351,13 +342,15 @@ public class StdHttpClientFunction {
     /**
      * 强制指定响应体的Content-Type
      *
-     * @param mc 方法上下文对象
+     * @param mc               方法上下文对象
+     * @param apiConfig        当前HTTP客户端的配置
+     * @param lifeCycleManager 生命周期管理器对象
      * @return 强制指定的响应体Content-Type
      */
-    @FunctionAlias("__mandatory_designation_response_content_type__")
-    public static String mandatoryDesignationResponseContentType(MethodContext mc) {
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
-        LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+    @FunctionAlias("__std_response_content_type__")
+    public static String mandatoryDesignationResponseContentType(MethodContext mc,
+                                                                 @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                                                                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
         return lifeCycleManager.mandatoryDesignationResponseContentType(mc, apiConfig);
     }
 
@@ -370,7 +363,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 最终的响应结果
      */
-    @FunctionAlias("__result_convert__")
+    @FunctionAlias("__std_result_convert__")
     public static Object resultConvert(
             MethodContext mc,
             Response response,
@@ -383,12 +376,13 @@ public class StdHttpClientFunction {
     /**
      * 是否启用 Mock 功能
      *
-     * @param mc 方法上下文
-     * @return 是否启用 Mock 文件
+     * @param mc         方法上下文
+     * @param mockConfig Mock 配置
+     * @return 是否启用 Mock 功能
      */
     @FunctionAlias("__std_mock_enable__")
-    public static boolean stdMockEnable(MethodContext mc) {
-        MockConfiguration mockConfig = mc.getRootVar(STANDARD_MOCK_CONFIG, MockConfiguration.class);
+    public static boolean stdMockEnable(MethodContext mc,
+                                        @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig) {
         return MockConfigFunction.mockEnable(mc, mockConfig);
     }
 
@@ -421,12 +415,11 @@ public class StdHttpClientFunction {
     /**
      * 是否启用异常处理
      *
-     * @param mc 方法上下文
+     * @param apiConfig 当前HTTP客户端的配置
      * @return 是否启用异常处理
      */
     @FunctionAlias("__std_enable_exception_handler__")
-    public static boolean enableExceptionHandler(MethodContext mc) {
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+    public static boolean enableExceptionHandler(@Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig) {
         ExceptionHandlerConfig exceptionHandlerConfig = apiConfig.getExceptionHandler();
         List<ConditionExceptionHandlerConfig> exceptionHandlerConfigs = apiConfig.getConditionExceptionHandler();
         return (exceptionHandlerConfig != null && exceptionHandlerConfig.effective()) || ContainerUtils.isNotEmptyCollection(exceptionHandlerConfigs);
@@ -438,11 +431,12 @@ public class StdHttpClientFunction {
      * @return 异常处理
      */
     @FunctionAlias("__std_exception_handler__")
-    public static Object exceptionHandler(MethodContext mc) throws Throwable {
-        Request request = mc.getRootVar($_REQUEST_$, Request.class);
-        Throwable th = mc.getRootVar($_THROWABLE_$, Throwable.class);
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
-        LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+    public static Object exceptionHandler(MethodContext mc,
+                                          Request request,
+                                          Throwable th,
+                                          @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                                          @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+    ) throws Throwable {
         return lifeCycleManager.exceptionHandler(mc, request, th, apiConfig);
     }
 

@@ -12,11 +12,7 @@ import io.github.lucklike.httpclient.discovery.HttpClient;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 标准的HTTP客户端
@@ -26,10 +22,10 @@ import java.lang.annotation.Target;
 @Inherited
 @ApiConfig
 @HttpRequest
-@HttpClient(func = "__get_http_server_url__", service = "#{__get_http_service_name__($mc$)}")
-@Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
-@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
-@ExceptionHandle(condition = "#{__std_enable_exception_handler__($mc$)}", excHandleExp = "#{__std_exception_handler__($mc$)}", exceptions = Throwable.class)
+@HttpClient(urlFunc = "__std_http_server_url__", serviceFunc = "__std_http_service_name__")
+@Mock(enableFunc = "__std_mock_enable__", mockFunc = "__std_mock_result__")
+@RespConvert(metaTypeFunc = "__std_response_meta_type__", resultFunc = "__std_result_convert__", respContentTypeFunc = "__std_response_content_type__")
+@ExceptionHandle(conditionFunc = "__std_enable_exception_handler__", handleFunc = "__std_exception_handler__", exceptions = Throwable.class)
 @SpELImport({GeneratedResponseJavaBeanFunction.class, StdHttpClientFunction.class})
 public @interface StdHttpClient {
 
