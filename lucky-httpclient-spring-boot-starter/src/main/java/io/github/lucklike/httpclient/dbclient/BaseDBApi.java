@@ -4,6 +4,7 @@ import com.luckyframework.common.ContainerUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import io.github.lucklike.httpclient.dbclient.annotation.SQL;
 import io.github.lucklike.httpclient.dbclient.function.EntityUtils;
+import io.github.lucklike.httpclient.dbclient.function.IdField;
 import io.github.lucklike.httpclient.dbclient.function.SQLFunctions;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.Lambda;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBuilder;
@@ -796,12 +797,15 @@ public interface BaseDBApi<E> {
      * @throws IllegalArgumentException 如果 entity 为 null 时抛出
      */
     default int insert(@NonNull E entity) {
-        EntityUtils.AutoIncrementField autoIncrementIdField = EntityUtils.getAutoIncrementIdField(entityClass());
-        if (autoIncrementIdField.hasAutoIncrementId()) {
+        IdField idField = EntityUtils.getAutoIncrementIdField(entityClass());
+        if (idField.isAutoIncrement()) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             int row = _insert_(entity, keyHolder);
-            autoIncrementIdField.setId(entity, keyHolder);
+            idField.setId(entity, keyHolder);
             return row;
+        } else if (!idField.isManualSettings()) {
+            idField.setId(entity);
+            return _insert_(entity, null);
         } else {
             return _insert_(entity, null);
         }
