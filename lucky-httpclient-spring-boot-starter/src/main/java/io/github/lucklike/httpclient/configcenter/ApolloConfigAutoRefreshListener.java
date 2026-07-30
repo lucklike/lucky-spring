@@ -51,7 +51,7 @@ public class ApolloConfigAutoRefreshListener implements InitializingBean {
                         // 发布 EnvironmentChangeEvent
                         applicationContext.publishEvent(new EnvironmentChangeEvent(changeEvent.changedKeys()));
                     });
-                    logger.info("[namespace={}] Apollo configuration listener has been registered successfully.", namespace);
+                    logger.info("[Namespace={}] Apollo configuration listener has been registered successfully.", namespace);
                 }
             }
         }
