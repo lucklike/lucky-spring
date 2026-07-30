@@ -23,7 +23,7 @@ import java.util.Map;
 public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
-     * 开启配置自动热刷新功能
+     * 开启配置自动热更新功能
      */
     private boolean enableConfigAutoRefresh = false;
 
@@ -203,9 +203,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
 
     /**
-     * 设置开启配置自动热刷新功能
+     * 设置开启配置自动热更新功能
      *
-     * @param enableConfigAutoRefresh 开启配置自动热刷新功能
+     * @param enableConfigAutoRefresh 开启配置自动热更新功能
      */
     public void setEnableConfigAutoRefresh(boolean enableConfigAutoRefresh) {
         this.enableConfigAutoRefresh = enableConfigAutoRefresh;
@@ -446,9 +446,9 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 是否开启配置自动热刷新功能
+     * 是否开启配置自动热更新功能
      *
-     * @return 开启配置自动热刷新功能
+     * @return 开启配置自动热更新功能
      */
     public boolean isEnableConfigAutoRefresh() {
         return enableConfigAutoRefresh;
