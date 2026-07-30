@@ -1225,7 +1225,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 Environment environment,
                 DualProxyObjectFactory dualProxyObjectFactory
         ) {
-            log.info("[🔥] GlobalConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+            log.info("[🔌]GlobalConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
                     GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
             return new GlobalConfigRefreshApplicationListener(environment, dualProxyObjectFactory);
         }
@@ -1235,7 +1235,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
         @ConditionalOnBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
         public DualProxyObjectFactory prototypeLuckyComponentProxyObjectFactory(@Qualifier("&" + PROXY_FACTORY_BEAN_NAME) FactoryBean<HttpClientProxyObjectFactory> factoryBean) {
-            log.info("[🔥] DualProxyObjectFactory bean [{}] initialized, delegating to prototype HttpClientProxyObjectFactory: {}",
+            log.info("[🔌] DualProxyObjectFactory bean [{}] initialized, delegating to prototype HttpClientProxyObjectFactory: {}",
                     LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
                     factoryBean.getClass().getSimpleName());
             return new DualProxyObjectFactory(() -> {
@@ -1252,7 +1252,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
         @ConditionalOnMissingBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
         public DualProxyObjectFactory singleLuckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
-            log.info("[🔥] DualProxyObjectFactory bean [{}] initialized, delegating to single HttpClientProxyObjectFactory: {}",
+            log.info("[🔌] DualProxyObjectFactory bean [{}] initialized, delegating to single HttpClientProxyObjectFactory: {}",
                     LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
                     httpClientProxyObjectFactory.getClass().getSimpleName());
             return new DualProxyObjectFactory(() -> httpClientProxyObjectFactory);
@@ -1265,7 +1265,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 ApplicationContext applicationContext,
                 DualProxyObjectFactory dualProxyObjectFactory
         ) {
-            log.info("[🔥] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+            log.info("[🔌] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
                     STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
             return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
         }
