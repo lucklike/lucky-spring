@@ -89,6 +89,7 @@ import io.github.lucklike.httpclient.config.impl.BeanSpELRuntimeFactoryFactory;
 import io.github.lucklike.httpclient.config.impl.LazyThreadPoolParam;
 import io.github.lucklike.httpclient.config.impl.SpecifiedInterfaceLoggerHandler;
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
+import io.github.lucklike.httpclient.configcenter.ApolloConfigAutoRefreshListener;
 import io.github.lucklike.httpclient.configcenter.GlobalConfigRefreshApplicationListener;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
@@ -145,6 +146,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static io.github.lucklike.httpclient.Constant.APOLLO_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_HTTP_CLIENT_V5_EXECUTOR_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.DEFAULT_JDK_EXECUTOR_BEAN_NAME;
@@ -1205,13 +1207,12 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 
     /**
      * SpringBoot 环境
-     * 1.需要自行导入rg.springframework.cloud:spring-cloud-context
-     * 2.执行实现对应配置中心的监听器
-     * 3.监听器逻辑中必须包含发布EnvironmentChangeEvent事件的逻辑
-     * <p>
-     * Spring Cloud 环境
-     * Nacos 会自动监听配置变化而且会发布EnvironmentChangeEvent事件
-     * Apollo 需要自行实现监听器
+     * <pre>
+     *      1.需要自行导入rg.springframework.cloud:spring-cloud-context
+     *      2.执行实现对应配置中心的监听器
+     *      3.监听器逻辑中必须包含发布EnvironmentChangeEvent事件的逻辑
+     * </pre>
+     *
      */
     @Role(ROLE_INFRASTRUCTURE)
     @ConditionalOnClass(name = {"org.springframework.cloud.context.environment.EnvironmentChangeEvent"})
@@ -1267,6 +1268,14 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             log.info("[🔥] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
                     STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
             return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
+        }
+
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = APOLLO_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME)
+        @ConditionalOnClass(name = {"com.ctrip.framework.apollo.ConfigChangeListener"})
+        public ApolloConfigAutoRefreshListener apolloConfigAutoRefreshListener(ApplicationContext applicationContext) {
+            return new ApolloConfigAutoRefreshListener(applicationContext);
         }
 
     }

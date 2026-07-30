@@ -46,6 +46,7 @@
         <spring-version>2.7.14</spring-version>
         <lucky-version>3.0.3</lucky-version>
         <spring-cloud>3.1.8</spring-cloud>
+        <apollo-client>2.2.0</apollo-client>
     </properties>
 
     <dependencies>
@@ -93,7 +94,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Validation api-->
+        <!-- Validation Api-->
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
@@ -101,10 +102,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <!--Spring JDBC-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
             <version>${spring-version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--Apollo Client-->
+        <dependency>
+            <groupId>com.ctrip.framework.apollo</groupId>
+            <artifactId>apollo-client-config-data</artifactId>
+            <version>${apollo-client}</version>
             <scope>provided</scope>
         </dependency>
 
