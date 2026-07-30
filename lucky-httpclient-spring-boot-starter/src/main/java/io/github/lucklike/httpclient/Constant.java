@@ -42,4 +42,5 @@ public class Constant {
 
     public static final String LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME = "__luckyComponentProxyObjectFactory__";
     public static final String STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME = "__stdConfigRefreshApplicationListener__";
+    public static final String GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME = "__globalConfigRefreshApplicationListener__";
 }

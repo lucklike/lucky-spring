@@ -1,4 +1,4 @@
-package io.github.lucklike.httpclient.config.mock;
+package io.github.lucklike.httpclient.std.mock;
 
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 

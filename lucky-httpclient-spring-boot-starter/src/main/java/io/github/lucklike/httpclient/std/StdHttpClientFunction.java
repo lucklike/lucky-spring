@@ -32,14 +32,20 @@ import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.mock.MockResult;
+import io.github.lucklike.httpclient.std.mock.MockResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.luckyframework.common.ContainerUtils.mergeCollection;
@@ -655,12 +661,12 @@ public class StdHttpClientFunction {
 
     }
 
-    private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.config.mock.WhenMockResult> _whenMockResults) {
+    private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.std.mock.WhenMockResult> _whenMockResults) {
         if (ContainerUtils.isEmptyCollection(_whenMockResults)) {
             return Collections.emptyList();
         }
         List<WhenMockResult> listResult = new ArrayList<>(_whenMockResults.size());
-        for (io.github.lucklike.httpclient.config.mock.WhenMockResult whenMockResult : _whenMockResults) {
+        for (io.github.lucklike.httpclient.std.mock.WhenMockResult whenMockResult : _whenMockResults) {
             WhenMockResult when = new WhenMockResult();
             BeanUtils.copyProperties(whenMockResult, when);
             listResult.add(when);
@@ -668,7 +674,7 @@ public class StdHttpClientFunction {
         return listResult;
     }
 
-    private static MockBody convertToMockBody(io.github.lucklike.httpclient.config.mock.MockBody _mockBody) {
+    private static MockBody convertToMockBody(io.github.lucklike.httpclient.std.mock.MockBody _mockBody) {
         MockBody mockBody = new MockBody();
         BeanUtils.copyProperties(_mockBody, mockBody);
         return mockBody;

@@ -14,6 +14,7 @@ import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,9 @@ public class StdConfigRefreshApplicationListener implements ApplicationListener<
         Set<String> changeKeys = event.getKeys();
         Set<Class<?>> needRefreshStdBeanClasses = new HashSet<>();
 
+        Environment environment = applicationContext.getEnvironment();
+        Set<String> changeKeyValueSet = new HashSet<>();
+
         // Detect changed keys
         for (String changeKey : changeKeys) {
             if (!changeKey.startsWith(STD_CONFIG_PREFIX)) {
@@ -63,13 +67,14 @@ public class StdConfigRefreshApplicationListener implements ApplicationListener<
             stdConfigMap.forEach((k, v) -> {
                 if (changeKey.startsWith(k)) {
                     needRefreshStdBeanClasses.add(v);
+                    changeKeyValueSet.add(String.format("%s=%s", changeKey, environment.getProperty(changeKey)));
                 }
             });
         }
 
         // Refresh proxy objects if needed
         if (ContainerUtils.isNotEmptyCollection(needRefreshStdBeanClasses)) {
-            logger.info("[🔄] Refreshing [{}] @StdHttpClient proxy(s) due to config changes: {}", needRefreshStdBeanClasses.size(),  needRefreshStdBeanClasses.stream().map(Class::getSimpleName).collect(Collectors.toList()));
+            logger.info("[🔄] Refreshing [{}] @StdHttpClient proxy(s) due to config changes: {}-[{}]", needRefreshStdBeanClasses.size(), needRefreshStdBeanClasses.stream().map(Class::getSimpleName).collect(Collectors.toList()), changeKeyValueSet);
 
             HttpClientProxyObjectFactory httpClientProxyObjectFactory = dualProxyObjectFactory.getHttpClientProxyObjectFactory();
             httpClientProxyObjectFactory.clearCacheProxyObject(needRefreshStdBeanClasses.toArray(new Class[0]));

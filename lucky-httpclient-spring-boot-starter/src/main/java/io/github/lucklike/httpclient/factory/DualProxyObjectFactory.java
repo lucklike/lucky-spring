@@ -15,40 +15,50 @@ import java.util.function.Supplier;
  * 双重代理的对象工厂
  */
 @SuppressWarnings("unchecked")
-public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory{
+public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory {
 
-    public final HttpClientProxyObjectFactory httpClientProxyObjectFactory;
+    public final Supplier<HttpClientProxyObjectFactory> httpClientProxyObjectFactorySupplier;
+    public HttpClientProxyObjectFactory httpClientProxyObjectFactory;
 
-    public DualProxyObjectFactory(HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
-        this.httpClientProxyObjectFactory = httpClientProxyObjectFactory;
+    public DualProxyObjectFactory(Supplier<HttpClientProxyObjectFactory> httpClientProxyObjectFactorySupplier) {
+        this.httpClientProxyObjectFactorySupplier = httpClientProxyObjectFactorySupplier;
     }
 
-    public HttpClientProxyObjectFactory getHttpClientProxyObjectFactory() {
+    public synchronized HttpClientProxyObjectFactory getHttpClientProxyObjectFactory() {
+        if (httpClientProxyObjectFactory == null) {
+            httpClientProxyObjectFactory = httpClientProxyObjectFactorySupplier.get();
+        }
         return httpClientProxyObjectFactory;
+    }
+
+    public synchronized void clearHttpClientProxyObjectFactoryInstance(boolean needShutdown) {
+        if  (needShutdown && httpClientProxyObjectFactory != null) {
+            httpClientProxyObjectFactory.shutdown();
+        }
+        httpClientProxyObjectFactory = null;
     }
 
 
     public <T> T getProxyObject(Class<T> clazz) {
-        httpClientProxyObjectFactory.getProxyObject(clazz);
-        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getProxyObject(clazz)));
+        getHttpClientProxyObjectFactory().getProxyObject(clazz);
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> getHttpClientProxyObjectFactory().getProxyObject(clazz)));
     }
 
     @Override
     public <T> T getCglibProxyObject(Class<T> clazz) {
-        httpClientProxyObjectFactory.getCglibProxyObject(clazz);
-        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getCglibProxyObject(clazz)));
+        getHttpClientProxyObjectFactory().getCglibProxyObject(clazz);
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> getHttpClientProxyObjectFactory().getCglibProxyObject(clazz)));
     }
 
     @Override
     public <T> T getJdkProxyObject(Class<T> clazz) {
-        httpClientProxyObjectFactory.getJdkProxyObject(clazz);
-        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> httpClientProxyObjectFactory.getJdkProxyObject(clazz)));
+        getHttpClientProxyObjectFactory().getJdkProxyObject(clazz);
+        return (T) ProxyFactory.getCglibProxyObject(clazz, Enhancer::create, new HttpClientProxyMethodInterceptor(() -> getHttpClientProxyObjectFactory().getJdkProxyObject(clazz)));
     }
 
     public void shutdown() {
-        httpClientProxyObjectFactory.shutdown();
+        getHttpClientProxyObjectFactory().shutdown();
     }
-
 
     static class HttpClientProxyMethodInterceptor implements MethodInterceptor {
         public final Supplier<Object> proxyObjectSupplier;

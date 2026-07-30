@@ -10,7 +10,7 @@ import com.luckyframework.httpclient.proxy.configapi.parse.RetryConfiguration;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeConfiguration;
-import io.github.lucklike.httpclient.config.mock.MockResult;
+import io.github.lucklike.httpclient.std.mock.MockResult;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.ResolvableType;
 

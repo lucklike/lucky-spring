@@ -22,6 +22,10 @@ import java.util.Map;
  */
 public class HttpClientProxyObjectFactoryConfiguration {
 
+    /**
+     * 开启配置自动热刷新功能
+     */
+    private boolean enableConfigAutoRefresh = false;
 
     /**
      * 对象创建器工厂
@@ -196,6 +200,16 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
+
+
+    /**
+     * 设置开启配置自动热刷新功能
+     *
+     * @param enableConfigAutoRefresh 开启配置自动热刷新功能
+     */
+    public void setEnableConfigAutoRefresh(boolean enableConfigAutoRefresh) {
+        this.enableConfigAutoRefresh = enableConfigAutoRefresh;
+    }
 
     /**
      * 设置{@link ObjectCreatorFactory 对象创建器工厂}
@@ -430,6 +444,15 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
+
+    /**
+     * 是否开启配置自动热刷新功能
+     *
+     * @return 开启配置自动热刷新功能
+     */
+    public boolean isEnableConfigAutoRefresh() {
+        return enableConfigAutoRefresh;
+    }
 
     /**
      * 获取{@link ObjectCreatorFactory 对象创建器工厂}
