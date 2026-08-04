@@ -57,7 +57,7 @@ public class StdConfigRefreshApplicationListener implements ApplicationListener<
         Set<Class<?>> needRefreshStdBeanClasses = new HashSet<>();
 
         Environment environment = applicationContext.getEnvironment();
-        Set<String> changeKeyValueSet = new HashSet<>();
+        Set<String> changeKeySet = new HashSet<>();
 
         // Detect changed keys
         for (String changeKey : changeKeys) {
@@ -67,19 +67,19 @@ public class StdConfigRefreshApplicationListener implements ApplicationListener<
             stdConfigMap.forEach((k, v) -> {
                 if (changeKey.startsWith(k)) {
                     needRefreshStdBeanClasses.add(v);
-                    changeKeyValueSet.add(String.format("%s=%s", changeKey, environment.getProperty(changeKey)));
+                    changeKeySet.add(changeKey);
                 }
             });
         }
 
         // Refresh proxy objects if needed
         if (ContainerUtils.isNotEmptyCollection(needRefreshStdBeanClasses)) {
-            logger.info("[🔄] Refreshing [{}] @StdHttpClient proxy(s) due to config changes: {}-[{}]", needRefreshStdBeanClasses.size(), needRefreshStdBeanClasses.stream().map(Class::getSimpleName).collect(Collectors.toList()), changeKeyValueSet);
+            logger.info("[🔄][🎯] Refreshing [{}] @StdHttpClient proxy(s) due to config changes: {}-[{}]", needRefreshStdBeanClasses.size(), needRefreshStdBeanClasses.stream().map(Class::getSimpleName).collect(Collectors.toList()), changeKeySet);
 
             HttpClientProxyObjectFactory httpClientProxyObjectFactory = dualProxyObjectFactory.getHttpClientProxyObjectFactory();
             httpClientProxyObjectFactory.clearCacheProxyObject(needRefreshStdBeanClasses.toArray(new Class[0]));
 
-            logger.info("[✅] StdHttpClient proxy cache cleared successfully");
+            logger.info("[✅][🎯] StdHttpClient proxy cache cleared successfully");
         }
     }
 

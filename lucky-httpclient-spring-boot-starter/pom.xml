@@ -47,6 +47,7 @@
         <lucky-version>3.0.3</lucky-version>
         <spring-cloud>3.1.8</spring-cloud>
         <apollo-client>2.2.0</apollo-client>
+        <nacos-client>0.2.12</nacos-client>
     </properties>
 
     <dependencies>
@@ -115,6 +116,14 @@
             <groupId>com.ctrip.framework.apollo</groupId>
             <artifactId>apollo-client-config-data</artifactId>
             <version>${apollo-client}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--Nacos Client-->
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>nacos-config-spring-boot-starter</artifactId>
+            <version>${nacos-client}</version>
             <scope>provided</scope>
         </dependency>
 

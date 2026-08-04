@@ -23,7 +23,7 @@ import java.util.Map;
 public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
-     * 开启配置自动热更新功能
+     * 开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
      */
     private boolean enableConfigAutoRefresh = false;
 
@@ -203,7 +203,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
 
 
     /**
-     * 设置开启配置自动热更新功能
+     * 设置开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
      *
      * @param enableConfigAutoRefresh 开启配置自动热更新功能
      */
@@ -446,7 +446,7 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
 
     /**
-     * 是否开启配置自动热更新功能
+     * 是否开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
      *
      * @return 开启配置自动热更新功能
      */

@@ -91,6 +91,7 @@ import io.github.lucklike.httpclient.config.impl.SpecifiedInterfaceLoggerHandler
 import io.github.lucklike.httpclient.configapi.SpringEnvironmentConfigurationSource;
 import io.github.lucklike.httpclient.configcenter.ApolloConfigAutoRefreshListener;
 import io.github.lucklike.httpclient.configcenter.GlobalConfigRefreshApplicationListener;
+import io.github.lucklike.httpclient.configcenter.NacosConfigAutoRefreshListener;
 import io.github.lucklike.httpclient.convert.HttpExecutorFactoryInstanceConverter;
 import io.github.lucklike.httpclient.convert.InitBindParameterConvert;
 import io.github.lucklike.httpclient.convert.ObjectCreatorFactoryInstanceConverter;
@@ -126,7 +127,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.NonNull;
 
@@ -156,6 +156,7 @@ import static io.github.lucklike.httpclient.Constant.DESTROY_METHOD;
 import static io.github.lucklike.httpclient.Constant.GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.INIT_BIND_PARAMETER_CONVERT;
 import static io.github.lucklike.httpclient.Constant.LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME;
+import static io.github.lucklike.httpclient.Constant.NACOS_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 import static io.github.lucklike.httpclient.Constant.SIMPLE_HTTP_EXECUTOR;
@@ -1221,21 +1222,31 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Role(ROLE_INFRASTRUCTURE)
         @Bean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
         @ConditionalOnProperty(name = "lucky.http-client.enable-config-auto-refresh")
-        public GlobalConfigRefreshApplicationListener globalConfigRefreshApplicationListener(
-                Environment environment,
+        public GlobalConfigRefreshApplicationListener globalConfigRefreshApplicationListener(DualProxyObjectFactory dualProxyObjectFactory) {
+            log.info("[🎧] GlobalConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+                    GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
+            return new GlobalConfigRefreshApplicationListener(dualProxyObjectFactory);
+        }
+
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(name = STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
+        @ConditionalOnMissingBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
+        public StdConfigRefreshApplicationListener stdConfigRefreshApplicationListener(
+                ApplicationContext applicationContext,
                 DualProxyObjectFactory dualProxyObjectFactory
         ) {
-            log.info("[🔌]GlobalConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
-                    GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
-            return new GlobalConfigRefreshApplicationListener(environment, dualProxyObjectFactory);
+            log.info("[🎧][🎯]StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
+                    STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
+            return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
         }
+
 
         @Primary
         @Role(ROLE_INFRASTRUCTURE)
         @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
         @ConditionalOnBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
         public DualProxyObjectFactory prototypeLuckyComponentProxyObjectFactory(@Qualifier("&" + PROXY_FACTORY_BEAN_NAME) FactoryBean<HttpClientProxyObjectFactory> factoryBean) {
-            log.info("[🔌] DualProxyObjectFactory bean [{}] initialized, delegating to prototype HttpClientProxyObjectFactory: {}",
+            log.info("[🎧] DualProxyObjectFactory bean [{}] initialized, delegating to prototype HttpClientProxyObjectFactory: {}",
                     LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
                     factoryBean.getClass().getSimpleName());
             return new DualProxyObjectFactory(() -> {
@@ -1252,24 +1263,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
         @Bean(name = LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME, destroyMethod = DESTROY_METHOD)
         @ConditionalOnMissingBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
         public DualProxyObjectFactory singleLuckyComponentProxyObjectFactory(@Qualifier(PROXY_FACTORY_BEAN_NAME) HttpClientProxyObjectFactory httpClientProxyObjectFactory) {
-            log.info("[🔌] DualProxyObjectFactory bean [{}] initialized, delegating to single HttpClientProxyObjectFactory: {}",
+            log.info("[🎧] DualProxyObjectFactory bean [{}] initialized, delegating to single HttpClientProxyObjectFactory: {}",
                     LUCKY_COMPONENT_PROXY_OBJECT_FACTORY_BEAN_NAME,
                     httpClientProxyObjectFactory.getClass().getSimpleName());
             return new DualProxyObjectFactory(() -> httpClientProxyObjectFactory);
         }
-
-        @Role(ROLE_INFRASTRUCTURE)
-        @Bean(name = STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
-        @ConditionalOnMissingBean(name = GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME)
-        public StdConfigRefreshApplicationListener stdConfigRefreshApplicationListener(
-                ApplicationContext applicationContext,
-                DualProxyObjectFactory dualProxyObjectFactory
-        ) {
-            log.info("[🔌] StdConfigRefreshApplicationListener bean [{}] registered, listening for environment change events (EnvironmentChangeEvent)",
-                    STD_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME);
-            return new StdConfigRefreshApplicationListener(applicationContext, dualProxyObjectFactory);
-        }
-
 
         @Role(ROLE_INFRASTRUCTURE)
         @Bean(name = APOLLO_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME)
@@ -1278,6 +1276,17 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             return new ApolloConfigAutoRefreshListener(applicationContext);
         }
 
+        @Role(ROLE_INFRASTRUCTURE)
+        @Bean(NACOS_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME)
+        @ConditionalOnClass(name = {
+                "com.alibaba.nacos.api.config.ConfigService",
+                "com.alibaba.boot.nacos.config.properties.NacosConfigProperties"
+        })
+        public NacosConfigAutoRefreshListener nacosConfigAutoRefreshListener(
+                ApplicationContext applicationContext
+        ) {
+            return new NacosConfigAutoRefreshListener(applicationContext);
+        }
     }
 
 

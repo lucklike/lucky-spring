@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.Environment;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,16 +27,13 @@ public class GlobalConfigRefreshApplicationListener implements ApplicationListen
     private static final String LUCKY_CONFIG_THREAD_POOL_PREFIX = "lucky.http-client.thread-pool";
 
     private final DualProxyObjectFactory dualProxyObjectFactory;
-    private final Environment environment;
 
     /**
      * 构造函数
      *
-     * @param environment            环境变量
      * @param dualProxyObjectFactory 代理对象工厂类
      */
-    public GlobalConfigRefreshApplicationListener(Environment environment, DualProxyObjectFactory dualProxyObjectFactory) {
-        this.environment = environment;
+    public GlobalConfigRefreshApplicationListener(DualProxyObjectFactory dualProxyObjectFactory) {
         this.dualProxyObjectFactory = dualProxyObjectFactory;
     }
 
@@ -47,10 +43,10 @@ public class GlobalConfigRefreshApplicationListener implements ApplicationListen
 
         // HttpClient相关配置变更
         boolean needShutdown = false;
-        Set<String> httpClientKeyValueSet = new HashSet<>();
+        Set<String> httpClientKeySet = new HashSet<>();
         for (String changeKey : changeKeys) {
             if (changeKey.startsWith(LUCKY_CONFIG_PREFIX)) {
-                httpClientKeyValueSet.add(String.format("%s=%s", changeKey, environment.getProperty(changeKey)));
+                httpClientKeySet.add(changeKey);
             }
             if (changeKey.startsWith(LUCKY_CONFIG_THREAD_POOL_PREFIX)) {
                 needShutdown = true;
@@ -58,8 +54,8 @@ public class GlobalConfigRefreshApplicationListener implements ApplicationListen
         }
 
         // Refresh proxy objects if needed
-        if (ContainerUtils.isNotEmptyCollection(httpClientKeyValueSet)) {
-            logger.info("[🔄] Refreshing HttpClientProxyObjectFactory due to config changes: {}, need-shutdown={}", httpClientKeyValueSet, needShutdown);
+        if (ContainerUtils.isNotEmptyCollection(httpClientKeySet)) {
+            logger.info("[🔄] Refreshing HttpClientProxyObjectFactory due to config changes: {}, need-shutdown={}", httpClientKeySet, needShutdown);
             dualProxyObjectFactory.clearHttpClientProxyObjectFactoryInstance(needShutdown);
             logger.info("[✅] HttpClientProxyObjectFactory refresh successful.");
         }

@@ -45,4 +45,5 @@ public class Constant {
     public static final String GLOBAL_CONFIG_REFRESH_APPLICATION_LISTENER_BEAN_NAME = "__globalConfigRefreshApplicationListener__";
 
     public static final String APOLLO_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME = "__apolloConfigAutoRefreshListener__";
+    public static final String NACOS_CONFIG_AUTO_REFRESH_LISTENER_BEAN_NAME = "__nacosConfigAutoRefreshListener__";
 }
