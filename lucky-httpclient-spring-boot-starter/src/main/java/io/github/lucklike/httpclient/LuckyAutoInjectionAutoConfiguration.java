@@ -7,11 +7,11 @@ import io.github.lucklike.httpclient.injection.parameter.HttpReferenceParameterI
 import io.github.lucklike.httpclient.injection.parameter.ParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.QualifierParameterInstanceFactory;
 import io.github.lucklike.httpclient.injection.parameter.ValueParameterInstanceFactory;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
-@Configuration
+@AutoConfiguration
 public class LuckyAutoInjectionAutoConfiguration {
 
     //---------------------------------------------------------------------------------------------------------

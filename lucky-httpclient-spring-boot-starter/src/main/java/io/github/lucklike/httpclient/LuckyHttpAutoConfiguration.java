@@ -113,6 +113,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -122,7 +123,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Role;
 import org.springframework.context.support.ConversionServiceFactoryBean;
@@ -175,7 +175,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRA
  * @version 1.0.0
  * @date 2023/8/30 03:35
  */
-@Configuration
+@AutoConfiguration
 @Role(ROLE_INFRASTRUCTURE)
 public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
 

@@ -1,11 +1,11 @@
 package io.github.lucklike.httpclient.configcenter;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.properties.ConfigurationPropertiesBeans;
 import org.springframework.cloud.context.properties.ConfigurationPropertiesRebinder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
 
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
@@ -17,7 +17,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRA
  * @version 1.0.0
  * @date 2026/7/5 02:03
  */
-@Configuration
+@AutoConfiguration
 public class ConfigurationPropertiesAutoRefreshConfiguration {
 
 
