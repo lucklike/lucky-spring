@@ -23,11 +23,6 @@ import java.util.Map;
 public class HttpClientProxyObjectFactoryConfiguration {
 
     /**
-     * 开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
-     */
-    private boolean enableConfigAutoRefresh = false;
-
-    /**
      * 对象创建器工厂
      */
     private ObjectCreatorFactory objectCreatorFactory;
@@ -200,16 +195,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Setter methods
     //------------------------------------------------------------------------------------------------
-
-
-    /**
-     * 设置开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
-     *
-     * @param enableConfigAutoRefresh 开启配置自动热更新功能
-     */
-    public void setEnableConfigAutoRefresh(boolean enableConfigAutoRefresh) {
-        this.enableConfigAutoRefresh = enableConfigAutoRefresh;
-    }
 
     /**
      * 设置{@link ObjectCreatorFactory 对象创建器工厂}
@@ -444,15 +429,6 @@ public class HttpClientProxyObjectFactoryConfiguration {
     //------------------------------------------------------------------------------------------------
     //                                Getter methods
     //------------------------------------------------------------------------------------------------
-
-    /**
-     * 是否开启配置自动热更新功能，此功能只有在 Spring Cloud 环境下才会生效
-     *
-     * @return 开启配置自动热更新功能
-     */
-    public boolean isEnableConfigAutoRefresh() {
-        return enableConfigAutoRefresh;
-    }
 
     /**
      * 获取{@link ObjectCreatorFactory 对象创建器工厂}

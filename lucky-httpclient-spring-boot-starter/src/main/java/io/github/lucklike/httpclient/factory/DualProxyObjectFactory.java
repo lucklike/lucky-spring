@@ -9,6 +9,8 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -31,13 +33,18 @@ public class DualProxyObjectFactory implements LuckyComponentProxyObjectFactory 
         return httpClientProxyObjectFactory;
     }
 
-    public synchronized void clearHttpClientProxyObjectFactoryInstance(boolean needShutdown) {
-        if  (needShutdown && httpClientProxyObjectFactory != null) {
-            httpClientProxyObjectFactory.shutdown();
+    public synchronized void initHttpClientProxyObjectFactoryLoadProxyCache(boolean needShutdown) {
+        if (httpClientProxyObjectFactory != null) {
+            Set<Class<?>> jdkProxyObjectClasses = new HashSet<>(httpClientProxyObjectFactory.getAllJdkProxyObjectClasses());
+            Set<Class<?>> cglibProxyObjectClasses = new HashSet<>(httpClientProxyObjectFactory.getCglibProxyObjectClasses());
+            if (needShutdown) {
+                httpClientProxyObjectFactory.shutdown();
+            }
+            httpClientProxyObjectFactory = httpClientProxyObjectFactorySupplier.get();
+            jdkProxyObjectClasses.forEach(httpClientProxyObjectFactory::getJdkProxyObject);
+            cglibProxyObjectClasses.forEach(httpClientProxyObjectFactory::getCglibProxyObject);
         }
-        httpClientProxyObjectFactory = null;
     }
-
 
     public <T> T getProxyObject(Class<T> clazz) {
         getHttpClientProxyObjectFactory().getProxyObject(clazz);
