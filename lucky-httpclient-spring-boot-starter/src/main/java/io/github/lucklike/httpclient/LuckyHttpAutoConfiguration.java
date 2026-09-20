@@ -21,7 +21,7 @@ import com.luckyframework.httpclient.core.ssl.SSLException;
 import com.luckyframework.httpclient.core.ssl.SSLSocketFactoryFactory;
 import com.luckyframework.httpclient.core.ssl.SSLUtils;
 import com.luckyframework.httpclient.core.ssl.TrustAllHostnameVerifier;
-import com.luckyframework.httpclient.generalapi.plugin.ValidationPlugin;
+import com.luckyframework.httpclient.generalapi.plugin.validator.ValidationPlugin;
 import com.luckyframework.httpclient.proxy.HttpClientProxyObjectFactory;
 import com.luckyframework.httpclient.proxy.async.Model;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationApiFunctionalSupport;
