@@ -2,6 +2,8 @@ package io.github.lucklike.httpclient.cache;
 
 import com.luckyframework.httpclient.generalapi.plugin.cache.CachePluginMeta;
 import com.luckyframework.httpclient.generalapi.plugin.cache.CachePluginProhibition;
+import com.luckyframework.httpclient.proxy.SpELVariableNote;
+import com.luckyframework.reflect.Combination;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -39,7 +41,16 @@ import java.lang.annotation.Target;
 @Documented
 @Inherited
 @CachePluginMeta(cache = RedisCacheImpl.class)
+@Combination({CachePluginMeta.class})
 public @interface RedisCache {
+
+    /**
+     * 决定是否启用当前插件的SpEL表达式，表达式结果必须是{@code boolean}类型
+     *
+     * @see SpELVariableNote
+     */
+    @AliasFor(annotation = CachePluginMeta.class, attribute = "enable")
+    String enable() default "";
 
     /**
      * 用于缓存的Redis Key，必须要手动指定，支持SpEL表达式
