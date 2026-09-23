@@ -5,6 +5,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.core.util.BeanUtils;
+import com.luckyframework.httpclient.generalapi.plugin.cache.CachePluginMeta;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
@@ -419,6 +420,64 @@ public class StdHttpClientFunction {
     }
 
     /**
+     * 获取当前API的缓存配置
+     *
+     * @param mc 方法上下文
+     * @return 当前API的缓存配置，未配置时返回{@code null}
+     */
+    public static CacheConfig getCacheConfig(MethodContext mc) {
+        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        return apiConfig.getCacheConfig();
+    }
+
+    /**
+     * 获取缓存功能启用状态的函数，对应{@link CachePluginMeta CachePluginMeta#enable()}，
+     * 未启用缓存时缓存插件不会被注册
+     *
+     * @param mc 方法上下文
+     * @return 是否启用缓存功能
+     */
+    @FunctionAlias("__std_cache_enable__")
+    public static boolean stdCacheEnable(MethodContext mc) {
+        return isCacheEnable(getCacheConfig(mc));
+    }
+
+    /**
+     * 获取缓存Key的函数，对应{@link CachePluginMeta CachePluginMeta#key()}
+     *
+     * @param mc 方法上下文
+     * @return 缓存Key
+     */
+    @FunctionAlias("__std_cache_key__")
+    public static String stdCacheKey(MethodContext mc) {
+        CacheConfig cacheConfig = getCacheConfig(mc);
+        String key = cacheConfig == null ? null : cacheConfig.getKey();
+        if (!StringUtils.hasText(key)) {
+            throw new ConfigurationParserException(
+                    "@StdHttpClient('{0}')[{1}] Cache is enabled, but the cache key is not configured! Please configure it through 'lucky.http-client.standard-client-configs.{0}.cache-config.key' or the method-level cache configuration",
+                    CommonFunctions.getApiConfigId(mc.getClassContext()),
+                    mc.getCurrentAnnotatedElement().toString()
+            ).error(logger);
+        }
+        return mc.parseExpression(key, String.class);
+    }
+
+    /**
+     * 获取缓存过期时间的函数，对应{@link CachePluginMeta CachePluginMeta#expires()}
+     *
+     * @param mc 方法上下文
+     * @return 缓存过期时间，单位：毫秒，小于0时表示永不过期
+     */
+    @FunctionAlias("__std_cache_expires__")
+    public static long stdCacheExpires(MethodContext mc) {
+        CacheConfig cacheConfig = getCacheConfig(mc);
+        if (cacheConfig == null || !StringUtils.hasText(cacheConfig.getExpires())) {
+            return -1L;
+        }
+        return mc.parseExpression(cacheConfig.getExpires(), long.class);
+    }
+
+    /**
      * 是否启用异常处理
      *
      * @param apiConfig 当前HTTP客户端的配置
@@ -599,6 +658,7 @@ public class StdHttpClientFunction {
         apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
         apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
         apiConfig.setGenerateResponseJavaBean(nullReturnDefault(methodConfig.getGenerateResponseJavaBean(), config.getGenerateResponseJavaBean()));
+        apiConfig.setCacheConfig(mergeCacheConfig(config.getCacheConfig(), methodConfig.getCacheConfig()));
         apiConfig.setSpelImport(methodConfig.getSpelImport());
         apiConfig.setMethodMetaSpelImport(methodConfig.getMethodMetaSpelImport());
 
@@ -678,6 +738,39 @@ public class StdHttpClientFunction {
         MockBody mockBody = new MockBody();
         BeanUtils.copyProperties(_mockBody, mockBody);
         return mockBody;
+    }
+
+    /**
+     * 合并缓存配置
+     *
+     * @param cc 类级别缓存配置
+     * @param mc 方法级别缓存配置
+     * @return 合并后的缓存配置
+     */
+    private static CacheConfig mergeCacheConfig(CacheConfig cc, CacheConfig mc) {
+        if (mc == null) {
+            return cc;
+        }
+        if (cc == null) {
+            return mc;
+        }
+        CacheConfig cacheConfig = new CacheConfig();
+        cacheConfig.setEnable(nullReturnDefault(mc.getEnable(), cc.getEnable()));
+        cacheConfig.setType(nullReturnDefault(mc.getType(), cc.getType()));
+        cacheConfig.setKey(blankReturnDefault(mc.getKey(), cc.getKey()));
+        cacheConfig.setExpires(blankReturnDefault(mc.getExpires(), cc.getExpires()));
+        cacheConfig.setRedisTemplateBeanName(blankReturnDefault(mc.getRedisTemplateBeanName(), cc.getRedisTemplateBeanName()));
+        return cacheConfig;
+    }
+
+    /**
+     * 是否开启了缓存功能
+     *
+     * @param cacheConfig 缓存配置
+     * @return 是否开启了缓存功能
+     */
+    private static boolean isCacheEnable(CacheConfig cacheConfig) {
+        return cacheConfig != null && Objects.equals(Boolean.TRUE, cacheConfig.getEnable());
     }
 
     /**

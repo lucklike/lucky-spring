@@ -200,6 +200,12 @@ public class StandardApiConfiguration {
     private MockResult mockConfig;
 
     /**
+     * 缓存相关配置
+     */
+    @NestedConfigurationProperty
+    private CacheConfig cacheConfig;
+
+    /**
      * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
      */
     @NestedConfigurationProperty
@@ -796,6 +802,24 @@ public class StandardApiConfiguration {
      */
     public void setMockConfig(MockResult mockConfig) {
         this.mockConfig = mockConfig;
+    }
+
+    /**
+     * 获取缓存相关配置
+     *
+     * @return 缓存相关配置
+     */
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    /**
+     * 设置缓存相关配置
+     *
+     * @param cacheConfig 缓存相关配置
+     */
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
     }
 
     /**
