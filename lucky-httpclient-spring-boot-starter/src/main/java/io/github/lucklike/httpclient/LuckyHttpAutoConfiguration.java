@@ -649,7 +649,7 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
             plaLoggerHandler.addCommonMaskers(maskerSetMap);
 
             // 开启常用字段无关的裸值脱敏（手机号、身份证、邮箱、Basic认证、JWT），该配置全局生效、重复调用幂等
-            if (loggerConfig.isEnableCommonValueMaskers()) {
+            if (maskers.isEnableCommonValueMaskers()) {
                 DataMasker.enableCommonValueMaskers();
             }
         }
