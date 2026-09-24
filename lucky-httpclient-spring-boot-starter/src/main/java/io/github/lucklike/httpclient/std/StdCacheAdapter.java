@@ -21,12 +21,16 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
  * <p>缓存插件是否需要注册由{@link CachePluginMeta CachePluginMeta#enable()}控制，缓存功能未启用时本适配器不会被调用；
  * 适配器通过{@link CacheConfig @StdHttpClient缓存配置}来决定使用哪种缓存实现：
  * <pre>
- *     1.{@link CacheType#MEMORY}：委托给{@link MemoryCacheImpl}实现（默认）
+ *     1.{@link CacheType#MEMORY}：委托给{@link StdMemoryCache}实现（默认）
  *     2.{@link CacheType#REDIS} ：委托给{@link RedisCacheImpl}实现
  * </pre>
  *
  * <p>每次读写缓存前都会重新读取最新的缓存配置，因此可以配合配置刷新机制动态调整缓存行为；
  * 缓存key为空时不会执行真正的缓存读写操作
+ *
+ * <p>{@link CacheType#MEMORY}类型缓存基于{@link MemoryCacheImpl}实现，容量以及保存目录通过
+ * {@link CacheConfig#getMemoryCapacity()}与{@link CacheConfig#getMemorySaveDir()}配置（均支持SpEL表达式），
+ * 内存缓存配置相同的接口会共享同一个缓存实例
  *
  * <p>{@link CacheType#REDIS}类型缓存使用的{@code RedisTemplate}的解析规则：
  * <pre>
@@ -47,9 +51,10 @@ public class StdCacheAdapter implements ICache {
     private static final String DEFAULT_REDIS_CACHE_KEY = "DEFAULT";
 
     /**
-     * 进程内缓存实现
+     * 内存缓存实现的集合，key由容量以及保存目录的配置值生成，
+     * 内存缓存配置相同的接口共享同一个缓存实例
      */
-    private final ICache memoryCache = new MemoryCacheImpl();
+    private final Map<String, StdMemoryCache> memoryCacheMap = new ConcurrentHashMap<>(2);
 
     /**
      * Redis缓存实现集合，key为配置的{@code RedisTemplate}的Bean名称，
@@ -121,7 +126,30 @@ public class StdCacheAdapter implements ICache {
         CacheConfig cacheConfig = StdHttpClientFunction.getCacheConfig(mc);
         return cacheConfig != null && cacheConfig.getType() == CacheType.REDIS
                 ? getRedisCache(mc, cacheConfig)
-                : memoryCache;
+                : getMemoryCache(mc, cacheConfig);
+    }
+
+    /**
+     * 获取{@link CacheType#MEMORY}类型缓存对应的缓存实现，
+     * 使用容量以及保存目录的配置值作为缓存实例的标识，配置相同的接口共享同一个缓存实例
+     *
+     * @param mc          方法上下文
+     * @param cacheConfig 缓存配置，未配置时使用默认配置（不限制容量、不保存到磁盘）
+     * @return 内存缓存实现
+     */
+    private ICache getMemoryCache(MethodContext mc, CacheConfig cacheConfig) {
+        String capacityExpression = cacheConfig == null ? null : cacheConfig.getMemoryCapacity();
+        String saveDirExpression = cacheConfig == null ? null : cacheConfig.getMemorySaveDir();
+
+        long capacity = StringUtils.hasText(capacityExpression)
+                ? mc.parseExpression(capacityExpression, long.class)
+                : -1L;
+        String saveDir = StringUtils.hasText(saveDirExpression)
+                ? blankReturnDefault(mc.parseExpression(saveDirExpression, String.class), "")
+                : "";
+
+        String cacheKey = capacity + "|" + saveDir;
+        return memoryCacheMap.computeIfAbsent(cacheKey, _k -> new StdMemoryCache(capacity, saveDir));
     }
 
     /**

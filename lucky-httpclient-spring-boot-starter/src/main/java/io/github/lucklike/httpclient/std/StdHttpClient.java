@@ -19,7 +19,7 @@ import java.lang.annotation.*;
  * 标准的HTTP客户端
  *
  * <p>支持通过配置为接口开启缓存功能，缓存是否启用、使用哪种缓存实现以及缓存key、
- * 过期时间等参数均通过{@link CacheConfig 缓存配置}来控制
+ * 过期时间、容量、持久化目录等参数均通过{@link CacheConfig 缓存配置}来控制
  *
  * @see CacheConfig
  */

@@ -760,6 +760,8 @@ public class StdHttpClientFunction {
         cacheConfig.setKey(blankReturnDefault(mc.getKey(), cc.getKey()));
         cacheConfig.setExpires(blankReturnDefault(mc.getExpires(), cc.getExpires()));
         cacheConfig.setRedisTemplateBeanName(blankReturnDefault(mc.getRedisTemplateBeanName(), cc.getRedisTemplateBeanName()));
+        cacheConfig.setMemoryCapacity(blankReturnDefault(mc.getMemoryCapacity(), cc.getMemoryCapacity()));
+        cacheConfig.setMemorySaveDir(blankReturnDefault(mc.getMemorySaveDir(), cc.getMemorySaveDir()));
         return cacheConfig;
     }
 

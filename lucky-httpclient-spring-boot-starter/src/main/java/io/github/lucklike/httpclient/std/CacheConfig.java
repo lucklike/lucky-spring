@@ -23,9 +23,14 @@ package io.github.lucklike.httpclient.std;
  *             url: https://gitee.com/api/v5
  *             cache-config:
  *               enable: true
- *               type: redis
+ *               type: memory
  *               key: "gitee:user:#{#id}"
  *               expires: "60000"
+ *               # 【MEMORY类型缓存专属配置】
+ *               memory-capacity: "1000"
+ *               memory-save-dir: "D:/cache/gitee"
+ *               # 【REDIS类型缓存专属配置】
+ *               redis-template-bean-name: "giteeRedisTemplate"
  *             method-configs:
  *               getUsers:
  *                 cache-config:
@@ -63,6 +68,19 @@ public class CacheConfig {
      * 未配置时使用默认规则解析，详见{@link StdCacheAdapter}的说明
      */
     private String redisTemplateBeanName;
+
+    /**
+     * {@link CacheType#MEMORY}类型缓存的最大容量（支持SpEL表达式），
+     * 小于等于0时表示不限制容量，缓存条目数超过容量时会按最近最少使用(LRU)策略淘汰数据
+     */
+    private String memoryCapacity;
+
+    /**
+     * {@link CacheType#MEMORY}类型缓存数据保存的目录（支持SpEL表达式），
+     * 未配置时表示不保存到磁盘；配置该目录后，缓存数据会被持久化到该目录中，
+     * 应用启动后首次访问时会自动从磁盘恢复数据
+     */
+    private String memorySaveDir;
 
     /**
      * 是否开启缓存功能
@@ -152,5 +170,45 @@ public class CacheConfig {
      */
     public void setRedisTemplateBeanName(String redisTemplateBeanName) {
         this.redisTemplateBeanName = redisTemplateBeanName;
+    }
+
+    /**
+     * {@link CacheType#MEMORY}类型缓存的最大容量（支持SpEL表达式），
+     * 小于等于0时表示不限制容量
+     *
+     * @return 内存缓存的最大容量
+     */
+    public String getMemoryCapacity() {
+        return memoryCapacity;
+    }
+
+    /**
+     * 设置{@link CacheType#MEMORY}类型缓存的最大容量（支持SpEL表达式），
+     * 小于等于0时表示不限制容量
+     *
+     * @param memoryCapacity 内存缓存的最大容量
+     */
+    public void setMemoryCapacity(String memoryCapacity) {
+        this.memoryCapacity = memoryCapacity;
+    }
+
+    /**
+     * {@link CacheType#MEMORY}类型缓存数据保存的目录（支持SpEL表达式），
+     * 未配置时表示不保存到磁盘
+     *
+     * @return 内存缓存数据保存的目录
+     */
+    public String getMemorySaveDir() {
+        return memorySaveDir;
+    }
+
+    /**
+     * 设置{@link CacheType#MEMORY}类型缓存数据保存的目录（支持SpEL表达式），
+     * 未配置时表示不保存到磁盘
+     *
+     * @param memorySaveDir 内存缓存数据保存的目录
+     */
+    public void setMemorySaveDir(String memorySaveDir) {
+        this.memorySaveDir = memorySaveDir;
     }
 }
