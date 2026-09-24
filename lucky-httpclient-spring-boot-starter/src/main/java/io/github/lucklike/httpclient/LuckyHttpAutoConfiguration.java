@@ -37,6 +37,7 @@ import com.luckyframework.httpclient.proxy.interceptor.CookieManagerInterceptor;
 import com.luckyframework.httpclient.proxy.interceptor.Interceptor;
 import com.luckyframework.httpclient.proxy.interceptor.RedirectInterceptor;
 import com.luckyframework.httpclient.proxy.logging.CustomMasker;
+import com.luckyframework.httpclient.proxy.logging.DataMasker;
 import com.luckyframework.httpclient.proxy.logging.LoggerHandler;
 import com.luckyframework.httpclient.proxy.logging.MaskType;
 import com.luckyframework.httpclient.proxy.logging.PrintLogAnnotationContextLoggerHandler;
@@ -646,6 +647,11 @@ public class LuckyHttpAutoConfiguration implements ApplicationContextAware {
                 }
             }
             plaLoggerHandler.addCommonMaskers(maskerSetMap);
+
+            // 开启常用字段无关的裸值脱敏（手机号、身份证、邮箱、Basic认证、JWT），该配置全局生效、重复调用幂等
+            if (loggerConfig.isEnableCommonValueMaskers()) {
+                DataMasker.enableCommonValueMaskers();
+            }
         }
 
         SpecifiedInterfaceLoggerHandler specifiedInterfaceLoggerHandler = new SpecifiedInterfaceLoggerHandler(loggerHandler);
