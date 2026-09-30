@@ -5,6 +5,7 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.core.meta.Request;
 import com.luckyframework.httpclient.core.meta.Response;
 import com.luckyframework.httpclient.core.util.BeanUtils;
+import com.luckyframework.httpclient.generalapi.plugin.cache.CachePluginMeta;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerateUtil;
 import com.luckyframework.httpclient.proxy.configapi.ConfigurationParserException;
@@ -32,7 +33,7 @@ import com.luckyframework.spel.LazyValue;
 import io.github.lucklike.httpclient.ApplicationContextUtils;
 import io.github.lucklike.httpclient.config.GenerateEntry;
 import io.github.lucklike.httpclient.config.HttpClientProxyObjectFactoryConfiguration;
-import io.github.lucklike.httpclient.config.mock.MockResult;
+import io.github.lucklike.httpclient.std.mock.MockResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,8 +55,6 @@ import static com.luckyframework.common.StringUtils.blankReturnDefault;
 import static com.luckyframework.common.StringUtils.nullReturnDefault;
 import static com.luckyframework.httpclient.proxy.function.CommonFunctions.getApiId;
 import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_METHOD_RESULT_$;
-import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_REQUEST_$;
-import static com.luckyframework.httpclient.proxy.spel.InternalRootVarName.$_THROWABLE_$;
 import static io.github.lucklike.httpclient.Constant.PROXY_FACTORY_CONFIG_BEAN_NAME;
 
 /**
@@ -309,7 +308,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 目标HTTP服务地址
      */
-    @FunctionAlias("__get_http_server_url__")
+    @FunctionAlias("__std_http_server_url__")
     public static String getHttpServerUrl(
             MethodContext mc,
             @Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config,
@@ -321,12 +320,11 @@ public class StdHttpClientFunction {
     /**
      * 获取服务名，用于从注册中心获取URL
      *
-     * @param mc 方法上下文
+     * @param config 当前HTTP客户端的配置
      * @return 服务名
      */
-    @FunctionAlias("__get_http_service_name__")
-    public static String getHttpServiceName(MethodContext mc) {
-        StandardHttpClientConfiguration config = mc.getRootVar(STANDARD_HTTP_CLIENT_CONFIG_NAME, StandardHttpClientConfiguration.class);
+    @FunctionAlias("__std_http_service_name__")
+    public static String getHttpServiceName(@Rar(STANDARD_HTTP_CLIENT_CONFIG_NAME) StandardHttpClientConfiguration config) {
         return config.getService();
     }
 
@@ -338,7 +336,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 响应元类型
      */
-    @FunctionAlias("__get_response_meta_type__")
+    @FunctionAlias("__std_response_meta_type__")
     public static Object getResponseMetaType(
             MethodContext mc,
             @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
@@ -351,13 +349,15 @@ public class StdHttpClientFunction {
     /**
      * 强制指定响应体的Content-Type
      *
-     * @param mc 方法上下文对象
+     * @param mc               方法上下文对象
+     * @param apiConfig        当前HTTP客户端的配置
+     * @param lifeCycleManager 生命周期管理器对象
      * @return 强制指定的响应体Content-Type
      */
-    @FunctionAlias("__mandatory_designation_response_content_type__")
-    public static String mandatoryDesignationResponseContentType(MethodContext mc) {
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
-        LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+    @FunctionAlias("__std_response_content_type__")
+    public static String mandatoryDesignationResponseContentType(MethodContext mc,
+                                                                 @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                                                                 @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager) {
         return lifeCycleManager.mandatoryDesignationResponseContentType(mc, apiConfig);
     }
 
@@ -370,7 +370,7 @@ public class StdHttpClientFunction {
      * @param lifeCycleManager 生命周期管理器对象
      * @return 最终的响应结果
      */
-    @FunctionAlias("__result_convert__")
+    @FunctionAlias("__std_result_convert__")
     public static Object resultConvert(
             MethodContext mc,
             Response response,
@@ -383,12 +383,13 @@ public class StdHttpClientFunction {
     /**
      * 是否启用 Mock 功能
      *
-     * @param mc 方法上下文
-     * @return 是否启用 Mock 文件
+     * @param mc         方法上下文
+     * @param mockConfig Mock 配置
+     * @return 是否启用 Mock 功能
      */
     @FunctionAlias("__std_mock_enable__")
-    public static boolean stdMockEnable(MethodContext mc) {
-        MockConfiguration mockConfig = mc.getRootVar(STANDARD_MOCK_CONFIG, MockConfiguration.class);
+    public static boolean stdMockEnable(MethodContext mc,
+                                        @Rar(STANDARD_MOCK_CONFIG) MockConfiguration mockConfig) {
         return MockConfigFunction.mockEnable(mc, mockConfig);
     }
 
@@ -419,14 +420,71 @@ public class StdHttpClientFunction {
     }
 
     /**
-     * 是否启用异常处理
+     * 获取当前API的缓存配置
      *
      * @param mc 方法上下文
+     * @return 当前API的缓存配置，未配置时返回{@code null}
+     */
+    public static CacheConfig getCacheConfig(MethodContext mc) {
+        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+        return apiConfig.getCacheConfig();
+    }
+
+    /**
+     * 获取缓存功能启用状态的函数，对应{@link CachePluginMeta CachePluginMeta#enable()}，
+     * 未启用缓存时缓存插件不会被注册
+     *
+     * @param mc 方法上下文
+     * @return 是否启用缓存功能
+     */
+    @FunctionAlias("__std_cache_enable__")
+    public static boolean stdCacheEnable(MethodContext mc) {
+        return isCacheEnable(getCacheConfig(mc));
+    }
+
+    /**
+     * 获取缓存Key的函数，对应{@link CachePluginMeta CachePluginMeta#key()}
+     *
+     * @param mc 方法上下文
+     * @return 缓存Key
+     */
+    @FunctionAlias("__std_cache_key__")
+    public static String stdCacheKey(MethodContext mc) {
+        CacheConfig cacheConfig = getCacheConfig(mc);
+        String key = cacheConfig == null ? null : cacheConfig.getKey();
+        if (!StringUtils.hasText(key)) {
+            throw new ConfigurationParserException(
+                    "@StdHttpClient('{0}')[{1}] Cache is enabled, but the cache key is not configured! Please configure it through 'lucky.http-client.standard-client-configs.{0}.cache-config.key' or the method-level cache configuration",
+                    CommonFunctions.getApiConfigId(mc.getClassContext()),
+                    mc.getCurrentAnnotatedElement().toString()
+            ).error(logger);
+        }
+        return mc.parseExpression(key, String.class);
+    }
+
+    /**
+     * 获取缓存过期时间的函数，对应{@link CachePluginMeta CachePluginMeta#expires()}
+     *
+     * @param mc 方法上下文
+     * @return 缓存过期时间，单位：毫秒，小于0时表示永不过期
+     */
+    @FunctionAlias("__std_cache_expires__")
+    public static long stdCacheExpires(MethodContext mc) {
+        CacheConfig cacheConfig = getCacheConfig(mc);
+        if (cacheConfig == null || !StringUtils.hasText(cacheConfig.getExpires())) {
+            return -1L;
+        }
+        return mc.parseExpression(cacheConfig.getExpires(), long.class);
+    }
+
+    /**
+     * 是否启用异常处理
+     *
+     * @param apiConfig 当前HTTP客户端的配置
      * @return 是否启用异常处理
      */
     @FunctionAlias("__std_enable_exception_handler__")
-    public static boolean enableExceptionHandler(MethodContext mc) {
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
+    public static boolean enableExceptionHandler(@Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig) {
         ExceptionHandlerConfig exceptionHandlerConfig = apiConfig.getExceptionHandler();
         List<ConditionExceptionHandlerConfig> exceptionHandlerConfigs = apiConfig.getConditionExceptionHandler();
         return (exceptionHandlerConfig != null && exceptionHandlerConfig.effective()) || ContainerUtils.isNotEmptyCollection(exceptionHandlerConfigs);
@@ -438,11 +496,12 @@ public class StdHttpClientFunction {
      * @return 异常处理
      */
     @FunctionAlias("__std_exception_handler__")
-    public static Object exceptionHandler(MethodContext mc) throws Throwable {
-        Request request = mc.getRootVar($_REQUEST_$, Request.class);
-        Throwable th = mc.getRootVar($_THROWABLE_$, Throwable.class);
-        StandardApiConfiguration apiConfig = mc.getRootVar(STANDARD_API_CONFIG_NAME, StandardApiConfiguration.class);
-        LifeCycleManager lifeCycleManager = mc.getRootVar(LIFE_CYCLE_MANAGER_NAME, LifeCycleManager.class);
+    public static Object exceptionHandler(MethodContext mc,
+                                          Request request,
+                                          Throwable th,
+                                          @Rar(STANDARD_API_CONFIG_NAME) StandardApiConfiguration apiConfig,
+                                          @Rar(LIFE_CYCLE_MANAGER_NAME) LifeCycleManager lifeCycleManager
+    ) throws Throwable {
         return lifeCycleManager.exceptionHandler(mc, request, th, apiConfig);
     }
 
@@ -599,6 +658,7 @@ public class StdHttpClientFunction {
         apiConfig.setSslConfig(nullReturnDefault(methodConfig.getSslConfig(), config.getSslConfig()));
         apiConfig.setRetryConfig(nullReturnDefault(methodConfig.getRetryConfig(), config.getRetryConfig()));
         apiConfig.setGenerateResponseJavaBean(nullReturnDefault(methodConfig.getGenerateResponseJavaBean(), config.getGenerateResponseJavaBean()));
+        apiConfig.setCacheConfig(mergeCacheConfig(config.getCacheConfig(), methodConfig.getCacheConfig()));
         apiConfig.setSpelImport(methodConfig.getSpelImport());
         apiConfig.setMethodMetaSpelImport(methodConfig.getMethodMetaSpelImport());
 
@@ -661,12 +721,12 @@ public class StdHttpClientFunction {
 
     }
 
-    private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.config.mock.WhenMockResult> _whenMockResults) {
+    private static List<WhenMockResult> convertToWhenMockResults(List<io.github.lucklike.httpclient.std.mock.WhenMockResult> _whenMockResults) {
         if (ContainerUtils.isEmptyCollection(_whenMockResults)) {
             return Collections.emptyList();
         }
         List<WhenMockResult> listResult = new ArrayList<>(_whenMockResults.size());
-        for (io.github.lucklike.httpclient.config.mock.WhenMockResult whenMockResult : _whenMockResults) {
+        for (io.github.lucklike.httpclient.std.mock.WhenMockResult whenMockResult : _whenMockResults) {
             WhenMockResult when = new WhenMockResult();
             BeanUtils.copyProperties(whenMockResult, when);
             listResult.add(when);
@@ -674,10 +734,45 @@ public class StdHttpClientFunction {
         return listResult;
     }
 
-    private static MockBody convertToMockBody(io.github.lucklike.httpclient.config.mock.MockBody _mockBody) {
+    private static MockBody convertToMockBody(io.github.lucklike.httpclient.std.mock.MockBody _mockBody) {
         MockBody mockBody = new MockBody();
         BeanUtils.copyProperties(_mockBody, mockBody);
         return mockBody;
+    }
+
+    /**
+     * 合并缓存配置
+     *
+     * @param cc 类级别缓存配置
+     * @param mc 方法级别缓存配置
+     * @return 合并后的缓存配置
+     */
+    private static CacheConfig mergeCacheConfig(CacheConfig cc, CacheConfig mc) {
+        if (mc == null) {
+            return cc;
+        }
+        if (cc == null) {
+            return mc;
+        }
+        CacheConfig cacheConfig = new CacheConfig();
+        cacheConfig.setEnable(nullReturnDefault(mc.getEnable(), cc.getEnable()));
+        cacheConfig.setType(nullReturnDefault(mc.getType(), cc.getType()));
+        cacheConfig.setKey(blankReturnDefault(mc.getKey(), cc.getKey()));
+        cacheConfig.setExpires(blankReturnDefault(mc.getExpires(), cc.getExpires()));
+        cacheConfig.setRedisTemplateBeanName(blankReturnDefault(mc.getRedisTemplateBeanName(), cc.getRedisTemplateBeanName()));
+        cacheConfig.setMemoryCapacity(blankReturnDefault(mc.getMemoryCapacity(), cc.getMemoryCapacity()));
+        cacheConfig.setMemorySaveDir(blankReturnDefault(mc.getMemorySaveDir(), cc.getMemorySaveDir()));
+        return cacheConfig;
+    }
+
+    /**
+     * 是否开启了缓存功能
+     *
+     * @param cacheConfig 缓存配置
+     * @return 是否开启了缓存功能
+     */
+    private static boolean isCacheEnable(CacheConfig cacheConfig) {
+        return cacheConfig != null && Objects.equals(Boolean.TRUE, cacheConfig.getEnable());
     }
 
     /**

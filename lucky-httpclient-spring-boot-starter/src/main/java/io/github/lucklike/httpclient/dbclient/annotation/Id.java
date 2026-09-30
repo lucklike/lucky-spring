@@ -24,4 +24,7 @@ public @interface Id {
 
     @AliasFor(annotation = Column.class, attribute = "value")
     String value() default "";
+
+    IdType type() default IdType.MANUAL_SETTINGS;
+
 }

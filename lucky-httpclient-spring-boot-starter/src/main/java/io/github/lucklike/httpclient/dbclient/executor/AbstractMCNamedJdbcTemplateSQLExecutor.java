@@ -24,6 +24,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -250,7 +252,13 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         if (keyHolder == null) {
             update = jdbcTemplate.update(sqlTemp, sqlParamSource);
         } else {
-            update = jdbcTemplate.update(sqlTemp, sqlParamSource, keyHolder);
+            update = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sqlTemp, Statement.RETURN_GENERATED_KEYS);
+                for (int i = 0; i < sqlParamSource.length; i++) {
+                    ps.setObject(i + 1, sqlParamSource[i]);
+                }
+                return ps;
+            }, keyHolder);
         }
         // Void方法
         if (methodContext.isVoidMethod()) {

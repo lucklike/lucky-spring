@@ -22,6 +22,12 @@ public class LoggerMaskerConfig {
     private boolean maskResponse = false;
 
     /**
+     * 是否开启常用字段无关的裸值脱敏（手机号、身份证、邮箱、Basic认证、JWT），默认关闭<br/>
+     * (注：该配置为全局生效，开启后所有日志脱敏都会应用裸值规则，存在误伤可能，请按需开启)
+     */
+    private boolean enableCommonValueMaskers = false;
+
+    /**
      * 预定义的脱敏配置
      */
     private Map<MaskType, Set<String>> predefined;
@@ -102,5 +108,23 @@ public class LoggerMaskerConfig {
      */
     public void setMaskResponse(boolean maskResponse) {
         this.maskResponse = maskResponse;
+    }
+
+    /**
+     * 是否开启常用字段无关的裸值脱敏（手机号、身份证、邮箱、Basic认证、JWT），默认关闭
+     *
+     * @return 是否开启常用裸值脱敏
+     */
+    public boolean isEnableCommonValueMaskers() {
+        return enableCommonValueMaskers;
+    }
+
+    /**
+     * 设置是否开启常用字段无关的裸值脱敏（手机号、身份证、邮箱、Basic认证、JWT），默认关闭
+     *
+     * @param enableCommonValueMaskers 是否开启常用裸值脱敏
+     */
+    public void setEnableCommonValueMaskers(boolean enableCommonValueMaskers) {
+        this.enableCommonValueMaskers = enableCommonValueMaskers;
     }
 }

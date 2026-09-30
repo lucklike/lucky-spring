@@ -4,11 +4,13 @@ import com.luckyframework.httpclient.core.meta.RequestMethod;
 import com.luckyframework.httpclient.proxy.configapi.Condition;
 import com.luckyframework.httpclient.proxy.configapi.SSLConf;
 import com.luckyframework.httpclient.proxy.configapi.SpELImportConf;
+import com.luckyframework.httpclient.proxy.configapi.parse.ConditionBody;
+import com.luckyframework.httpclient.proxy.configapi.parse.ConditionConfig;
+import com.luckyframework.httpclient.proxy.configapi.parse.RetryConfiguration;
 import com.luckyframework.httpclient.proxy.context.MethodMetaContext;
 import com.luckyframework.httpclient.proxy.function.CommonFunctions;
 import com.luckyframework.httpclient.proxy.generator.GeneratedJavaCodeConfiguration;
-import io.github.lucklike.httpclient.config.RetryConfiguration;
-import io.github.lucklike.httpclient.config.mock.MockResult;
+import io.github.lucklike.httpclient.std.mock.MockResult;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.ResolvableType;
 
@@ -196,6 +198,12 @@ public class StandardApiConfiguration {
      */
     @NestedConfigurationProperty
     private MockResult mockConfig;
+
+    /**
+     * 缓存相关配置
+     */
+    @NestedConfigurationProperty
+    private CacheConfig cacheConfig;
 
     /**
      * 当前上下文级别SpEL配置，通过此配置可以向上下文中导入变量、函数、Hooks、包
@@ -794,6 +802,24 @@ public class StandardApiConfiguration {
      */
     public void setMockConfig(MockResult mockConfig) {
         this.mockConfig = mockConfig;
+    }
+
+    /**
+     * 获取缓存相关配置
+     *
+     * @return 缓存相关配置
+     */
+    public CacheConfig getCacheConfig() {
+        return cacheConfig;
+    }
+
+    /**
+     * 设置缓存相关配置
+     *
+     * @param cacheConfig 缓存相关配置
+     */
+    public void setCacheConfig(CacheConfig cacheConfig) {
+        this.cacheConfig = cacheConfig;
     }
 
     /**

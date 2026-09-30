@@ -3,16 +3,16 @@ package io.github.lucklike.httpclient.discovery;
 import com.luckyframework.reflect.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Role;
 
 import static io.github.lucklike.httpclient.discovery.Constant.LOAD_BALANCER_CLIENT_URL_GETTER_BEAN_NAME;
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
-@Configuration
+@AutoConfiguration
 public class ServerDiscoveryAutoConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ServerDiscoveryAutoConfiguration.class);

@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.std;
 
+import com.luckyframework.httpclient.generalapi.plugin.cache.CachePluginMeta;
 import com.luckyframework.httpclient.proxy.annotations.ExceptionHandle;
 import com.luckyframework.httpclient.proxy.annotations.HttpRequest;
 import com.luckyframework.httpclient.proxy.annotations.ObjectGenerate;
@@ -12,24 +13,26 @@ import io.github.lucklike.httpclient.discovery.HttpClient;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 标准的HTTP客户端
+ *
+ * <p>支持通过配置为接口开启缓存功能，缓存是否启用、使用哪种缓存实现以及缓存key、
+ * 过期时间、容量、持久化目录等参数均通过{@link CacheConfig 缓存配置}来控制
+ *
+ * @see CacheConfig
  */
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @ApiConfig
 @HttpRequest
-@HttpClient(func = "__get_http_server_url__", service = "#{__get_http_service_name__($mc$)}")
-@Mock(enable = "#{__std_mock_enable__($mc$)}", mockFunc = "__std_mock_result__")
-@RespConvert(metaTypeFunc = "__get_response_meta_type__", resultFunc = "__result_convert__", respContentType = "#{__mandatory_designation_response_content_type__($mc$)}")
-@ExceptionHandle(condition = "#{__std_enable_exception_handler__($mc$)}", excHandleExp = "#{__std_exception_handler__($mc$)}", exceptions = Throwable.class)
+@HttpClient(urlFunc = "__std_http_server_url__", serviceFunc = "__std_http_service_name__")
+@Mock(enableFunc = "__std_mock_enable__", mockFunc = "__std_mock_result__")
+@CachePluginMeta(enable = "#{__std_cache_enable__($mc$)}", key = "#{__std_cache_key__($mc$)}", expires = "#{__std_cache_expires__($mc$)}", cache = StdCacheAdapter.class)
+@RespConvert(metaTypeFunc = "__std_response_meta_type__", resultFunc = "__std_result_convert__", respContentTypeFunc = "__std_response_content_type__")
+@ExceptionHandle(conditionFunc = "__std_enable_exception_handler__", handleFunc = "__std_exception_handler__", exceptions = Throwable.class)
 @SpELImport({GeneratedResponseJavaBeanFunction.class, StdHttpClientFunction.class})
 public @interface StdHttpClient {
 

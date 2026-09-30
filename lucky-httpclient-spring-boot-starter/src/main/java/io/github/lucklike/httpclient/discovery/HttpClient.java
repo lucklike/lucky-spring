@@ -7,11 +7,7 @@ import io.github.lucklike.httpclient.annotation.ProxyModel;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * HttpClient注解，用于将某个接口声明为httpclient代理接口
@@ -52,7 +48,7 @@ public @interface HttpClient {
     /**
      * 指定用于获取URL的函数
      */
-    String func() default "";
+    String urlFunc() default "";
 
     /**
      * 支持SpEL表达式
@@ -61,10 +57,20 @@ public @interface HttpClient {
     String service() default "";
 
     /**
+     * 指定用于获取 service 的函数
+     */
+    String serviceFunc() default "";
+
+    /**
      * 支持SpEL表达式
      * path，全局路径前缀，请求时会自动加上
      */
     String path() default "";
+
+    /**
+     * 用于获取 Path 的函数
+     */
+    String pathFunc() default "";
 
     /**
      * 代理模式
