@@ -4,21 +4,18 @@ import com.luckyframework.common.StringUtils;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.creator.Scope;
 import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
-import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.reflect.FieldUtils;
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
-import io.github.lucklike.httpclient.dbclient.annotation.Column;
-import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapperExecutor;
+import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
+import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import io.github.lucklike.httpclient.dbclient.sql.SimpleSqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
 import org.springframework.core.ResolvableType;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -289,11 +286,13 @@ public class SQLFunctions {
 
     /**
      * 批量插入实体集合
-     * <p>遍历实体类的所有字段和实体集合，构建批量INSERT语句</p>
+     * <p>与单条插入语义对齐：列集合为集合中至少有一条记录取值为非空的字段，
+     * 某条记录该字段为空时以 null 占位。</p>
      * <p><b>注意：</b>该方法会为每个字段生成占位符"?"，并使用批量参数方式执行</p>
      *
      * @param mc 方法上下文对象，包含实体集合参数信息
      * @return SQL执行器，用于执行批量插入的SQL语句
+     * @throws IllegalArgumentException 如果实体集合为null或空、或没有任何可插入字段时抛出此异常
      */
     public static SQLExecutor batchInsertSql(MethodContext mc) {
         Class<?> entityClass = mc.getParameterContexts()[0].getType().getGeneric(0).toClass();
@@ -303,40 +302,46 @@ public class SQLFunctions {
             throw new IllegalArgumentException("Batch insert entity collection must not be null or empty");
         }
 
+        // 收集所有参与映射的字段（过滤静态字段与@Column(exist=false)字段）
+        List<ColumnMetadata> allColumns = new ArrayList<>();
+        for (ColumnMetadata column : EntityMetadataFactory.getMetadata(entityClass).getColumns()) {
+            if (column.isStaticField() || !column.isExist()) {
+                continue;
+            }
+            allColumns.add(column);
+        }
+
+        // 与单条 insert 对齐：只插入集合中至少有一条记录取值为非空的字段
         List<String> columnNames = new ArrayList<>();
-        List<List<Object>> valuesList = new ArrayList<>();
-
-        String sqlTemp = "INSERT INTO %s (%s) VALUES (%s)";
-
-        for (Field field : ClassUtils.getAllFields(entityClass)) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
-            if (columnAnn != null && !columnAnn.exist()) {
-                continue;
-            }
-
-            String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
-            columnNames.add(columnName);
-            int i = 1;
+        List<ColumnMetadata> insertColumns = new ArrayList<>();
+        for (ColumnMetadata column : allColumns) {
             for (Object entity : entityList) {
-                List<Object> values;
-                if (valuesList.size() < i) {
-                    values = new ArrayList<>();
-                    valuesList.add(values);
-                } else {
-                    values = valuesList.get(i - 1);
+                if (FieldUtils.getValue(entity, column.getField()) != null) {
+                    insertColumns.add(column);
+                    columnNames.add(column.getColumnName());
+                    break;
                 }
-                values.add(FieldUtils.getValue(entity, field));
-                i++;
             }
         }
+        if (insertColumns.isEmpty()) {
+            throw new IllegalArgumentException("Batch insert entity collection has no non-null field to insert");
+        }
+
+        // 按列顺序收集每条记录的值，缺失字段以null占位
+        List<Object[]> batchParams = new ArrayList<>();
+        for (Object entity : entityList) {
+            Object[] lineParams = new Object[insertColumns.size()];
+            for (int i = 0; i < insertColumns.size(); i++) {
+                lineParams[i] = FieldUtils.getValue(entity, insertColumns.get(i).getField());
+            }
+            batchParams.add(lineParams);
+        }
+
+        String sqlTemp = "INSERT INTO %s (%s) VALUES (%s)";
         String iColumn = String.join(",", columnNames);
         String iValue = columnNames.stream().map(n -> "?").collect(Collectors.joining(","));
 
         String sql = String.format(sqlTemp, EntityUtils.getTableName(entityClass), iColumn, iValue);
-        List<Object[]> batchParams = valuesList.stream().filter(Objects::nonNull).map(list -> list.toArray(new Object[0])).collect(Collectors.toList());
 
         return new SQLWrapperExecutor(mc, SimpleSqlBuilder.ofBatch(sql, batchParams));
     }
@@ -365,27 +370,22 @@ public class SQLFunctions {
         }
 
         // 找出所有带有 @Column 且 exist() 为 true 的字段，并区分 ID 字段和普通字段
-        List<Field> idFields = new ArrayList<>();
-        List<Field> normalFields = new ArrayList<>();
+        List<ColumnMetadata> idColumns = new ArrayList<>();
+        List<ColumnMetadata> normalColumns = new ArrayList<>();
 
-        for (Field field : ClassUtils.getAllFields(entityClass)) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
-            if (columnAnn != null && !columnAnn.exist()) {
+        for (ColumnMetadata column : EntityMetadataFactory.getMetadata(entityClass).getColumns()) {
+            if (column.isStaticField() || !column.isExist()) {
                 continue;
             }
             // 判断是否为 ID 字段
-            Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
-            if (idAnn != null) {
-                idFields.add(field);
+            if (column.isId()) {
+                idColumns.add(column);
             } else {
-                normalFields.add(field);
+                normalColumns.add(column);
             }
         }
 
-        if (idFields.isEmpty()) {
+        if (idColumns.isEmpty()) {
             throw new IllegalArgumentException("Entity [" + entityClass.getName() + "] has no @Id field defined, batchUpdateById requires at least one @Id field");
         }
 
@@ -394,13 +394,11 @@ public class SQLFunctions {
         List<String> setColumns = new ArrayList<>();
         List<String> whereColumns = new ArrayList<>();
 
-        for (Field field : normalFields) {
-            String columnName = getColumnName(field);
-            setColumns.add(columnName + " = ?");
+        for (ColumnMetadata column : normalColumns) {
+            setColumns.add(column.getColumnName() + " = ?");
         }
-        for (Field field : idFields) {
-            String columnName = getColumnName(field);
-            whereColumns.add(columnName + " = ?");
+        for (ColumnMetadata column : idColumns) {
+            whereColumns.add(column.getColumnName() + " = ?");
         }
 
         if (setColumns.isEmpty()) {
@@ -417,74 +415,17 @@ public class SQLFunctions {
         for (Object entity : entityList) {
             List<Object> paramList = new ArrayList<>();
             // SET 部分的值
-            for (Field field : normalFields) {
-                paramList.add(FieldUtils.getValue(entity, field));
+            for (ColumnMetadata column : normalColumns) {
+                paramList.add(FieldUtils.getValue(entity, column.getField()));
             }
             // WHERE 部分的值
-            for (Field field : idFields) {
-                paramList.add(FieldUtils.getValue(entity, field));
+            for (ColumnMetadata column : idColumns) {
+                paramList.add(FieldUtils.getValue(entity, column.getField()));
             }
             batchParams.add(paramList.toArray());
         }
 
         return new SQLWrapperExecutor(mc, SimpleSqlBuilder.ofBatch(finalSql, batchParams));
-    }
-
-    /**
-     * 获取字段对应的数据库列名
-     * <p>优先级：@Column.value() > @Id.value() > 字段名</p>
-     *
-     * @param field 字段对象
-     * @return 数据库列名
-     */
-    private static String getColumnName(Field field) {
-        Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
-        if (columnAnn != null && StringUtils.hasText(columnAnn.value())) {
-            return columnAnn.value();
-        }
-        // 如果 @Id 本身有 value，也会通过 @AliasFor 传递到 @Column.value()
-        Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
-        if (idAnn != null && StringUtils.hasText(idAnn.value())) {
-            return idAnn.value();
-        }
-        return field.getName();
-    }
-
-    /**
-     * 处理实体对象的所有字段，提取列信息
-     * <p>遍历实体的所有非静态字段，过滤掉@Column(exist=false)的字段，
-     * 并将每个字段封装为ColumnInfo对象后传递给消费者处理</p>
-     *
-     * @param mc       方法上下文
-     * @param entity   实体对象
-     * @param consumer 列信息消费者，用于处理每个字段的列信息
-     */
-    private static void columnHandler(MethodContext mc, Object entity, Consumer<ColumnInfo> consumer) {
-        for (Field field : ClassUtils.getAllFields(entity.getClass())) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
-            if (columnAnn != null && !columnAnn.exist()) {
-                continue;
-            }
-
-            ColumnInfo columnInfo;
-
-            Object fieldValue = FieldUtils.getValue(entity, field);
-            String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
-            Condition condition =
-                    columnAnn == null
-                            ? mc.generateObject(Condition.Eq.class, Scope.SINGLETON)
-                            : mc.generateObject(columnAnn.condition(), Scope.SINGLETON);
-            if (AnnotationUtils.isAnnotated(field, Id.class)) {
-                columnInfo = new ColumnInfo(columnName, fieldValue, true, condition);
-            } else {
-                columnInfo = new ColumnInfo(columnName, fieldValue, false, condition);
-            }
-
-            consumer.accept(columnInfo);
-        }
     }
 
     /**
@@ -496,31 +437,31 @@ public class SQLFunctions {
      * @param consumer 列信息消费者，用于处理每个字段的列信息
      */
     public static void columnHandler(Object entity, Consumer<ColumnInfo> consumer) {
-        for (Field field : ClassUtils.getAllFields(entity.getClass())) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-            Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
-            if (columnAnn != null && !columnAnn.exist()) {
-                continue;
-            }
-
-            ColumnInfo columnInfo;
-
-            Object fieldValue = FieldUtils.getValue(entity, field);
-            String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value())) ? columnAnn.value() : field.getName();
-            Condition condition =
-                    columnAnn == null
-                            ? ClassUtils.newObject(Condition.Eq.class)
-                            : ClassUtils.newObject(columnAnn.condition());
-            if (AnnotationUtils.isAnnotated(field, Id.class)) {
-                columnInfo = new ColumnInfo(columnName, fieldValue, true, condition);
-            } else {
-                columnInfo = new ColumnInfo(columnName, fieldValue, false, condition);
-            }
-
-            consumer.accept(columnInfo);
-        }
+        columnHandler(null, entity, consumer);
     }
 
+    /**
+     * 处理实体对象的所有字段，提取列信息
+     * <p>遍历实体的所有非静态字段，过滤掉@Column(exist=false)的字段，
+     * 并将每个字段封装为ColumnInfo对象后传递给消费者处理</p>
+     *
+     * @param mc       方法上下文，为null时使用默认方式创建Condition实例
+     * @param entity   实体对象
+     * @param consumer 列信息消费者，用于处理每个字段的列信息
+     */
+    private static void columnHandler(MethodContext mc, Object entity, Consumer<ColumnInfo> consumer) {
+        for (ColumnMetadata column : EntityMetadataFactory.getMetadata(entity.getClass()).getColumns()) {
+            if (column.isStaticField() || !column.isExist()) {
+                continue;
+            }
+
+            Object fieldValue = FieldUtils.getValue(entity, column.getField());
+            Class<? extends Condition> conditionClass = column.getConditionClass();
+            Condition condition = mc == null
+                    ? ClassUtils.newObject(conditionClass)
+                    : mc.generateObject(conditionClass, Scope.SINGLETON);
+
+            consumer.accept(new ColumnInfo(column.getColumnName(), fieldValue, column.isId(), condition));
+        }
+    }
 }

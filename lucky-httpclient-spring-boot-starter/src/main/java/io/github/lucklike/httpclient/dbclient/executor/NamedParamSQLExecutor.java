@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
     private final SqlParameterSource sqlParamSource;
     private final SqlParameterSource[] batchSqlParamSource;
 
-    public NamedParamSQLExecutor(MethodContext mc, SQLType type, String sqlTemp) throws SQLException {
+    public NamedParamSQLExecutor(MethodContext mc, SQLType type, String sqlTemp) {
         super(mc, type);
         this.sqlTemp = sqlTemp;
         if (type == SQLType.BATCH) {
@@ -67,7 +66,7 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
      *          Must contain at least one parameter of type Iterable (e.g., List, Set, Collection).
      * @return An array of SqlParameterSource objects, where each element corresponds to one item
      *         in the source Iterable. Never returns null.
-     * @throws SQLException If no Iterable parameter is found in the method context, or if the
+     * @throws IllegalArgumentException If no Iterable parameter is found in the method context, or if the
      *                      Iterable is null. The exception message will indicate the specific
      *                      batch operation parameter error.
      *
@@ -78,7 +77,7 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
      * @see ContainerUtils#getIterable(Object)
      */
     @SuppressWarnings("unchecked")
-    private SqlParameterSource[] createBatchSqlParameterSource(MethodContext mc) throws SQLException {
+    private SqlParameterSource[] createBatchSqlParameterSource(MethodContext mc) {
         // Step 1: Locate the first iterable parameter in the method context
         Iterable<Object> iterable = null;
         for (ParameterContext pc : mc.getParameterContexts()) {
@@ -91,7 +90,7 @@ public class NamedParamSQLExecutor extends AbstractMCNamedJdbcTemplateSQLExecuto
 
         // Step 2: Validate that an iterable parameter exists
         if (iterable == null) {
-            throw new SQLException("Batch operation parameter error: no Iterable parameter found in method context");
+            throw new IllegalArgumentException("Batch operation parameter error: no Iterable parameter found in method context");
         }
 
         // Step 3: Convert each element in the iterable to a SqlParameterSource

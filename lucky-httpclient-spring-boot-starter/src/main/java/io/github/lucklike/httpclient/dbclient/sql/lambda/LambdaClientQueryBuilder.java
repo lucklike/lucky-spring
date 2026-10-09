@@ -7,10 +7,8 @@ import io.github.lucklike.httpclient.dbclient.sql.page.Page;
 import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 import org.springframework.lang.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -18,6 +16,7 @@ import java.util.stream.Stream;
  * <p>
  * 该类封装了 {@link LambdaQueryBuilder} 和 {@link BaseDBApi}，
  * 提供流式 API 构建 SELECT 查询条件，并可直接执行查询操作。
+ * 公共条件方法继承自 {@link AbstractLambdaClientBuilder}。
  * </p>
  * <p>
  * 支持的功能：
@@ -76,23 +75,23 @@ import java.util.stream.Stream;
  * @version 1.0.0
  * @date 2026/6/3 00:53
  */
-public class LambdaClientQueryBuilder<T> {
-
-    private final BaseDBApi<T> baseDBApi;
-    private final LambdaQueryBuilder<T> queryBuilder;
+public class LambdaClientQueryBuilder<T> extends AbstractLambdaClientBuilder<T, LambdaClientQueryBuilder<T>, LambdaQueryBuilder<T>> {
 
     /**
-     * 构造查询构建器（使用实体类，查询所有列）
+     * 构造查询构建器（使用实体对象，查询所有列）
+     * <p>
+     * 实体的非空字段会自动作为相等条件加入查询。
+     * </p>
      *
      * @param baseDBApi 数据库客户端API
-     * @param entity     实体对象
+     * @param entity    实体对象
      */
     @SuppressWarnings("unchecked")
     public LambdaClientQueryBuilder(BaseDBApi<T> baseDBApi, @Nullable T entity) {
         this(baseDBApi, (Class<T>) Objects.requireNonNull(entity).getClass());
         SQLFunctions.columnHandler(entity, co -> {
             if (co.getValue() != null) {
-                co.getCondition().additionCondition(queryBuilder.getSqlBuilder(), co);
+                co.getCondition().additionCondition(sqlBuilder.getSqlBuilder(), co);
             }
         });
     }
@@ -104,8 +103,7 @@ public class LambdaClientQueryBuilder<T> {
      * @param clazz     实体类类型
      */
     public LambdaClientQueryBuilder(BaseDBApi<T> baseDBApi, Class<T> clazz) {
-        this.queryBuilder = new LambdaQueryBuilder<>(clazz);
-        this.baseDBApi = baseDBApi;
+        super(baseDBApi, new LambdaQueryBuilder<>(clazz));
     }
 
     /**
@@ -115,16 +113,21 @@ public class LambdaClientQueryBuilder<T> {
      * @param sqlBuilder 现有的 SQL 构建器
      */
     public LambdaClientQueryBuilder(BaseDBApi<T> baseDBApi, LambdaSqlBuilder<T> sqlBuilder) {
-        this.queryBuilder = new LambdaQueryBuilder<>(sqlBuilder);
-        this.baseDBApi = baseDBApi;
+        super(baseDBApi, new LambdaQueryBuilder<>(sqlBuilder));
     }
 
     /**
-     * {@inheritDoc}
+     * 指定查询列
+     * <p>
+     * 覆盖默认的全列查询，仅查询指定的列。支持多次调用以追加查询列。
+     * </p>
+     *
+     * @param columns 要查询的列（Lambda 表达式）
+     * @return 当前构建器实例，支持链式调用
      */
     @SafeVarargs
     public final LambdaClientQueryBuilder<T> select(SFunction<T, ?>... columns) {
-        this.queryBuilder.select(columns);
+        sqlBuilder.select(columns);
         return this;
     }
 
@@ -153,7 +156,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public <E> LambdaClientQueryBuilder<T> join(SqlBuilder.JoinType type, Class<E> joinClass, String alias) {
-        queryBuilder.join(type, joinClass, alias);
+        sqlBuilder.join(type, joinClass, alias);
         return this;
     }
 
@@ -166,7 +169,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public <E> LambdaClientQueryBuilder<T> innerJoin(Class<E> joinClass, String alias) {
-        queryBuilder.innerJoin(joinClass, alias);
+        sqlBuilder.innerJoin(joinClass, alias);
         return this;
     }
 
@@ -179,7 +182,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public <E> LambdaClientQueryBuilder<T> leftJoin(Class<E> joinClass, String alias) {
-        queryBuilder.leftJoin(joinClass, alias);
+        sqlBuilder.leftJoin(joinClass, alias);
         return this;
     }
 
@@ -192,7 +195,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public <E> LambdaClientQueryBuilder<T> rightJoin(Class<E> joinClass, String alias) {
-        queryBuilder.rightJoin(joinClass, alias);
+        sqlBuilder.rightJoin(joinClass, alias);
         return this;
     }
 
@@ -206,7 +209,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public LambdaClientQueryBuilder<T> on(String condition) {
-        queryBuilder.on(condition);
+        sqlBuilder.on(condition);
         return this;
     }
 
@@ -222,596 +225,11 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public <E> LambdaClientQueryBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
-        queryBuilder.on(leftColumn, rightColumn);
+        sqlBuilder.on(leftColumn, rightColumn);
         return this;
     }
 
-    // ==================== 条件方法 ====================
-
-    /**
-     * 添加自定义 WHERE 条件
-     * <p>
-     * 使用原生 SQL 片段作为条件，可用于构建复杂或 Lambda 表达式无法表达的条件。
-     * </p>
-     *
-     * @param condition SQL 条件片段，可使用 ? 作为参数占位符
-     * @param values    占位符对应的参数值，按顺序匹配
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> where(String condition, Object... values) {
-        queryBuilder.where(condition, values);
-        return this;
-    }
-
-    /**
-     * 添加嵌套条件
-     * <p>
-     * 通过 Consumer 函数式接口构建嵌套的复杂条件，支持括号分组。
-     * </p>
-     * <p>
-     * 使用示例：
-     * <pre>{@code
-     * builder.where(sql -> sql.eq(User::getStatus, 1)
-     *                       .or()
-     *                       .eq(User::getStatus, 2));
-     * }
-     * </pre>
-     *
-     * @param conditionBuilder 条件构建器函数
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> where(Consumer<LambdaSqlBuilder<T>> conditionBuilder) {
-        queryBuilder.where(conditionBuilder);
-        return this;
-    }
-
-    /**
-     * 等于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> eq(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.eq(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 不等于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> ne(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.ne(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 大于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> gt(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.gt(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 大于等于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> ge(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.ge(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 小于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> lt(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.lt(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 小于等于条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> le(boolean condition, SFunction<T, ?> column, Object value) {
-        queryBuilder.le(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 模糊匹配条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     匹配值（会自动添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> like(boolean condition, SFunction<T, ?> column, String value) {
-        queryBuilder.like(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 左模糊匹配条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     匹配值（会自动在前面添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> likeLeft(boolean condition, SFunction<T, ?> column, String value) {
-        queryBuilder.likeLeft(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 右模糊匹配条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     匹配值（会自动在后面添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> likeRight(boolean condition, SFunction<T, ?> column, String value) {
-        queryBuilder.likeRight(condition, column, value);
-        return this;
-    }
-
-    /**
-     * 非模糊匹配条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value     匹配值（会自动添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notLike(boolean condition, SFunction<T, ?> column, String value) {
-        queryBuilder.notLike(condition, column, value);
-        return this;
-    }
-
-    /**
-     * IN 条件（条件性添加，可变参数）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param values    值列表
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> in(boolean condition, SFunction<T, ?> column, Object... values) {
-        queryBuilder.in(condition, column, values);
-        return this;
-    }
-
-    /**
-     * IN 条件（条件性添加，集合参数）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param values    值集合
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> in(boolean condition, SFunction<T, ?> column, Collection<?> values) {
-        queryBuilder.in(condition, column, values);
-        return this;
-    }
-
-    /**
-     * NOT IN 条件（条件性添加，可变参数）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param values    值列表
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Object... values) {
-        queryBuilder.notIn(condition, column, values);
-        return this;
-    }
-
-    /**
-     * NOT IN 条件（条件性添加，集合参数）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param values    值集合
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notIn(boolean condition, SFunction<T, ?> column, Collection<?> values) {
-        queryBuilder.notIn(condition, column, values);
-        return this;
-    }
-
-    /**
-     * IS NULL 条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> isNull(boolean condition, SFunction<T, ?> column) {
-        queryBuilder.isNull(condition, column);
-        return this;
-    }
-
-    /**
-     * IS NOT NULL 条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> isNotNull(boolean condition, SFunction<T, ?> column) {
-        queryBuilder.isNotNull(condition, column);
-        return this;
-    }
-
-    /**
-     * BETWEEN 条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    表字段的 Lambda 表达式
-     * @param value1    起始值
-     * @param value2    结束值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> between(boolean condition, SFunction<T, ?> column, Object value1, Object value2) {
-        queryBuilder.between(condition, column, value1, value2);
-        return this;
-    }
-
-    /**
-     * 排序条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    排序字段的 Lambda 表达式
-     * @param orderType 排序类型
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> orderBy(boolean condition, SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
-        queryBuilder.orderBy(condition, column, orderType);
-        return this;
-    }
-
-    /**
-     * 升序排序条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    排序字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> orderByAsc(boolean condition, SFunction<T, ?> column) {
-        queryBuilder.orderByAsc(condition, column);
-        return this;
-    }
-
-    /**
-     * 降序排序条件（条件性添加）
-     *
-     * @param condition 是否添加此条件
-     * @param column    排序字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> orderByDesc(boolean condition, SFunction<T, ?> column) {
-        queryBuilder.orderByDesc(condition, column);
-        return this;
-    }
-
-    /**
-     * NOT IN 条件（可变参数）
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param values 值列表
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notIn(SFunction<T, ?> column, Object... values) {
-        queryBuilder.notIn(column, values);
-        return this;
-    }
-
-    /**
-     * 等于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> eq(SFunction<T, ?> column, Object value) {
-        queryBuilder.eq(column, value);
-        return this;
-    }
-
-    /**
-     * 不等于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> ne(SFunction<T, ?> column, Object value) {
-        queryBuilder.ne(column, value);
-        return this;
-    }
-
-    /**
-     * 大于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> gt(SFunction<T, ?> column, Object value) {
-        queryBuilder.gt(column, value);
-        return this;
-    }
-
-    /**
-     * 大于等于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> ge(SFunction<T, ?> column, Object value) {
-        queryBuilder.ge(column, value);
-        return this;
-    }
-
-    /**
-     * 小于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> lt(SFunction<T, ?> column, Object value) {
-        queryBuilder.lt(column, value);
-        return this;
-    }
-
-    /**
-     * 小于等于条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  比较值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> le(SFunction<T, ?> column, Object value) {
-        queryBuilder.le(column, value);
-        return this;
-    }
-
-    /**
-     * 模糊匹配条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  匹配值（会自动添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> like(SFunction<T, ?> column, String value) {
-        queryBuilder.like(column, value);
-        return this;
-    }
-
-    /**
-     * 左模糊匹配条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  匹配值（会自动在前面添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> likeLeft(SFunction<T, ?> column, String value) {
-        queryBuilder.likeLeft(column, value);
-        return this;
-    }
-
-    /**
-     * 右模糊匹配条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  匹配值（会自动在后面添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> likeRight(SFunction<T, ?> column, String value) {
-        queryBuilder.likeRight(column, value);
-        return this;
-    }
-
-    /**
-     * 不匹配条件（NOT LIKE 'value%'）
-     *
-     * @param column 列对应的 Lambda 函数
-     * @param value  匹配模式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notLikeRight(SFunction<T, ?> column, String value) {
-        queryBuilder.notLikeRight(column, value);
-        return this;
-    }
-
-    /**
-     * 不匹配条件（NOT LIKE '%value'）
-     *
-     * @param column 列对应的 Lambda 函数
-     * @param value  匹配模式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notLikeLeft(SFunction<T, ?> column, String value) {
-        queryBuilder.notLikeLeft(column, value);
-        return this;
-    }
-
-    /**
-     * 非模糊匹配条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value  匹配值（会自动添加 % 通配符）
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> notLike(SFunction<T, ?> column, String value) {
-        queryBuilder.notLike(column, value);
-        return this;
-    }
-
-    /**
-     * IN 条件（集合参数）
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param values 值集合
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> in(SFunction<T, ?> column, Collection<?> values) {
-        queryBuilder.in(column, values);
-        return this;
-    }
-
-    /**
-     * IS NULL 条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> isNull(SFunction<T, ?> column) {
-        queryBuilder.isNull(column);
-        return this;
-    }
-
-    /**
-     * IS NOT NULL 条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> isNotNull(SFunction<T, ?> column) {
-        queryBuilder.isNotNull(column);
-        return this;
-    }
-
-    /**
-     * BETWEEN 条件
-     *
-     * @param column 表字段的 Lambda 表达式
-     * @param value1 起始值
-     * @param value2 结束值
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> between(SFunction<T, ?> column, Object value1, Object value2) {
-        queryBuilder.between(column, value1, value2);
-        return this;
-    }
-
-
-    /**
-     * 添加 OR (xxx) 逻辑表达式
-     *
-     * @param consumer 括号中的表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> or(Consumer<LambdaClientQueryBuilder<T>> consumer) {
-        orStart();
-        consumer.accept(this);
-        orEnd();
-        return this;
-    }
-
-    /**
-     * 添加 AND (xxx) 逻辑表达式
-     *
-     * @param consumer 括号中的表达式
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> and(Consumer<LambdaClientQueryBuilder<T>> consumer) {
-        andStart();
-        consumer.accept(this);
-        andEnd();
-        return this;
-    }
-
-    /**
-     * OR 逻辑运算符
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> or() {
-        queryBuilder.or();
-        return this;
-    }
-
-    /**
-     * AND 逻辑运算符
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> and() {
-        queryBuilder.and();
-        return this;
-    }
-
-    /**
-     * 拼接一个['AND ( ']，必须和andEnd方法配套使用
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> andStart() {
-        queryBuilder.andStart();
-        return this;
-    }
-
-    /**
-     * 拼接一个[')']，必须和andStart方法配套使用
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> andEnd() {
-        queryBuilder.andEnd();
-        return this;
-    }
-
-    /**
-     * 拼接一个['OR ( ']，必须和orEnd方法配套使用
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> orStart() {
-        queryBuilder.orStart();
-        return this;
-    }
-
-    /**
-     * 拼接一个[')']，必须和orStart方法配套使用
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> orEnd() {
-        queryBuilder.orEnd();
-        return this;
-    }
-
+    // ==================== 排序方法 ====================
 
     /**
      * 添加排序条件
@@ -821,7 +239,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public LambdaClientQueryBuilder<T> orderBy(SFunction<T, ?> column, SqlBuilder.OrderType orderType) {
-        queryBuilder.orderBy(column, orderType);
+        sqlBuilder.orderBy(column, orderType);
         return this;
     }
 
@@ -832,7 +250,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public LambdaClientQueryBuilder<T> orderByAsc(SFunction<T, ?> column) {
-        queryBuilder.orderByAsc(column);
+        sqlBuilder.orderByAsc(column);
         return this;
     }
 
@@ -843,23 +261,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 当前构建器实例，支持链式调用
      */
     public LambdaClientQueryBuilder<T> orderByDesc(SFunction<T, ?> column) {
-        queryBuilder.orderByDesc(column);
-        return this;
-    }
-
-    // ==================== 调试方法 ====================
-
-    /**
-     * 打印最终生成的 SQL 语句和参数到控制台
-     * <p>
-     * 用于调试和开发阶段，方便查看实际执行的 SQL。
-     * 生产环境建议关闭此功能。
-     * </p>
-     *
-     * @return 当前构建器实例，支持链式调用
-     */
-    public LambdaClientQueryBuilder<T> print() {
-        queryBuilder.print();
+        sqlBuilder.orderByDesc(column);
         return this;
     }
 
@@ -884,7 +286,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 查询结果列表，永远不为 null
      */
     public List<T> list() {
-        return this.baseDBApi.selectList(this.queryBuilder);
+        return this.baseDBApi.selectList(this.sqlBuilder);
     }
 
     /**
@@ -908,7 +310,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 查询结果，可能为 null
      */
     public T one() {
-        return this.baseDBApi.selectOne(this.queryBuilder);
+        return this.baseDBApi.selectOne(this.sqlBuilder);
     }
 
     /**
@@ -933,7 +335,7 @@ public class LambdaClientQueryBuilder<T> {
      * @return 包含映射对象的 Stream，必须在使用完毕后关闭
      */
     public Stream<T> stream() {
-        return this.baseDBApi.stream(this.queryBuilder);
+        return this.baseDBApi.stream(this.sqlBuilder);
     }
 
     /**
@@ -960,18 +362,17 @@ public class LambdaClientQueryBuilder<T> {
      * @return 分页结果，包含数据列表和分页信息
      */
     public PageResult<T> page(Page page) {
-        return this.baseDBApi.selectPage(this.queryBuilder, page);
+        return this.baseDBApi.selectPage(this.sqlBuilder, page);
     }
-
 
     /**
      * 简单分页查询，不进行COUNT查询，只返回记录
      *
-     * @param pageNum      查询的页数
-     * @param pageSize     每页的条数
+     * @param pageNum  查询的页数
+     * @param pageSize 每页的条数
      * @return 对应页码对的数据
      */
     public List<T> simplePage(long pageNum, long pageSize) {
-        return this.baseDBApi.simplePage(this.queryBuilder, pageNum, pageSize);
+        return this.baseDBApi.simplePage(this.sqlBuilder, pageNum, pageSize);
     }
 }

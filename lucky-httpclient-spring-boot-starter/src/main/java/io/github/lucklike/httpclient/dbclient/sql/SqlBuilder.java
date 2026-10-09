@@ -199,6 +199,19 @@ public class SqlBuilder implements SQLWrapper {
         return this;
     }
 
+    /**
+     * 设置 FROM 子句，使用子查询作为数据源
+     *
+     * @param subSql 子查询 SQL（不含括号）
+     * @param alias  子查询别名
+     * @param params 子查询 SQL 中的占位符参数，按顺序匹配
+     * @return 当前构建器实例，支持链式调用
+     */
+    public SqlBuilder fromSubQuery(String subSql, String alias, Object... params) {
+        addFragment(fromFragments, "(" + subSql + ")" + AS + alias, params);
+        return this;
+    }
+
     public SqlBuilder from(SqlBuilder subQuery, String alias) {
         String sql = "(" + subQuery.getSqlTemp() + ")";
         if (alias != null && !alias.isEmpty()) {

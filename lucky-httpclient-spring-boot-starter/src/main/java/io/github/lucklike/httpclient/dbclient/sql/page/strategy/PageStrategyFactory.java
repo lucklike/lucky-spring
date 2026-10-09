@@ -6,12 +6,25 @@ import org.springframework.jdbc.support.JdbcUtils;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * 分页策略工厂
  * 根据数据库类型获取对应的分页策略
  */
 public class PageStrategyFactory {
+
+    /**
+     * DataSource 与分页策略的缓存，避免每次分页查询都探测数据库元数据
+     */
+    private static final Map<DataSource, PageStrategy> DATA_SOURCE_STRATEGY_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * 自定义分页策略注册表（key为小写的数据库产品关键字）
+     */
+    private static final Map<String, Supplier<PageStrategy>> CUSTOM_STRATEGIES = new ConcurrentHashMap<>();
 
     /**
      * 数据库类型枚举
@@ -60,6 +73,20 @@ public class PageStrategyFactory {
     }
 
     /**
+     * 注册自定义分页策略，当数据库产品名包含 keyword（不区分大小写）时使用该策略
+     * <p>通常在内置策略不支持的数据库（如人大金仓等）场景下使用</p>
+     *
+     * @param keyword  数据库产品关键字，如 "kingbase"
+     * @param supplier 分页策略提供者
+     */
+    public static void registerStrategy(String keyword, Supplier<PageStrategy> supplier) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Database keyword cannot be null or empty");
+        }
+        CUSTOM_STRATEGIES.put(keyword.trim().toLowerCase(), supplier);
+    }
+
+    /**
      * 根据标准数据库名称获取分页策略
      *
      * @param standardDatabaseName 标准数据库名称（如：MySQL, PostgreSQL, Oracle, SQL Server等）
@@ -71,6 +98,13 @@ public class PageStrategyFactory {
         }
 
         String lowerName = standardDatabaseName.toLowerCase();
+
+        // 优先使用用户注册的自定义策略
+        for (Map.Entry<String, Supplier<PageStrategy>> entry : CUSTOM_STRATEGIES.entrySet()) {
+            if (lowerName.contains(entry.getKey())) {
+                return entry.getValue().get();
+            }
+        }
 
         if (lowerName.contains("mysql")) {
             return getStrategy(DatabaseType.MYSQL);
@@ -205,7 +239,7 @@ public class PageStrategyFactory {
 
     /**
      * 通过 DataSource 获取分页策略（推荐使用）
-     * 自动识别数据库类型，并根据版本选择最优策略
+     * 自动识别数据库类型，并根据版本选择最优策略；识别结果按 DataSource 缓存
      *
      * @param dataSource 数据源
      * @return 对应的分页策略
@@ -214,7 +248,16 @@ public class PageStrategyFactory {
         if (dataSource == null) {
             throw new IllegalArgumentException("DataSource cannot be null");
         }
+        return DATA_SOURCE_STRATEGY_CACHE.computeIfAbsent(dataSource, PageStrategyFactory::resolveStrategyByDataSource);
+    }
 
+    /**
+     * 探测数据库元数据并解析分页策略
+     *
+     * @param dataSource 数据源
+     * @return 对应的分页策略
+     */
+    private static PageStrategy resolveStrategyByDataSource(DataSource dataSource) {
         Connection connection = null;
         try {
             connection = DataSourceUtils.getConnection(dataSource);

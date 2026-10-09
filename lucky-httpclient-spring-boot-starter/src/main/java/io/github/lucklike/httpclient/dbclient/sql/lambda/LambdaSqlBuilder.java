@@ -256,21 +256,14 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @return 当前构建器实例，支持链式调用
      */
     protected LambdaSqlBuilder<T> from(LambdaSqlBuilder<?> subQuery, String alias) {
-        // 先构建子查询获取 SQL 和参数
+        // 先构建子查询获取 SQL 和参数，再以子查询作为 FROM 数据源（参数按 FROM 位置参与最终参数收集）
         SqlBuilder.QueryResult subResult = subQuery.buildInternal();
         String subSql = subResult.getSql();
         Object[] subParams = subResult instanceof SqlBuilder.SingleQueryResult
                 ? ((SqlBuilder.SingleQueryResult) subResult).getParams()
                 : new Object[0];
 
-        // 构建子查询片段
-        SqlBuilder tempBuilder = SqlBuilder.builder();
-        tempBuilder.from(subSql, alias);
-        // 手动添加子查询参数
-        for (Object param : subParams) {
-            tempBuilder.where("1=1", param); // 技巧：通过 where 添加参数
-        }
-
+        sqlBuilder.fromSubQuery(subSql, alias, subParams);
         return this;
     }
 
@@ -351,7 +344,7 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
      * @return 当前构建器实例，支持链式调用
      */
     protected <E> LambdaSqlBuilder<T> on(SFunction<T, ?> leftColumn, SFunction<E, ?> rightColumn) {
-        String condition = getColumn(leftColumn) + " = " + LambdaUtils.getColumnName(null, rightColumn);
+        String condition = getColumn(leftColumn) + " = " + LambdaUtils.getColumnName(rightColumn);
         sqlBuilder.on(condition);
         return this;
     }

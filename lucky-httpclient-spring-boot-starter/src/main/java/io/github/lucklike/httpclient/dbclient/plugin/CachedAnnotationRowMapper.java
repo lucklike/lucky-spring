@@ -1,18 +1,14 @@
 package io.github.lucklike.httpclient.dbclient.plugin;
 
-import com.luckyframework.reflect.AnnotationUtils;
-import com.luckyframework.reflect.ClassUtils;
-import io.github.lucklike.httpclient.dbclient.annotation.Column;
+import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
+import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.util.LinkedCaseInsensitiveMap;
-import org.springframework.util.StringUtils;
 
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -68,26 +64,21 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
             return;
         }
 
-        // 处理当前类的字段
-        Field[] fields = ClassUtils.getAllFields(clazz);
-        for (Field field : fields) {
-            if (Modifier.isStatic(field.getModifiers())) {
+        // 处理当前类的字段（列元数据由统一元数据层提供）
+        for (ColumnMetadata column : EntityMetadataFactory.getMetadata(clazz).getColumns()) {
+            if (column.isStaticField()) {
                 continue;
             }
 
-            String fieldName = field.getName();
-
-            Column column = AnnotationUtils.findMergedAnnotation(field, Column.class);
-            if (column != null) {
-                if (column.exist()) {
-                    String columnName = StringUtils.hasText(column.value()) ? column.value() : fieldName;
-                    metadata.addMapping(fieldName, columnName);
+            if (column.isColumnAnnotated()) {
+                metadata.setHasColumnAnnotations(true);
+                if (column.isExist()) {
+                    metadata.addMapping(column.getFieldName(), column.getColumnName());
                 }
             } else {
-                metadata.addMapping(fieldName, fieldName);
+                metadata.addMapping(column.getFieldName(), column.getFieldName());
             }
         }
-
     }
 
     /**
@@ -138,7 +129,7 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
     // 辅助方法
     private T createInstance() {
         try {
-            return getMappedClass().newInstance();
+            return getMappedClass().getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create instance of " + getMappedClass(), e);
         }
@@ -185,10 +176,16 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
      * 映射元数据类
      */
     private static class MappingMetadata {
+        // 是否存在 @Column 注解
+        private boolean hasColumnAnnotations;
         // 字段名 -> 列名
         private final Map<String, String> fieldToColumn = new HashMap<>();
         // 列名 -> 字段名
         private final Map<String, String> columnToField = new LinkedCaseInsensitiveMap<>();
+
+        public void setHasColumnAnnotations(boolean hasColumnAnnotations) {
+            this.hasColumnAnnotations = hasColumnAnnotations;
+        }
 
         public void addMapping(String fieldName, String columnName) {
             fieldToColumn.put(fieldName, columnName);
@@ -212,7 +209,7 @@ public class CachedAnnotationRowMapper<T> extends BeanPropertyRowMapper<T> {
         }
 
         public boolean hasAnnotationMappings() {
-            return !fieldToColumn.isEmpty();
+            return hasColumnAnnotations;
         }
 
         public Map<String, String> getFieldToColumnMappings() {

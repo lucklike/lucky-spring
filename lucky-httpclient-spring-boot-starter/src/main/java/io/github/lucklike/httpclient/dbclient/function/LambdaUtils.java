@@ -1,14 +1,13 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import com.luckyframework.reflect.AnnotationUtils;
-import io.github.lucklike.httpclient.dbclient.annotation.Column;
+import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
+import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
 
 import java.beans.Introspector;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -106,6 +105,23 @@ public class LambdaUtils {
     }
 
     /**
+     * 获取 SFunction 对应的数据库列名
+     * <p>实体类由方法引用的实现类推断，适用于没有实体类上下文的场景（如 JOIN 关联表的列）</p>
+     *
+     * @param function 字段引用的 SFunction
+     * @return 字段对应的数据库列名
+     */
+    public static <T, R> String getColumnName(SFunction<T, R> function) {
+        SerializedLambda lambda = resolveLambda(function);
+        try {
+            Class<?> entityClass = Class.forName(lambda.getImplClass().replace("/", "."));
+            return getColumnName(entityClass, getFieldName(function));
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Class not found: " + lambda.getImplClass(), e);
+        }
+    }
+
+    /**
      * 根据实体类和字段名获取列名
      */
     public static String getColumnName(Class<?> entityClass, String fieldName) {
@@ -119,20 +135,12 @@ public class LambdaUtils {
     public static Map<String, String> getColumnMap(Class<?> entityClass) {
         return COLUMN_CACHE.computeIfAbsent(entityClass, clazz -> {
             Map<String, String> map = new ConcurrentHashMap<>();
-            Map<String, Field> fieldMap = getFieldMap(clazz);
-
-            for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
-                String fieldName = entry.getKey();
-                Field field = entry.getValue();
-                Column column = AnnotationUtils.findMergedAnnotation(field, Column.class);
-
-                if (column != null && !column.value().isEmpty()) {
-                    // 使用 @Column 注解的值
-                    map.put(fieldName, column.value());
-                } else {
-                    // 使用字段名
-                    map.put(fieldName, fieldName);
+            // 列元数据由统一元数据层提供，忽略静态字段和 transient 字段（与 getFieldMap 保持一致）
+            for (ColumnMetadata column : EntityMetadataFactory.getMetadata(clazz).getColumns()) {
+                if (column.isStaticField() || column.isTransitory()) {
+                    continue;
                 }
+                map.put(column.getFieldName(), column.getColumnName());
             }
             return map;
         });
@@ -144,32 +152,15 @@ public class LambdaUtils {
     public static Map<String, Field> getFieldMap(Class<?> entityClass) {
         return FIELD_CACHE.computeIfAbsent(entityClass, clazz -> {
             Map<String, Field> fieldMap = new ConcurrentHashMap<>();
-            collectFields(clazz, fieldMap);
+            // 忽略静态字段和 transient 字段；列顺序为父类字段在前，父子类同名字段时由子类字段覆盖
+            for (ColumnMetadata column : EntityMetadataFactory.getMetadata(clazz).getColumns()) {
+                if (column.isStaticField() || column.isTransitory()) {
+                    continue;
+                }
+                fieldMap.put(column.getFieldName(), column.getField());
+            }
             return fieldMap;
         });
-    }
-
-    /**
-     * 递归收集类及其父类的所有字段
-     */
-    private static void collectFields(Class<?> clazz, Map<String, Field> fieldMap) {
-        if (clazz == null || clazz == Object.class) {
-            return;
-        }
-
-        // 处理当前类的字段
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-            // 忽略静态字段和 transient 字段
-            if (Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers())) {
-                continue;
-            }
-            // 如果子类已经定义了同名字段，不覆盖
-            fieldMap.putIfAbsent(field.getName(), field);
-        }
-
-        // 处理父类
-        collectFields(clazz.getSuperclass(), fieldMap);
     }
 
     /**
@@ -214,6 +205,7 @@ public class LambdaUtils {
         COLUMN_CACHE.clear();
         FIELD_CACHE.clear();
         LAMBDA_CACHE.clear();
+        EntityMetadataFactory.clearCache();
     }
 
     /**
@@ -222,6 +214,7 @@ public class LambdaUtils {
     public static void clearCache(Class<?> entityClass) {
         COLUMN_CACHE.remove(entityClass);
         FIELD_CACHE.remove(entityClass);
+        EntityMetadataFactory.clearCache(entityClass);
 
         // 清除相关字段名缓存
         String className = entityClass.getName();

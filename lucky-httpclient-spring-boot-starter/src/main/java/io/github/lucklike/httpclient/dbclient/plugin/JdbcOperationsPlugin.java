@@ -16,7 +16,6 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.sql.SQLException;
 
 /**
  * 基于{@link NamedParameterJdbcTemplate}实现的数据库通讯客户端插件
@@ -66,10 +65,11 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
         }
 
         /* 尝试从@SQL注解中获取 SQL 执行器 */
-        // 没有被 SQL 注解标注时直接返回 null
+        // 既不是default方法、非Object方法，也没有被 @SQL 注解标注时，视为接口配置错误
         SQL sqlAnn = mc.getMergedAnnotation(SQL.class);
         if (sqlAnn == null) {
-            return null;
+            throw new IllegalStateException("DB client method [" + method.toGenericString() + "] is not annotated with @SQL, "
+                    + "please check the interface definition");
         }
 
         // 配置了 SQL 执行器时优先使用 SQL 执行器
@@ -87,9 +87,8 @@ public class JdbcOperationsPlugin implements ProxyPlugin {
      * @param mc 方法上下文
      * @param sqlAnn SQL 注解示例
      * @return SQL 执行结果
-     * @throws SQLException 执行过程中可能出现 SQL 异常
      */
-    private Object executeSQL(MethodContext mc, SQL sqlAnn) throws SQLException {
+    private Object executeSQL(MethodContext mc, SQL sqlAnn) {
         // 计算 SQL 模板
         String sqlTemp = mc.parseExpression(sqlAnn.sql(), String.class);
         SQLType sqlType = sqlAnn.type();

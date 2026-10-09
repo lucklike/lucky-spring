@@ -17,6 +17,7 @@ import io.github.lucklike.httpclient.dbclient.sql.page.PageResult;
 import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageSql;
 import io.github.lucklike.httpclient.dbclient.sql.page.strategy.PageStrategyFactory;
 import org.springframework.core.ResolvableType;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -167,7 +168,15 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
 
         // 简单基本类型
         if (ClassUtils.isSimpleBaseType(resultType.toClass())) {
-            return jdbcTemplate.queryForObject(sqlTemp, resultType.toClass(), sqlArgs);
+            try {
+                return jdbcTemplate.queryForObject(sqlTemp, resultType.toClass(), sqlArgs);
+            } catch (EmptyResultDataAccessException e) {
+                // 无结果时返回null（方法声明为原始类型时无法表达null，保持原有异常）
+                if (resultType.toClass().isPrimitive()) {
+                    throw e;
+                }
+                return null;
+            }
         }
 
         RowMapper<?> rowMapper = createRowMapper();
@@ -178,9 +187,10 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
             return ConversionUtils.conversion(queryResult, resultType);
         }
 
-        // Map类型
-        if (resultType.toClass() == Map.class) {
-            return jdbcTemplate.query(sqlTemp, rowMapper, sqlArgs).stream().findFirst().orElse(null);
+        // Map类型（含 Map 的子类）
+        if (Map.class.isAssignableFrom(resultType.toClass())) {
+            Object mapResult = jdbcTemplate.query(sqlTemp, rowMapper, sqlArgs).stream().findFirst().orElse(null);
+            return conversionMapResult(mapResult, resultType.toClass());
         }
 
         // Bean 类型
@@ -218,7 +228,15 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
 
         // 简单基本类型
         if (ClassUtils.isSimpleBaseType(resultType.toClass())) {
-            return namedParameterJdbcTemplate.queryForObject(sqlTemp, sqlParamSource, resultType.toClass());
+            try {
+                return namedParameterJdbcTemplate.queryForObject(sqlTemp, sqlParamSource, resultType.toClass());
+            } catch (EmptyResultDataAccessException e) {
+                // 无结果时返回null（方法声明为原始类型时无法表达null，保持原有异常）
+                if (resultType.toClass().isPrimitive()) {
+                    throw e;
+                }
+                return null;
+            }
         }
 
         RowMapper<?> rowMapper = createRowMapper();
@@ -229,9 +247,10 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
             return ConversionUtils.conversion(queryResult, resultType);
         }
 
-        // Map类型
-        if (resultType.toClass() == Map.class) {
-            return namedParameterJdbcTemplate.query(sqlTemp, sqlParamSource, rowMapper).stream().findFirst().orElse(null);
+        // Map类型（含 Map 的子类）
+        if (Map.class.isAssignableFrom(resultType.toClass())) {
+            Object mapResult = namedParameterJdbcTemplate.query(sqlTemp, sqlParamSource, rowMapper).stream().findFirst().orElse(null);
+            return conversionMapResult(mapResult, resultType.toClass());
         }
 
         // Bean 类型
@@ -380,7 +399,7 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
         // 集合类型
         if (Collection.class.isAssignableFrom(resultType.toClass())) {
             Class<?> elementType = resultType.getGeneric(0).toClass();
-            if (elementType == Map.class) {
+            if (Map.class.isAssignableFrom(elementType)) {
                 return new ColumnMapRowMapper();
             }
             if (ClassUtils.isSimpleBaseType(elementType)) {
@@ -389,13 +408,27 @@ public abstract class AbstractMCNamedJdbcTemplateSQLExecutor implements SQLExecu
             return new CachedAnnotationRowMapper<>(elementType);
         }
 
-        // Map类型
-        if (resultType.toClass() == Map.class) {
+        // Map类型（含 Map 的子类）
+        if (Map.class.isAssignableFrom(resultType.toClass())) {
             return new ColumnMapRowMapper();
         }
 
         // Bean 类型
         return new CachedAnnotationRowMapper<>(resultType.toClass());
+    }
+
+    /**
+     * Map结果转换为方法声明的Map类型（声明类型为 Map 或结果本身即为声明类型时直接返回）
+     *
+     * @param mapResult    ColumnMapRowMapper 映射出的 Map 结果
+     * @param declaredType 方法声明的返回类型
+     * @return 符合声明类型的结果
+     */
+    private Object conversionMapResult(Object mapResult, Class<?> declaredType) {
+        if (mapResult == null || declaredType.isInstance(mapResult)) {
+            return mapResult;
+        }
+        return ConversionUtils.conversion(mapResult, declaredType);
     }
 
     /**

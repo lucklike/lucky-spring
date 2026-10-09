@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 查询类 SQL
+ * 批量类 SQL
  * @author fukang
  * @version 1.0.0
  * @date 2026/5/23 05:00

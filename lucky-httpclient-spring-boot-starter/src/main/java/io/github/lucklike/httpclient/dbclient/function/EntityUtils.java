@@ -1,50 +1,71 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import com.luckyframework.common.StringUtils;
-import com.luckyframework.conversion.ConversionUtils;
-import com.luckyframework.reflect.AnnotationUtils;
-import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.reflect.FieldUtils;
-import io.github.lucklike.httpclient.dbclient.annotation.Id;
-import io.github.lucklike.httpclient.dbclient.annotation.IdType;
-import io.github.lucklike.httpclient.dbclient.annotation.Table;
-import org.springframework.jdbc.support.KeyHolder;
+import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
+import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EntityUtils {
 
-    private static final Map<Class<?>, IdField> autoIncrementIdFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<IdField>> idFieldListMap = new ConcurrentHashMap<>();
 
     public static String getIdColumn(Class<?> clazz, String notIdErrorMsg) {
-        for (Field field : ClassUtils.getAllFields(clazz)) {
-            Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
-            if (idAnn != null) {
-                return StringUtils.hasText(idAnn.value()) ? idAnn.value() : field.getName();
-            }
+        List<ColumnMetadata> idColumns = EntityMetadataFactory.getMetadata(clazz).getIdColumns();
+        if (idColumns.isEmpty()) {
+            throw new IllegalArgumentException(notIdErrorMsg);
         }
-        throw new IllegalArgumentException(notIdErrorMsg);
+        return idColumns.get(0).getColumnName();
     }
 
     public static String getTableName(Class<?> clazz) {
-        Table tableAnn = AnnotationUtils.findMergedAnnotation(clazz, Table.class);
-        if (tableAnn != null && StringUtils.hasText(tableAnn.value())) {
-            return tableAnn.value();
-        }
-        return clazz.getSimpleName().toLowerCase();
+        return EntityMetadataFactory.getMetadata(clazz).getTableName();
     }
 
-    public static IdField getAutoIncrementIdField(Class<?> clazz) {
-        return autoIncrementIdFieldMap.computeIfAbsent(clazz, _c -> {
-            for (Field field : ClassUtils.getAllFields(clazz)) {
-                Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
-                if  (idAnn != null) {
-                    return IdField.of(field, idAnn.type());
-                }
+    /**
+     * 获取实体类中所有被 {@link Id @Id} 标注的字段（支持复合主键），结果会被缓存
+     *
+     * @param clazz 实体类类型
+     * @return ID 字段列表，没有 @Id 字段时返回空列表
+     */
+    public static List<IdField> getIdFields(Class<?> clazz) {
+        return idFieldListMap.computeIfAbsent(clazz, _c -> {
+            List<IdField> idFields = new ArrayList<>();
+            for (ColumnMetadata idColumn : EntityMetadataFactory.getMetadata(clazz).getIdColumns()) {
+                idFields.add(IdField.of(idColumn.getField(), idColumn.getIdType()));
             }
-            return IdField.NULL;
+            return Collections.unmodifiableList(idFields);
         });
+    }
+
+    /**
+     * 获取实体对象的第一个非空 ID 值
+     *
+     * @param entity 实体对象
+     * @return 第一个非空 ID 值，没有非空 ID 字段时返回 null
+     */
+    public static Object getIdValue(Object entity) {
+        for (IdField idField : getIdFields(entity.getClass())) {
+            Object value = FieldUtils.getValue(entity, idField.getField());
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取实体类中第一个 {@link Id @Id} 字段
+     *
+     * @param clazz 实体类类型
+     * @return 第一个 ID 字段，没有 @Id 字段时返回 {@link IdField#NULL}
+     */
+    public static IdField getAutoIncrementIdField(Class<?> clazz) {
+        List<IdField> idFields = getIdFields(clazz);
+        return idFields.isEmpty() ? IdField.NULL : idFields.get(0);
     }
 }
