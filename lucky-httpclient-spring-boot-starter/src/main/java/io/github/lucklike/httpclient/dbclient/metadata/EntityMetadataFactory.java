@@ -5,6 +5,7 @@ import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import io.github.lucklike.httpclient.dbclient.annotation.Id;
+import io.github.lucklike.httpclient.dbclient.annotation.LogicDelete;
 import io.github.lucklike.httpclient.dbclient.annotation.Table;
 import io.github.lucklike.httpclient.dbclient.function.Condition;
 
@@ -86,6 +87,7 @@ public final class EntityMetadataFactory {
     private static ColumnMetadata buildColumnMetadata(Field field) {
         Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
         Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
+        LogicDelete logicDeleteAnn = AnnotationUtils.findMergedAnnotation(field, LogicDelete.class);
 
         String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value()))
                 ? columnAnn.value()
@@ -94,7 +96,10 @@ public final class EntityMetadataFactory {
         Class<? extends Condition> conditionClass = columnAnn == null ? Condition.Eq.class : columnAnn.condition();
 
         return new ColumnMetadata(field, columnName, exist, columnAnn != null, idAnn != null,
-                idAnn == null ? null : idAnn.type(), conditionClass);
+                idAnn == null ? null : idAnn.type(), conditionClass,
+                logicDeleteAnn != null,
+                logicDeleteAnn == null ? null : logicDeleteAnn.deletedValue(),
+                logicDeleteAnn == null ? null : logicDeleteAnn.notDeletedValue());
     }
 
     /**

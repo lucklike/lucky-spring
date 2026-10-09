@@ -542,6 +542,26 @@ public class LambdaConditionBuilder<T> extends LambdaSqlBuilder<T> {
     }
 
     /**
+     * 转换为逻辑删除构建器
+     *
+     * @return 逻辑删除构建器
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段、标注了多个或取值非法时
+     */
+    public final LambdaLogicDeleteBuilder<T> toLogicDelete() {
+        return new LambdaLogicDeleteBuilder<>(this);
+    }
+
+    /**
+     * 转换为恢复构建器
+     *
+     * @return 恢复构建器
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段、标注了多个或取值非法时
+     */
+    public final LambdaRestoreBuilder<T> toRestore() {
+        return new LambdaRestoreBuilder<>(this);
+    }
+
+    /**
      * 转换为单列查询构建器
      *
      * @return 单列查询构建器

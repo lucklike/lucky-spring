@@ -128,6 +128,8 @@ public class SQLFunctions {
                 .select()
                 .from(EntityUtils.getTableName(entityClass))
                 .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, selectById requires at least one @Id field"), idValue);
+        // 标注 @LogicDelete 的实体：自动追加“不等于已删除值”的过滤条件
+        EntityUtils.applyLogicDeleteFilter(sqlBuilder, entityClass);
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 
@@ -148,6 +150,8 @@ public class SQLFunctions {
                 co.getCondition().additionCondition(sqlBuilder, co);
             }
         });
+        // 标注 @LogicDelete 的实体：自动追加“不等于已删除值”的过滤条件
+        EntityUtils.applyLogicDeleteFilter(sqlBuilder, entityClass);
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 
@@ -168,6 +172,8 @@ public class SQLFunctions {
                 sqlBuilder.eq(key, value);
             }
         });
+        // 标注 @LogicDelete 的实体：自动追加“不等于已删除值”的过滤条件
+        EntityUtils.applyLogicDeleteFilter(sqlBuilder, entityClass);
         return new SQLWrapperExecutor(mc, sqlBuilder);
 
     }
@@ -191,6 +197,68 @@ public class SQLFunctions {
                 .delete()
                 .from(EntityUtils.getTableName(entityClass))
                 .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, deleteById requires at least one @Id field"), idValue);
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+    /**
+     * 根据主键ID逻辑删除实体
+     * <p>将实体@LogicDelete字段的列更新为"已删除值"，不物理删除数据</p>
+     * <p><b>注意：</b>主键ID值不能为null，实体必须标注了@LogicDelete字段，否则会抛出异常</p>
+     *
+     * @param mc 方法上下文对象，包含泛型信息和参数信息
+     * @return SQL执行器，用于执行逻辑删除的SQL语句
+     * @throws IllegalArgumentException 如果主键ID为null或实体未标注@LogicDelete字段时抛出此异常
+     */
+    public static SQLExecutor logicDeleteById(MethodContext mc) {
+        // 获取主键值
+        Object idValue = mc.getArguments()[0];
+        if (idValue == null) {
+            throw new IllegalArgumentException("Primary key ID value cannot be null in logicDeleteById operation");
+        }
+
+        Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
+        EntityUtils.LogicDeleteRule rule = EntityUtils.getLogicDeleteRule(entityClass);
+        if (rule == null) {
+            throw new IllegalArgumentException(
+                    String.format("Entity [%s] has no @LogicDelete field defined, logicDeleteById requires a @LogicDelete field",
+                            entityClass.getName())
+            );
+        }
+        SqlBuilder sqlBuilder = SqlBuilder.builder()
+                .update(EntityUtils.getTableName(entityClass))
+                .set(rule.getColumnName(), rule.getDeletedValue())
+                .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, logicDeleteById requires at least one @Id field"), idValue);
+        return new SQLWrapperExecutor(mc, sqlBuilder);
+    }
+
+    /**
+     * 根据主键ID恢复已逻辑删除的实体
+     * <p>将实体@LogicDelete字段的列写回"未删除值"；对未处于删除状态的记录执行恢复不改变其数据</p>
+     * <p><b>注意：</b>主键ID值不能为null，实体必须标注了@LogicDelete字段，否则会抛出异常</p>
+     *
+     * @param mc 方法上下文对象，包含泛型信息和参数信息
+     * @return SQL执行器，用于执行恢复的SQL语句
+     * @throws IllegalArgumentException 如果主键ID为null或实体未标注@LogicDelete字段时抛出此异常
+     */
+    public static SQLExecutor restoreById(MethodContext mc) {
+        // 获取主键值
+        Object idValue = mc.getArguments()[0];
+        if (idValue == null) {
+            throw new IllegalArgumentException("Primary key ID value cannot be null in restoreById operation");
+        }
+
+        Class<?> entityClass = ResolvableType.forClass(BaseDBApi.class, mc.getClassContext().getCurrentAnnotatedElement()).getGeneric(0).toClass();
+        EntityUtils.LogicDeleteRule rule = EntityUtils.getLogicDeleteRule(entityClass);
+        if (rule == null) {
+            throw new IllegalArgumentException(
+                    String.format("Entity [%s] has no @LogicDelete field defined, restoreById requires a @LogicDelete field",
+                            entityClass.getName())
+            );
+        }
+        SqlBuilder sqlBuilder = SqlBuilder.builder()
+                .update(EntityUtils.getTableName(entityClass))
+                .set(rule.getColumnName(), rule.getNotDeletedValue())
+                .eq(EntityUtils.getIdColumn(entityClass, "Entity [" + entityClass.getName() + "] has no @Id field defined, restoreById requires at least one @Id field"), idValue);
         return new SQLWrapperExecutor(mc, sqlBuilder);
     }
 

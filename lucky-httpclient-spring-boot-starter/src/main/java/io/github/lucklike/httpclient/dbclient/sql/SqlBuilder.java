@@ -52,6 +52,11 @@ public class SqlBuilder implements SQLWrapper {
     // 用于标记当前构建的是 DELETE 语句
     private boolean isDeleteStatement;
 
+    // 逻辑删除过滤配置（仅 SELECT 生效，由启用方通过 applyLogicDeleteFilter 设置）
+    private String logicDeleteColumn;
+    private Object logicDeleteDeletedValue;
+    private boolean includeDeleted;
+
     // SQL关键字
     private static final String SELECT = "SELECT ";
     private static final String FROM = " FROM ";
@@ -663,6 +668,50 @@ public class SqlBuilder implements SQLWrapper {
         return likeValue.replace("%", "\\%").replace("_", "\\_");
     }
 
+    // ==================== 逻辑删除过滤 ====================
+
+    /**
+     * 应用逻辑删除过滤配置
+     * <p>
+     * 仅对 SELECT 语句生效：渲染时在 WHERE 子句中追加 "column &lt;&gt; ?"（不等于已删除值）条件，
+     * 参数追加在 WHERE 参数之后（与 SQL 文本顺序一致）。
+     * UPDATE / DELETE / BATCH 语句与批量插入完全不受影响。
+     * </p>
+     *
+     * @param columnName   逻辑删除列名
+     * @param deletedValue 已删除值（已按字段类型转换）
+     * @return 当前构建器实例，支持链式调用
+     */
+    public SqlBuilder applyLogicDeleteFilter(String columnName, Object deletedValue) {
+        this.logicDeleteColumn = columnName;
+        this.logicDeleteDeletedValue = deletedValue;
+        return this;
+    }
+
+    /**
+     * 设置查询是否包含已删除记录
+     * <p>
+     * 设为 {@code true} 时不再渲染逻辑删除过滤条件；仅影响 SELECT 语句。
+     * </p>
+     *
+     * @param includeDeleted 是否包含已删除记录
+     * @return 当前构建器实例，支持链式调用
+     */
+    public SqlBuilder includeDeleted(boolean includeDeleted) {
+        this.includeDeleted = includeDeleted;
+        return this;
+    }
+
+    /**
+     * 逻辑删除过滤是否启用（已设置过滤配置、未包含已删除记录且语句为 SELECT）
+     */
+    private boolean isLogicDeleteFilterEnabled() {
+        return logicDeleteColumn != null
+                && logicDeleteDeletedValue != null
+                && !includeDeleted
+                && sqlType == SQLType.SELECT;
+    }
+
     // ==================== 其他方法 ====================
 
     public SqlBuilder clear() {
@@ -684,6 +733,9 @@ public class SqlBuilder implements SQLWrapper {
         hasWhere = false;
         needAndPrefix = false;
         isDeleteStatement = false;
+        logicDeleteColumn = null;
+        logicDeleteDeletedValue = null;
+        includeDeleted = false;
         return this;
     }
 
@@ -713,6 +765,9 @@ public class SqlBuilder implements SQLWrapper {
         copy.hasWhere = this.hasWhere;
         copy.needAndPrefix = this.needAndPrefix;
         copy.isDeleteStatement = this.isDeleteStatement;
+        copy.logicDeleteColumn = this.logicDeleteColumn;
+        copy.logicDeleteDeletedValue = this.logicDeleteDeletedValue;
+        copy.includeDeleted = this.includeDeleted;
         copy.isBuilt = false;  // 关键：重置构建状态
 
         return copy;
@@ -770,6 +825,10 @@ public class SqlBuilder implements SQLWrapper {
         for (SqlFragment fragment : whereFragments) {
             allParams.addAll(fragment.getParams());
         }
+        // 逻辑删除过滤参数（紧跟 WHERE 参数之后，与 SQL 文本顺序一致）
+        if (isLogicDeleteFilterEnabled()) {
+            allParams.add(logicDeleteDeletedValue);
+        }
         // GROUP BY 参数
         for (SqlFragment fragment : groupByFragments) {
             allParams.addAll(fragment.getParams());
@@ -825,10 +884,28 @@ public class SqlBuilder implements SQLWrapper {
                 }
             }
 
-            if (!whereFragments.isEmpty()) {
+            boolean logicDeleteFilter = isLogicDeleteFilterEnabled();
+            if (!whereFragments.isEmpty() || logicDeleteFilter) {
                 sql.append(WHERE);
-                for (SqlFragment fragment : whereFragments) {
-                    sql.append(fragment.getSql());
+                if (!whereFragments.isEmpty()) {
+                    if (logicDeleteFilter) {
+                        // 整体括号包装，避免既有条件包含 OR 时与追加条件的优先级错误
+                        sql.append("(");
+                        for (SqlFragment fragment : whereFragments) {
+                            sql.append(fragment.getSql());
+                        }
+                        sql.append(")");
+                    } else {
+                        for (SqlFragment fragment : whereFragments) {
+                            sql.append(fragment.getSql());
+                        }
+                    }
+                }
+                if (logicDeleteFilter) {
+                    if (!whereFragments.isEmpty()) {
+                        sql.append(AND);
+                    }
+                    sql.append(logicDeleteColumn).append(" <> ?");
                 }
             }
 

@@ -73,6 +73,22 @@ public interface DbApi<E> {
     String SQL_UPDATE_BY_ID = "#{updateById($mc$)}";
 
     /**
+     * {@link SQLFunctions#logicDeleteById(MethodContext)} 执行的 SQL 模板
+     * <p>
+     * 用于根据 ID 逻辑删除记录，将逻辑删除字段更新为"已删除值"，不物理删除数据。
+     * </p>
+     */
+    String SQL_LOGIC_DELETE_BY_ID = "#{logicDeleteById($mc$)}";
+
+    /**
+     * {@link SQLFunctions#restoreById(MethodContext)} 执行的 SQL 模板
+     * <p>
+     * 用于根据 ID 恢复已逻辑删除的记录，将逻辑删除字段写回"未删除值"。
+     * </p>
+     */
+    String SQL_RESTORE_BY_ID = "#{restoreById($mc$)}";
+
+    /**
      * {@link SQLFunctions#insertSql(MethodContext)} 执行的 SQL 模板
      * <p>
      * 用于插入单条记录。

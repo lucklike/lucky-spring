@@ -17,7 +17,8 @@ import java.util.stream.Stream;
  * <p>
  * 该类封装了 {@link LambdaConditionBuilder} 和 {@link BaseDBApi}，
  * 提供流式 API 构建查询条件，并可通过 {@link #toSelect}, {@link #toCount},
- * {@link #toUpdate}, {@link #toDelete} 方法转换为对应的操作构建器。
+ * {@link #toUpdate}, {@link #toDelete}, {@link #toLogicDelete}, {@link #toRestore}
+ * 方法转换为对应的操作构建器。
  * 公共条件方法继承自 {@link AbstractLambdaClientBuilder}。
  * </p>
  * <p>
@@ -37,6 +38,10 @@ import java.util.stream.Stream;
  *     .toUpdate()
  *     .set(User::getStatus, 1)
  *     .update();
+ *
+ * // 构建条件并执行逻辑删除 / 恢复
+ * int deleted = condition.eq(User::getStatus, 0).toLogicDelete().logicDelete();
+ * int restored = condition.eq(User::getStatus, 0).toRestore().restore();
  * }
  * </pre>
  * </p>
@@ -183,6 +188,52 @@ public class LambdaClientConditionBuilder<T> extends AbstractLambdaClientBuilder
      */
     public final LambdaClientUpdateBuilder<T> toUpdate() {
         return new LambdaClientUpdateBuilder<>(this.baseDBApi, this.sqlBuilder);
+    }
+
+    /**
+     * 将当前的条件构建器转换为逻辑删除构建器
+     * <p>
+     * 转换后可用于执行逻辑删除操作：将 {@code @LogicDelete} 字段的列更新为"已删除值"，
+     * 不物理删除数据。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果条件为空，可能会"删除"全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = condition.eq(User::getStatus, 0).toLogicDelete().logicDelete();
+     * }</pre>
+     * </p>
+     *
+     * @return 逻辑删除构建器
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段、标注了多个或取值非法时
+     */
+    public final LambdaClientLogicDeleteBuilder<T> toLogicDelete() {
+        return new LambdaClientLogicDeleteBuilder<>(this.baseDBApi, this.sqlBuilder);
+    }
+
+    /**
+     * 将当前的条件构建器转换为恢复构建器
+     * <p>
+     * 转换后可用于执行恢复操作：将 {@code @LogicDelete} 字段的列写回"未删除值"，
+     * 恢复后记录重新对常规查询可见。
+     * </p>
+     * <p>
+     * <b>注意：</b> 如果条件为空，可能会恢复全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = condition.eq(User::getStatus, 0).toRestore().restore();
+     * }</pre>
+     * </p>
+     *
+     * @return 恢复构建器
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段、标注了多个或取值非法时
+     */
+    public final LambdaClientRestoreBuilder<T> toRestore() {
+        return new LambdaClientRestoreBuilder<>(this.baseDBApi, this.sqlBuilder);
     }
 
     /**

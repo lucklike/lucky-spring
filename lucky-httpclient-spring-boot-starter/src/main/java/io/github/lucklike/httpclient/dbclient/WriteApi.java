@@ -6,6 +6,8 @@ import io.github.lucklike.httpclient.dbclient.function.EntityUtils;
 import io.github.lucklike.httpclient.dbclient.function.IdField;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaConditionBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaLogicDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaRestoreBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaUpdateBuilder;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -24,6 +26,7 @@ import java.util.List;
  * <ul>
  *     <li>根据 ID 查询、更新、删除</li>
  *     <li>Lambda 更新与删除</li>
+ *     <li>逻辑删除与恢复</li>
  *     <li>单条/批量插入</li>
  *     <li>批量更新</li>
  *     <li>保存或更新（saveOrUpdate）语义</li>
@@ -107,9 +110,85 @@ public interface WriteApi<E> extends QueryApi<E> {
     }
 
     /**
+     * 执行逻辑删除并返回影响行数。
+     * <p>
+     * 将实体 {@code @LogicDelete} 字段的列更新为"已删除值"，不物理删除数据；
+     * 逻辑删除后该记录对常规查询不可见，可通过 {@link #restore(LambdaRestoreBuilder)} 恢复。
+     * </p>
+     * <p>
+     * <b>警告：</b> 如果条件为空，可能会"删除"全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 逻辑删除状态为0的用户
+     * int rows = mapper.logicDelete(Lambda.logicDelete(User.class)
+     *     .eq(User::getStatus, 0));
+     * }</pre>
+     * </p>
+     *
+     * @param logicDeleteBuilder 逻辑删除条件构建器
+     * @return 影响的行数
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    @SQL(executor = SQL_LAMBDA)
+    int logicDelete(LambdaLogicDeleteBuilder<E> logicDeleteBuilder);
+
+    /**
+     * 执行恢复并返回影响行数。
+     * <p>
+     * 将实体 {@code @LogicDelete} 字段的列写回"未删除值"，恢复后该记录重新对常规查询可见；
+     * 对未处于删除状态的记录执行恢复不改变其数据。
+     * </p>
+     * <p>
+     * <b>警告：</b> 如果条件为空，可能会恢复全表数据，请谨慎使用。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 恢复ID为1的用户
+     * int rows = mapper.restore(Lambda.restore(User.class)
+     *     .eq(User::getId, 1L));
+     * }</pre>
+     * </p>
+     *
+     * @param restoreBuilder 恢复条件构建器
+     * @return 影响的行数
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    @SQL(executor = SQL_LAMBDA)
+    int restore(LambdaRestoreBuilder<E> restoreBuilder);
+
+    /**
+     * 执行逻辑删除并返回影响行数（使用条件构建器）
+     * <p>
+     * 便捷方法，将条件构建器转换为逻辑删除构建器后执行。
+     * </p>
+     *
+     * @param conditionBuilder 条件构建器
+     * @return 影响的行数
+     */
+    default int logicDelete(LambdaConditionBuilder<E> conditionBuilder) {
+        return logicDelete(conditionBuilder.toLogicDelete());
+    }
+
+    /**
+     * 执行恢复并返回影响行数（使用条件构建器）
+     * <p>
+     * 便捷方法，将条件构建器转换为恢复构建器后执行。
+     * </p>
+     *
+     * @param conditionBuilder 条件构建器
+     * @return 影响的行数
+     */
+    default int restore(LambdaConditionBuilder<E> conditionBuilder) {
+        return restore(conditionBuilder.toRestore());
+    }
+
+    /**
      * 根据 ID 查询实体。
      * <p>
-     * 使用实体类中标记的 {@code @TableId} 注解识别 ID 字段。
+     * 使用实体类中标记的 {@code @Id} 注解识别 ID 字段。
      * 如果查询结果为空，则返回 {@code null}。
      * </p>
      * <p>
@@ -131,7 +210,7 @@ public interface WriteApi<E> extends QueryApi<E> {
     /**
      * 根据 ID 删除实体。
      * <p>
-     * 使用实体类中标记的 {@code @TableId} 注解识别 ID 字段。
+     * 使用实体类中标记的 {@code @Id} 注解识别 ID 字段。
      * </p>
      * <p>
      * 使用示例：
@@ -149,9 +228,53 @@ public interface WriteApi<E> extends QueryApi<E> {
     int deleteById(@NonNull Object id);
 
     /**
+     * 根据 ID 逻辑删除实体。
+     * <p>
+     * 使用实体类中标记的 {@code @Id} 注解识别 ID 字段。
+     * 将实体 {@code @LogicDelete} 字段的列更新为"已删除值"，不物理删除数据；
+     * 逻辑删除后该记录对常规查询不可见，可通过 {@link #restoreById(Object)} 恢复。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 逻辑删除ID为1的用户
+     * int rows = mapper.logicDeleteById(1L);
+     * }</pre>
+     * </p>
+     *
+     * @param id ID 字段值
+     * @return 影响的行数
+     * @throws IllegalArgumentException 如果 id 为 null、或实体未标注 {@code @LogicDelete} 字段时抛出
+     */
+    @SQL(executor = SQL_LOGIC_DELETE_BY_ID)
+    int logicDeleteById(@NonNull Object id);
+
+    /**
+     * 根据 ID 恢复已逻辑删除的实体。
+     * <p>
+     * 使用实体类中标记的 {@code @Id} 注解识别 ID 字段。
+     * 将实体 {@code @LogicDelete} 字段的列写回"未删除值"，恢复后该记录重新对常规查询可见；
+     * 对未处于删除状态的记录执行恢复不改变其数据。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 恢复已逻辑删除的ID为1的用户
+     * int rows = mapper.restoreById(1L);
+     * }</pre>
+     * </p>
+     *
+     * @param id ID 字段值
+     * @return 影响的行数
+     * @throws IllegalArgumentException 如果 id 为 null、或实体未标注 {@code @LogicDelete} 字段时抛出
+     */
+    @SQL(executor = SQL_RESTORE_BY_ID)
+    int restoreById(@NonNull Object id);
+
+    /**
      * 根据 ID 更新实体。
      * <p>
-     * 使用实体中标记的 {@code @TableId} 注解识别 ID 字段，
+     * 使用实体中标记的 {@code @Id} 注解识别 ID 字段，
      * 使用实体中其他非空属性作为更新字段（如果字段值为 null，则不会更新该字段）。
      * </p>
      * <p>

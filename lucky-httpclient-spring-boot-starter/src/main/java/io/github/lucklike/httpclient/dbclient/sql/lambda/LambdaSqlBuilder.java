@@ -109,6 +109,54 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
         return sqlBuilder;
     }
 
+    // ==================== 逻辑删除过滤相关方法 ====================
+
+    /**
+     * 启用逻辑删除过滤（内部钩子）。
+     * <p>
+     * 当实体类标注了 {@code @LogicDelete} 字段时，将逻辑删除规则（列名与已删除值）
+     * 传递给底层 SqlBuilder，使该构建器渲染的 SELECT 语句自动追加"不等于已删除值"的条件；
+     * 未标注逻辑删除字段的实体不产生任何影响，行为与变更前完全一致。
+     *
+     * @return 当前构建器实例，支持链式调用
+     */
+    protected LambdaSqlBuilder<T> applyLogicDeleteFilter() {
+        EntityUtils.applyLogicDeleteFilter(sqlBuilder, entityClass);
+        return this;
+    }
+
+    /**
+     * 启用"包含已删除记录"查询（内部钩子）。
+     * <p>
+     * 解析实体的逻辑删除规则并置位底层 SqlBuilder 的 includeDeleted 标志，
+     * 使本次 SELECT 渲染不追加"不等于已删除值"的过滤条件；仅三个 SELECT 构建器（{@link LambdaQueryBuilder}、
+     * {@link LambdaCountBuilder}、{@link LambdaSingleColumnQueryBuilder}）通过公开的
+     * includeDeleted() 链式方法暴露该能力。未标注 {@code @LogicDelete} 的实体调用时
+     * 抛出明确异常（不产生任何 SQL）。
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    protected LambdaSqlBuilder<T> includeDeletedInternal() {
+        EntityUtils.LogicDeleteRule rule = EntityUtils.getLogicDeleteRule(entityClass);
+        if (rule == null) {
+            throw new IllegalArgumentException(String.format(
+                    "Entity [%s] has no @LogicDelete field defined, includeDeleted requires a @LogicDelete field",
+                    entityClass.getName()));
+        }
+        sqlBuilder.includeDeleted(true);
+        return this;
+    }
+
+    /**
+     * 获取当前构建器绑定的实体类类型
+     *
+     * @return 实体类类型
+     */
+    protected Class<T> getEntityClass() {
+        return entityClass;
+    }
+
     // ==================== 表名和列名辅助方法 ====================
 
     /**

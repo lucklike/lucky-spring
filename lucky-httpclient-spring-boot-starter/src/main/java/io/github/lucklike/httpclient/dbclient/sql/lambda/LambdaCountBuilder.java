@@ -39,6 +39,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     LambdaCountBuilder(Class<T> clazz) {
         super(clazz);
         selectCount().from();
+        // 标注 @LogicDelete 的实体自动追加"不等于已删除值"的过滤条件
+        applyLogicDeleteFilter();
     }
 
     /**
@@ -62,6 +64,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     public LambdaCountBuilder(LambdaSqlBuilder<T> sqlBuilder) {
         super(sqlBuilder);
         selectCount().from();
+        // 拷贝构造路径（如 toCount() 转换）同样启用逻辑删除过滤
+        applyLogicDeleteFilter();
     }
 
     /**
@@ -88,6 +92,8 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     public LambdaCountBuilder(LambdaSqlBuilder<T> sqlBuilder, SFunction<T, ?> column) {
         super(sqlBuilder);
         selectCount(column).from();
+        // 拷贝构造路径同样启用逻辑删除过滤
+        applyLogicDeleteFilter();
     }
 
     /**
@@ -99,6 +105,23 @@ public class LambdaCountBuilder<T> extends LambdaSqlBuilder<T> {
     public LambdaCountBuilder(Class<T> clazz, SFunction<T, ?> column) {
         super(clazz);
         selectCount(column).from();
+        // 标注 @LogicDelete 的实体自动追加"不等于已删除值"的过滤条件
+        applyLogicDeleteFilter();
+    }
+
+    /**
+     * 统计时包含已删除记录。
+     * <p>
+     * 调用后本次统计不追加"不等于已删除值"的过滤条件，统计结果同时包含未删除与已删除记录；
+     * 与查询路径的 includeDeleted() 口径一致。实体未标注 {@code @LogicDelete} 字段时抛出明确异常。
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    public LambdaCountBuilder<T> includeDeleted() {
+        includeDeletedInternal();
+        return this;
     }
 
     /**

@@ -47,6 +47,11 @@ public class EntityMetadata {
     private final List<ColumnMetadata> idColumns;
 
     /**
+     * 逻辑删除字段的列元数据（@LogicDelete 标注，顺序与 {@link #columns} 一致）
+     */
+    private final List<ColumnMetadata> logicDeleteColumns;
+
+    /**
      * 字段名索引（同名字段由子类字段覆盖）
      */
     private final Map<String, ColumnMetadata> fieldIndex;
@@ -62,6 +67,7 @@ public class EntityMetadata {
         this.columns = Collections.unmodifiableList(new ArrayList<>(columns));
 
         List<ColumnMetadata> idColumnList = new ArrayList<>();
+        List<ColumnMetadata> logicDeleteColumnList = new ArrayList<>();
         Map<String, ColumnMetadata> index = new HashMap<>(columns.size() * 2);
         boolean annotated = false;
         for (ColumnMetadata column : columns) {
@@ -73,8 +79,12 @@ public class EntityMetadata {
             if (column.isColumnAnnotated()) {
                 annotated = true;
             }
+            if (column.isLogicDelete()) {
+                logicDeleteColumnList.add(column);
+            }
         }
         this.idColumns = Collections.unmodifiableList(idColumnList);
+        this.logicDeleteColumns = Collections.unmodifiableList(logicDeleteColumnList);
         this.fieldIndex = Collections.unmodifiableMap(index);
         this.columnAnnotated = annotated;
     }
@@ -113,6 +123,15 @@ public class EntityMetadata {
      */
     public List<ColumnMetadata> getIdColumns() {
         return idColumns;
+    }
+
+    /**
+     * 获取逻辑删除字段的列元数据
+     *
+     * @return 不可变的逻辑删除列元数据列表，未标注 @LogicDelete 时返回空列表
+     */
+    public List<ColumnMetadata> getLogicDeleteColumns() {
+        return logicDeleteColumns;
     }
 
     /**

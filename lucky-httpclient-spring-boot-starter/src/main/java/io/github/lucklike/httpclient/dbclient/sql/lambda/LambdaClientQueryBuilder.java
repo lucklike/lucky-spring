@@ -131,6 +131,31 @@ public class LambdaClientQueryBuilder<T> extends AbstractLambdaClientBuilder<T, 
         return this;
     }
 
+    /**
+     * 查询时包含已删除记录
+     * <p>
+     * 调用后本次查询不追加"不等于已删除值"的过滤条件，结果集同时包含未删除与已删除记录；
+     * 分页查询（含总数统计）口径一致。实体未标注 {@code @LogicDelete} 字段时抛出明确异常。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * // 查询包含已删除的用户
+     * List<User> users = baseDBApi.lambdaQuery()
+     *     .includeDeleted()
+     *     .list();
+     * }
+     * </pre>
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    public LambdaClientQueryBuilder<T> includeDeleted() {
+        sqlBuilder.includeDeleted();
+        return this;
+    }
+
     // ==================== 关联表方法 ====================
 
     /**

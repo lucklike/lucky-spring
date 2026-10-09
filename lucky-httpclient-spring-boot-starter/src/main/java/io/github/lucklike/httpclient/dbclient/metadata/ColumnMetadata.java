@@ -15,6 +15,7 @@ import java.lang.reflect.Modifier;
  *     <li>{@link #isExist()}：@Column(exist=false) 标记为非数据库字段</li>
  *     <li>{@link #isColumnAnnotated()}：字段是否带有 @Column 注解（含 @Id 等派生注解）</li>
  *     <li>{@link #isId()}/{@link #getIdType()}：主键信息</li>
+ *     <li>{@link #isLogicDelete()}：@LogicDelete 逻辑删除字段标志与取值配置</li>
  *     <li>{@link #getConditionClass()}：条件拼接策略</li>
  * </ul>
  * 消费方应根据自身语义选择过滤条件，以保持各自原有行为。
@@ -70,6 +71,21 @@ public class ColumnMetadata {
     private final Class<? extends Condition> conditionClass;
 
     /**
+     * 是否为 @LogicDelete 逻辑删除字段
+     */
+    private final boolean logicDelete;
+
+    /**
+     * @LogicDelete 配置的已删除值原始字符串（非逻辑删除字段为 null）
+     */
+    private final String logicDeleteDeletedValue;
+
+    /**
+     * @LogicDelete 配置的未删除值原始字符串（非逻辑删除字段为 null）
+     */
+    private final String logicDeleteNotDeletedValue;
+
+    /**
      * 是否为静态字段
      */
     private final boolean staticField;
@@ -80,7 +96,8 @@ public class ColumnMetadata {
     private final boolean transitory;
 
     ColumnMetadata(Field field, String columnName, boolean exist, boolean columnAnnotated,
-                   boolean id, IdType idType, Class<? extends Condition> conditionClass) {
+                   boolean id, IdType idType, Class<? extends Condition> conditionClass,
+                   boolean logicDelete, String logicDeleteDeletedValue, String logicDeleteNotDeletedValue) {
         this.field = field;
         this.fieldName = field.getName();
         this.columnName = columnName;
@@ -89,6 +106,9 @@ public class ColumnMetadata {
         this.id = id;
         this.idType = idType;
         this.conditionClass = conditionClass;
+        this.logicDelete = logicDelete;
+        this.logicDeleteDeletedValue = logicDeleteDeletedValue;
+        this.logicDeleteNotDeletedValue = logicDeleteNotDeletedValue;
         this.staticField = Modifier.isStatic(field.getModifiers());
         this.transitory = Modifier.isTransient(field.getModifiers());
     }
@@ -157,7 +177,34 @@ public class ColumnMetadata {
     }
 
     /**
-     * 获取条件拼接策略
+     * 判断是否为逻辑删除字段（带有 @LogicDelete 注解）
+     *
+     * @return true 表示是逻辑删除字段
+     */
+    public boolean isLogicDelete() {
+        return logicDelete;
+    }
+
+    /**
+     * 获取 @LogicDelete 配置的已删除值原始字符串
+     *
+     * @return 已删除值原始字符串，非逻辑删除字段时返回 null
+     */
+    public String getLogicDeleteDeletedValue() {
+        return logicDeleteDeletedValue;
+    }
+
+    /**
+     * 获取 @LogicDelete 配置的未删除值原始字符串
+     *
+     * @return 未删除值原始字符串，非逻辑删除字段时返回 null
+     */
+    public String getLogicDeleteNotDeletedValue() {
+        return logicDeleteNotDeletedValue;
+    }
+
+    /**
+     * 条件拼接策略
      *
      * @return 条件拼接策略类型
      */

@@ -81,6 +81,21 @@ public class LambdaClientCountBuilder<T> extends AbstractLambdaClientBuilder<T, 
         super(baseDBApi, new LambdaCountBuilder<>(clazz, column));
     }
 
+    /**
+     * 统计时包含已删除记录
+     * <p>
+     * 调用后本次统计不追加"不等于已删除值"的过滤条件，统计结果同时包含未删除与已删除记录；
+     * 与查询路径的 includeDeleted() 口径一致。实体未标注 {@code @LogicDelete} 字段时抛出明确异常。
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    public LambdaClientCountBuilder<T> includeDeleted() {
+        sqlBuilder.includeDeleted();
+        return this;
+    }
+
     // ==================== 关联表方法 ====================
 
     /**

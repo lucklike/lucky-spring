@@ -26,6 +26,8 @@ public class LambdaSingleColumnQueryBuilder<T, R> extends LambdaSqlBuilder<T> {
         super(clazz);
         this.selectColumn = selectColumn;
         select(selectColumn).from();
+        // 标注 @LogicDelete 的实体自动追加"不等于已删除值"的过滤条件
+        applyLogicDeleteFilter();
     }
 
     /**
@@ -38,6 +40,8 @@ public class LambdaSingleColumnQueryBuilder<T, R> extends LambdaSqlBuilder<T> {
         super(sqlBuilder);
         this.selectColumn = selectColumn;
         select(selectColumn).from();
+        // 拷贝构造路径（如 toSingleColumn() 转换）同样启用逻辑删除过滤
+        applyLogicDeleteFilter();
     }
 
     /**
@@ -47,6 +51,21 @@ public class LambdaSingleColumnQueryBuilder<T, R> extends LambdaSqlBuilder<T> {
      */
     public Class<?> getSelectColumnType() {
         return LambdaUtils.getField(selectColumn).getType();
+    }
+
+    /**
+     * 查询时包含已删除记录。
+     * <p>
+     * 调用后本次查询不追加"不等于已删除值"的过滤条件，列值结果中同时包含来自未删除与已删除记录的数据；
+     * 分页查询（含总数统计）口径一致。实体未标注 {@code @LogicDelete} 字段时抛出明确异常。
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    public LambdaSingleColumnQueryBuilder<T, R> includeDeleted() {
+        includeDeletedInternal();
+        return this;
     }
 
     /**

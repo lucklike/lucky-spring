@@ -11,6 +11,8 @@ import com.luckyframework.common.ContainerUtils;
  *     <li>COUNT 统计：{@link #count(Class, SFunction[])}</li>
  *     <li>UPDATE 更新：{@link #update(Class)}</li>
  *     <li>DELETE 删除：{@link #delete(Class)}</li>
+ *     <li>逻辑删除：{@link #logicDelete(Class)}</li>
+ *     <li>恢复：{@link #restore(Class)}</li>
  *     <li>条件构造：{@link #condition(Class)}</li>
  * </ul>
  * <p>
@@ -107,6 +109,36 @@ public abstract class Lambda {
      */
     public static <T> LambdaDeleteBuilder<T> delete(Class<T> clazz) {
         return new LambdaDeleteBuilder<>(clazz);
+    }
+
+    /**
+     * 构造逻辑删除操作。
+     * <p>
+     * 将实体 {@code @LogicDelete} 字段的列更新为"已删除值"，不物理删除数据；
+     * 实体必须标注 {@code @LogicDelete} 字段，否则抛出异常。
+     * </p>
+     *
+     * @param clazz 实体类类型
+     * @param <T>   实体类型
+     * @return {@link LambdaLogicDeleteBuilder} 逻辑删除构造器实例
+     */
+    public static <T> LambdaLogicDeleteBuilder<T> logicDelete(Class<T> clazz) {
+        return new LambdaLogicDeleteBuilder<>(clazz);
+    }
+
+    /**
+     * 构造恢复操作。
+     * <p>
+     * 将实体 {@code @LogicDelete} 字段的列写回"未删除值"，恢复后记录重新对常规查询可见；
+     * 实体必须标注 {@code @LogicDelete} 字段，否则抛出异常。
+     * </p>
+     *
+     * @param clazz 实体类类型
+     * @param <T>   实体类型
+     * @return {@link LambdaRestoreBuilder} 恢复构造器实例
+     */
+    public static <T> LambdaRestoreBuilder<T> restore(Class<T> clazz) {
+        return new LambdaRestoreBuilder<>(clazz);
     }
 
     /**

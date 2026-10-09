@@ -72,6 +72,21 @@ public class LambdaClientSingleColumnQueryBuilder<T, R> extends AbstractLambdaCl
         return sqlBuilder.getSelectColumnType();
     }
 
+    /**
+     * 查询时包含已删除记录
+     * <p>
+     * 调用后本次查询不追加"不等于已删除值"的过滤条件，列值结果中同时包含来自未删除与已删除记录的数据；
+     * 分页查询（含总数统计）口径一致。实体未标注 {@code @LogicDelete} 字段时抛出明确异常。
+     * </p>
+     *
+     * @return 当前构建器实例，支持链式调用
+     * @throws IllegalArgumentException 实体未标注 {@code @LogicDelete} 字段时
+     */
+    public LambdaClientSingleColumnQueryBuilder<T, R> includeDeleted() {
+        sqlBuilder.includeDeleted();
+        return this;
+    }
+
     // ==================== 关联表方法 ====================
 
     /**

@@ -3,7 +3,9 @@ package io.github.lucklike.httpclient.dbclient;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientConditionBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientCountBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientDeleteBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientLogicDeleteBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientQueryBuilder;
+import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientRestoreBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientSingleColumnQueryBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.LambdaClientUpdateBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.lambda.SFunction;
@@ -37,7 +39,6 @@ public interface LambdaBuilderApi<E> extends DbApi<E> {
      *
      * @return 当前实例的 BaseDBApi 视图
      */
-    @SuppressWarnings("unchecked")
     default BaseDBApi<E> dbApi() {
         return (BaseDBApi<E>) this;
     }
@@ -128,6 +129,50 @@ public interface LambdaBuilderApi<E> extends DbApi<E> {
      */
     default LambdaClientDeleteBuilder<E> lambdaDelete() {
         return new LambdaClientDeleteBuilder<>(dbApi(), entityClass());
+    }
+
+    /**
+     * 创建 Lambda 逻辑删除构建器。
+     * <p>
+     * 返回一个基于当前数据库客户端的 Lambda 逻辑删除构建器，
+     * 用于构建动态条件并将 {@code @LogicDelete} 字段的列更新为"已删除值"，
+     * 不物理删除数据。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = userDBApi.lambdaLogicDelete()
+     *     .where(User::getStatus).eq(0)
+     *     .logicDelete();
+     * }</pre>
+     * </p>
+     *
+     * @return Lambda 逻辑删除构建器
+     */
+    default LambdaClientLogicDeleteBuilder<E> lambdaLogicDelete() {
+        return new LambdaClientLogicDeleteBuilder<>(dbApi(), entityClass());
+    }
+
+    /**
+     * 创建 Lambda 恢复构建器。
+     * <p>
+     * 返回一个基于当前数据库客户端的 Lambda 恢复构建器，
+     * 用于构建动态条件并将 {@code @LogicDelete} 字段的列写回"未删除值"，
+     * 恢复后记录重新对常规查询可见。
+     * </p>
+     * <p>
+     * 使用示例：
+     * <pre>{@code
+     * int rows = userDBApi.lambdaRestore()
+     *     .where(User::getId).eq(1L)
+     *     .restore();
+     * }</pre>
+     * </p>
+     *
+     * @return Lambda 恢复构建器
+     */
+    default LambdaClientRestoreBuilder<E> lambdaRestore() {
+        return new LambdaClientRestoreBuilder<>(dbApi(), entityClass());
     }
 
     /**
