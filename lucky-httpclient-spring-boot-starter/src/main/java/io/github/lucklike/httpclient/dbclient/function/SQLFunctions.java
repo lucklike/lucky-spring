@@ -7,6 +7,9 @@ import com.luckyframework.httpclient.proxy.spel.FunctionAlias;
 import com.luckyframework.reflect.ClassUtils;
 import com.luckyframework.reflect.FieldUtils;
 import io.github.lucklike.httpclient.dbclient.BaseDBApi;
+import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
+import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
+import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.executor.SQLExecutor;
 import io.github.lucklike.httpclient.dbclient.executor.SQLWrapperExecutor;
 import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
@@ -14,13 +17,17 @@ import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import io.github.lucklike.httpclient.dbclient.sql.SQLWrapper;
 import io.github.lucklike.httpclient.dbclient.sql.SimpleSqlBuilder;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ResolvableType;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -34,6 +41,8 @@ import java.util.stream.Collectors;
  * @date 2026/5/23 03:09
  */
 public class SQLFunctions {
+
+    private static final Logger log = LoggerFactory.getLogger(SQLFunctions.class);
 
     private static final String SQL_AND = "AND";
     private static final String SQL_OR = "OR";
@@ -279,6 +288,9 @@ public class SQLFunctions {
         Object entity = mc.getArguments()[0];
         Class<?> entityClass = entity.getClass();
 
+        // 任务 7.1：在执行更新前，对标注 @AutoFill(scene = UPDATE) 的字段进行填充
+        fillAuditFields(mc, entity, AuditFillScene.UPDATE);
+
         // 分别记录是否有ID字段、是否有有效的ID值
         final AtomicBoolean hasIdField = new AtomicBoolean(false);
         final AtomicBoolean hasValidIdValue = new AtomicBoolean(false);
@@ -286,6 +298,9 @@ public class SQLFunctions {
         final String[] idFieldName = new String[1];
 
         SqlBuilder sqlBuilder = SqlBuilder.builder().update(EntityUtils.getTableName(entityClass));
+
+        // 记录已进入 SET 子句的列名，用于审计列补漏时去重
+        final Set<String> setColumnNames = new HashSet<>();
 
         columnHandler(mc, entity, co -> {
             if (co.isId()) {
@@ -299,8 +314,12 @@ public class SQLFunctions {
                 }
             } else if (co.getValue() != null) {
                 sqlBuilder.set(co.getName(), co.getValue());
+                setColumnNames.add(co.getName());
             }
         });
+
+        // 任务 7.2：特殊处理 - 审计列补漏入 SET（跳过 columnHandler 已处理的列，避免重复）
+        addAuditFillColumnsToSet(sqlBuilder, entity, entityClass, AuditFillScene.UPDATE, setColumnNames);
 
         // 情况1：没有ID字段
         if (!hasIdField.get()) {
@@ -333,6 +352,9 @@ public class SQLFunctions {
     public static SQLExecutor insertSql(MethodContext mc) {
         Object entity = mc.getArguments()[0];
         Class<?> entityClass = entity.getClass();
+
+        // 任务 5.1：在执行插入前，对标注 @AutoFill(scene = INSERT) 的字段进行填充
+        fillAuditFields(mc, entity, AuditFillScene.INSERT);
 
         List<String> columnNames = new ArrayList<>();
         List<Object> values = new ArrayList<>();
@@ -368,6 +390,11 @@ public class SQLFunctions {
 
         if (entityList == null || entityList.isEmpty()) {
             throw new IllegalArgumentException("Batch insert entity collection must not be null or empty");
+        }
+
+        // 任务 6.1：在执行批量插入前，对列表中每个实体的 @AutoFill(scene = INSERT) 字段进行填充
+        for (Object entity : entityList) {
+            fillAuditFields(mc, entity, AuditFillScene.INSERT);
         }
 
         // 收集所有参与映射的字段（过滤静态字段与@Column(exist=false)字段）
@@ -435,6 +462,11 @@ public class SQLFunctions {
         Collection<?> entityList = (Collection<?>) mc.getArguments()[0];
         if (entityList == null || entityList.isEmpty()) {
             throw new IllegalArgumentException("Batch update entity collection must not be null or empty");
+        }
+
+        // 任务 8.1：在执行批量更新前，对列表中每个实体的 @AutoFill(scene = UPDATE) 字段进行填充
+        for (Object entity : entityList) {
+            fillAuditFields(mc, entity, AuditFillScene.UPDATE);
         }
 
         // 找出所有带有 @Column 且 exist() 为 true 的字段，并区分 ID 字段和普通字段
@@ -530,6 +562,90 @@ public class SQLFunctions {
                     : mc.generateObject(conditionClass, Scope.SINGLETON);
 
             consumer.accept(new ColumnInfo(column.getColumnName(), fieldValue, column.isId(), condition));
+        }
+    }
+
+    /**
+     * 自动填充标注了 @AutoFill 注解的字段。
+     * <p>
+     * 在 INSERT/UPDATE 操作前调用，通过 {@link MethodContext#parseExpression(String, Class)}
+     * 评估 SpEL 表达式并将结果回写到实体字段。
+     * 填充完成后，后续 columnHandler() 会扫描到非空审计字段并入 SQL 生成。
+     * </p>
+     *
+     * @param mc     方法上下文，供 Filler 解析 SpEL 表达式
+     * @param entity 实体对象
+     * @param scene  填充场景（INSERT 或 UPDATE）
+     */
+    private static void fillAuditFields(MethodContext mc, Object entity, AuditFillScene scene) {
+        if (entity == null || !FillRegistry.hasHandlers()) {
+            return; // 无实体或无填充处理器时跳过
+        }
+
+        try {
+            // 从注册表获取该实体类和场景下的所有 Filler
+            List<Filler> fillers = FillRegistry.getFillers(entity.getClass(), scene);
+            if (fillers.isEmpty()) {
+                return; // 无可用 Filler 时跳过
+            }
+
+            // 依次执行每个 Filler
+            for (Filler filler : fillers) {
+                try {
+                    filler.fill(mc, entity, scene);
+                } catch (Exception e) {
+                    // 单个 Filler 失败不中断整体流程，记录错误日志后继续
+                    log.error("[AuditFill] Filler '{}' execution failed for entity '{}' in scene '{}'",
+                            filler.getClass().getName(), entity.getClass().getName(), scene, e);
+                }
+            }
+        } catch (Exception e) {
+            // 全局异常捕获，确保填充逻辑不会干扰正常 SQL 生成
+            log.error("[AuditFill] Failed to fill entity '{}' in scene '{}'",
+                    entity.getClass().getName(), scene, e);
+        }
+    }
+
+    /**
+     * 将审计列补漏加入 SET 子句（任务 7.2 特殊处理）。
+     * <p>
+     * 填充发生在 columnHandler 之前，正常路径下已填充的审计列会被 columnHandler 采集；
+     * 此方法仅作为兜底，补充未进入 SET 且当前值非空的审计列，并按 existingSetColumns 去重。
+     * </p>
+     *
+     * @param sqlBuilder         SQL 构建器
+     * @param entity             实体对象
+     * @param entityClass        实体类型
+     * @param scene              填充场景
+     * @param existingSetColumns 已经进入 SET 子句的列名集合，用于避免重复添加
+     */
+    private static void addAuditFillColumnsToSet(SqlBuilder sqlBuilder, Object entity,
+                                                  Class<?> entityClass, AuditFillScene scene,
+                                                  Set<String> existingSetColumns) {
+        List<ColumnMetadata> fillColumns = EntityMetadataFactory.getMetadata(entityClass).getFillColumns(scene);
+        if (fillColumns == null || fillColumns.isEmpty()) {
+            return;
+        }
+
+        for (ColumnMetadata column : fillColumns) {
+            AutoFill autoFill = column.getAutoFill();
+            if (autoFill == null || !column.isExist()) {
+                // 非表字段（@Column(exist = false)）不参与 SET 子句构建
+                continue;
+            }
+
+            String columnName = column.getColumnName();
+            // columnHandler 已采集的列不再重复加入
+            if (existingSetColumns.contains(columnName)) {
+                continue;
+            }
+
+            Object value = FieldUtils.getValue(entity, column.getField());
+            if (value != null) {
+                // 兜底补入 SET 子句
+                sqlBuilder.set(columnName, value);
+                existingSetColumns.add(columnName);
+            }
         }
     }
 }

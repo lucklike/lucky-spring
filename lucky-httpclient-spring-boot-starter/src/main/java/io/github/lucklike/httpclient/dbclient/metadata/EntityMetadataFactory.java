@@ -3,6 +3,7 @@ package io.github.lucklike.httpclient.dbclient.metadata;
 import com.luckyframework.common.StringUtils;
 import com.luckyframework.reflect.AnnotationUtils;
 import com.luckyframework.reflect.ClassUtils;
+import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
 import io.github.lucklike.httpclient.dbclient.annotation.Column;
 import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.annotation.LogicDelete;
@@ -88,6 +89,7 @@ public final class EntityMetadataFactory {
         Column columnAnn = AnnotationUtils.findMergedAnnotation(field, Column.class);
         Id idAnn = AnnotationUtils.findMergedAnnotation(field, Id.class);
         LogicDelete logicDeleteAnn = AnnotationUtils.findMergedAnnotation(field, LogicDelete.class);
+        AutoFill autoFillAnn = AnnotationUtils.findMergedAnnotation(field, AutoFill.class);
 
         String columnName = (columnAnn != null && StringUtils.hasText(columnAnn.value()))
                 ? columnAnn.value()
@@ -99,7 +101,8 @@ public final class EntityMetadataFactory {
                 idAnn == null ? null : idAnn.type(), conditionClass,
                 logicDeleteAnn != null,
                 logicDeleteAnn == null ? null : logicDeleteAnn.deletedValue(),
-                logicDeleteAnn == null ? null : logicDeleteAnn.notDeletedValue());
+                logicDeleteAnn == null ? null : logicDeleteAnn.notDeletedValue(),
+                autoFillAnn);
     }
 
     /**

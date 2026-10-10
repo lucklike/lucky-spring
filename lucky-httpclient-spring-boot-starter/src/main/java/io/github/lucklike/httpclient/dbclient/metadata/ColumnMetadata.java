@@ -1,5 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.metadata;
 
+import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
 import io.github.lucklike.httpclient.dbclient.annotation.IdType;
 import io.github.lucklike.httpclient.dbclient.function.Condition;
 
@@ -95,9 +96,15 @@ public class ColumnMetadata {
      */
     private final boolean transitory;
 
+    /**
+     * 是否带有 @AutoFill 自动填充注解
+     */
+    private final AutoFill autoFill;
+
     ColumnMetadata(Field field, String columnName, boolean exist, boolean columnAnnotated,
                    boolean id, IdType idType, Class<? extends Condition> conditionClass,
-                   boolean logicDelete, String logicDeleteDeletedValue, String logicDeleteNotDeletedValue) {
+                   boolean logicDelete, String logicDeleteDeletedValue, String logicDeleteNotDeletedValue,
+                   AutoFill autoFill) {
         this.field = field;
         this.fieldName = field.getName();
         this.columnName = columnName;
@@ -111,6 +118,7 @@ public class ColumnMetadata {
         this.logicDeleteNotDeletedValue = logicDeleteNotDeletedValue;
         this.staticField = Modifier.isStatic(field.getModifiers());
         this.transitory = Modifier.isTransient(field.getModifiers());
+        this.autoFill = autoFill;
     }
 
     /**
@@ -228,5 +236,14 @@ public class ColumnMetadata {
      */
     public boolean isTransitory() {
         return transitory;
+    }
+
+    /**
+     * 获取 @AutoFill 自动填充注解（可能为 null）
+     *
+     * @return @AutoFill 注解实例，未标注时返回 null
+     */
+    public AutoFill getAutoFill() {
+        return autoFill;
     }
 }
