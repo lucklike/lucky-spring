@@ -25,8 +25,9 @@ import java.lang.annotation.Target;
  * 取值说明：
  * <ul>
  *     <li>默认已删除值为 {@code "1"}、未删除值为 {@code "0"}；</li>
- *     <li>字段为数值类型时按数字解析；</li>
- *     <li>字段为 {@code boolean/Boolean} 时接受 {@code true/false/1/0}。</li>
+ *     <li>注解中以字符串配置，运行时由框架 ConversionUtils 按字段类型通用转换，
+ *     不限定字段类型（String、数值、boolean 等均可，如 "Y"/"N"、"1"/"0"、{@code true}/{@code false}）；</li>
+ *     <li>两个取值转换后必须不相等，否则视为无效配置并抛出异常。</li>
  * </ul>
  * <p>
  * 注意：同一实体最多只允许标注一个逻辑删除字段，多字段标注在执行相关操作时会抛出异常。

@@ -1,17 +1,19 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
+import com.luckyframework.conversion.ConversionUtils;
 import com.luckyframework.reflect.FieldUtils;
+import io.github.lucklike.httpclient.dbclient.annotation.Id;
 import io.github.lucklike.httpclient.dbclient.annotation.LogicDelete;
 import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
 import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import io.github.lucklike.httpclient.dbclient.sql.SqlBuilder;
+import org.springframework.core.ResolvableType;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EntityUtils {
@@ -87,13 +89,13 @@ public class EntityUtils {
      * 获取实体类的逻辑删除规则（带缓存）
      * <p>
      * 规则来源：实体中标注了 {@link LogicDelete @LogicDelete} 的字段。
-     * 列名由既有列映射规则决定；已删除值/未删除值按字段类型转换（数值类型按数字解析，
-     * {@code boolean/Boolean} 接受 {@code true/false/1/0}）。
+     * 列名由既有列映射规则决定；已删除值/未删除值交由框架
+     * {@link ConversionUtils} 按字段类型通用转换，不限定字段类型。
      * </p>
      *
      * @param clazz 实体类类型
      * @return 逻辑删除规则；实体未标注逻辑删除字段时返回 null（调用方走原逻辑）
-     * @throws IllegalArgumentException 存在多个逻辑删除字段、取值无法转换为字段类型或字段类型不受支持时
+     * @throws IllegalArgumentException 存在多个逻辑删除字段、取值无法转换为字段类型，或两值转换后相同（逻辑删除无效）时
      */
     public static LogicDeleteRule getLogicDeleteRule(Class<?> clazz) {
         Object cached = logicDeleteRuleMap.computeIfAbsent(clazz, _c -> {
@@ -141,68 +143,40 @@ public class EntityUtils {
         ColumnMetadata column = logicDeleteColumns.get(0);
         Object deletedValue = convertLogicDeleteValue(clazz, column, column.getLogicDeleteDeletedValue(), "deletedValue");
         Object notDeletedValue = convertLogicDeleteValue(clazz, column, column.getLogicDeleteNotDeletedValue(), "notDeletedValue");
+        if (Objects.equals(deletedValue, notDeletedValue)) {
+            throw new IllegalArgumentException(String.format(
+                    "Entity [%s] @LogicDelete field [%s] deletedValue [%s] and notDeletedValue [%s] are the same after type conversion, logical delete will not work",
+                    clazz.getName(), column.getFieldName(), column.getLogicDeleteDeletedValue(), column.getLogicDeleteNotDeletedValue()));
+        }
         return new LogicDeleteRule(column.getColumnName(), deletedValue, notDeletedValue);
     }
 
     /**
-     * 将 @LogicDelete 配置的原始字符串按字段类型转换
+     * 将 @LogicDelete 配置的原始字符串转换为字段类型
+     * <p>
+     * 委托框架 {@link ConversionUtils#conversion(Object, ResolvableType)} 完成，
+     * 不对字段类型做白名单限制（String、数值、boolean 等均可），
+     * 转换失败时包装为带实体/字段/属性上下文的 IllegalArgumentException。
+     * </p>
      *
      * @param clazz     实体类（用于错误提示）
      * @param column    逻辑删除列元数据
      * @param rawValue  注解配置的原始字符串
      * @param attribute 属性名（deletedValue / notDeletedValue，用于错误提示）
-     * @return 转换后的强类型值
+     * @return 转换后的字段类型值
      */
     private static Object convertLogicDeleteValue(Class<?> clazz, ColumnMetadata column, String rawValue, String attribute) {
-        Class<?> fieldType = column.getField().getType();
         if (rawValue == null) {
             throw new IllegalArgumentException(String.format(
                     "Entity [%s] @LogicDelete field [%s] attribute [%s] is null",
                     clazz.getName(), column.getFieldName(), attribute));
         }
         try {
-            if (fieldType == boolean.class || fieldType == Boolean.class) {
-                if ("true".equalsIgnoreCase(rawValue) || "1".equals(rawValue)) {
-                    return Boolean.TRUE;
-                }
-                if ("false".equalsIgnoreCase(rawValue) || "0".equals(rawValue)) {
-                    return Boolean.FALSE;
-                }
-                throw new IllegalArgumentException(String.format(
-                        "Entity [%s] @LogicDelete field [%s] attribute [%s] boolean value [%s] is invalid, expected true/false/1/0",
-                        clazz.getName(), column.getFieldName(), attribute, rawValue));
-            }
-            if (fieldType == byte.class || fieldType == Byte.class) {
-                return Byte.valueOf(rawValue);
-            }
-            if (fieldType == short.class || fieldType == Short.class) {
-                return Short.valueOf(rawValue);
-            }
-            if (fieldType == int.class || fieldType == Integer.class) {
-                return Integer.valueOf(rawValue);
-            }
-            if (fieldType == long.class || fieldType == Long.class) {
-                return Long.valueOf(rawValue);
-            }
-            if (fieldType == float.class || fieldType == Float.class) {
-                return Float.valueOf(rawValue);
-            }
-            if (fieldType == double.class || fieldType == Double.class) {
-                return Double.valueOf(rawValue);
-            }
-            if (fieldType == BigInteger.class) {
-                return new BigInteger(rawValue);
-            }
-            if (fieldType == BigDecimal.class) {
-                return new BigDecimal(rawValue);
-            }
-            throw new IllegalArgumentException(String.format(
-                    "Entity [%s] @LogicDelete field [%s] has unsupported type [%s], only numeric and boolean types are supported",
-                    clazz.getName(), column.getFieldName(), fieldType.getName()));
-        } catch (NumberFormatException e) {
+            return ConversionUtils.conversion(rawValue, ResolvableType.forField(column.getField()));
+        } catch (Exception e) {
             throw new IllegalArgumentException(String.format(
                     "Entity [%s] @LogicDelete field [%s] attribute [%s] value [%s] cannot be converted to type [%s]",
-                    clazz.getName(), column.getFieldName(), attribute, rawValue, fieldType.getName()), e);
+                    clazz.getName(), column.getFieldName(), attribute, rawValue, column.getField().getGenericType().getTypeName()), e);
         }
     }
 
