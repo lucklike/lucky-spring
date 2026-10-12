@@ -3,12 +3,12 @@ package io.github.lucklike.httpclient.dbclient.function;
 import com.luckyframework.httpclient.proxy.context.MethodContext;
 import com.luckyframework.httpclient.proxy.spel.MutableMapParamWrapper;
 import com.luckyframework.reflect.FieldUtils;
-import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
-import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 import io.github.lucklike.httpclient.dbclient.metadata.ColumnMetadata;
 import io.github.lucklike.httpclient.dbclient.metadata.EntityMetadataFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ResolvableType;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -19,32 +19,34 @@ import java.util.Map;
 /**
  * 默认 SpEL 填充器实现。
  * <p>
- * 负责评估 @AutoFill 注解中的 SpEL 表达式，并将结果赋值到实体字段。
+ * 负责评估 @Column 的 fillValue 表达式，并按场景产出填充结果。
+ * 统一填充规则：实体字段为 null 时才填充，已有值时保留用户显式赋值：
+ * 有实体时回写字段（INSERT/批量路径），无实体时仅返回字段映射（由
+ * {@link AuditFillSupport#applyUpdateFill} 注入 SET 子句）。
  * 表达式求值不直接依赖 {@code SpELRuntime}，而是通过
  * {@link MethodContext#parseExpression(String, Class, com.luckyframework.httpclient.proxy.spel.ParamWrapperSetter)}
  * 完成，从而复用框架的表达式解析管线（嵌套解析、上下文变量、SpEL 函数等能力全部可用）。
  * </p>
  * <p>
- * 表达式中可通过以下扩展变量访问填充上下文（同时注册到 rootObject 与 variables）：
+ * 表达式中可通过以下扩展变量访问填充上下文（注册到表达式 rootObject，以属性方式访问）：
  * <ul>
- *     <li>{@code entity} / {@code #entity} - 当前操作的实体对象</li>
- *     <li>{@code entityClass} / {@code #entityClass} - 实体类型 Class</li>
- *     <li>{@code scene} / {@code #scene} - 当前填充场景（INSERT 或 UPDATE）</li>
- *     <li>{@code methodName} / {@code #methodName} - 当前执行的 dbclient 方法签名</li>
+ *     <li>{@code entity} - 当前操作的实体对象</li>
+ *     <li>{@code entityClass} - 实体类型 Class</li>
+ *     <li>{@code scene} - 当前填充场景（INSERT 或 UPDATE）</li>
+ *     <li>{@code methodName} - 当前执行的 dbclient 方法签名</li>
  * </ul>
  * </p>
  * <p>
  * 使用示例：
  * <pre>{@code
- * // 注册为默认填充处理器
- * FillRegistry.register(new DefaultSpELFillHandler());
+ * // 本填充器由 FillRegistry 默认内置注册，无需手动配置
  *
- * // 实体字段标注
- * @AutoFill(expression = "T(java.time.LocalDateTime).now()", scene = AuditFillScene.INSERT)
+ * // 实体字段声明（仅插入时填充创建时间）
+ * @Column(fillScene = FillScene.INSERT, fillValue = "T(java.time.LocalDateTime).now()")
  * private LocalDateTime createTime;
  *
- * // 访问填充上下文变量
- * @AutoFill(expression = "#entity.name + '-suffix'")
+ * // 访问填充上下文变量（无实体路径 entity 为主键探针实体）
+ * @Column(fillScene = FillScene.UPDATE, fillValue = "#{entity.id + '_suffix'}")
  * private String remark;
  * }</pre>
  * </p>
@@ -60,13 +62,11 @@ public class DefaultSpELFiller implements Filler {
     private static final Logger log = LoggerFactory.getLogger(DefaultSpELFiller.class);
 
     @Override
-    public Map<String, Object> fill(MethodContext mc, Object entity, AuditFillScene scene) {
-        // 表达式求值依赖 MethodContext，上下文缺失时静默跳过
-        if (mc == null || entity == null) {
+    public Map<String, Object> fill(MethodContext mc, Object entity, Class<?> entityClass, FillScene scene) {
+        // 表达式求值依赖 MethodContext，上下文/实体类型缺失时静默跳过
+        if (mc == null || entityClass == null) {
             return null;
         }
-
-        Class<?> entityClass = entity.getClass();
 
         // 获取该实体类的自动填充元数据
         List<ColumnMetadata> fillColumns = EntityMetadataFactory.getMetadata(entityClass).getFillColumns(scene);
@@ -78,14 +78,21 @@ public class DefaultSpELFiller implements Filler {
         Map<String, Object> result = new HashMap<>();
 
         for (ColumnMetadata column : fillColumns) {
-            AutoFill autoFill = column.getAutoFill();
-            if (autoFill == null) {
+            String fillValue = column.getFillValue();
+            Field field = column.getField();
+            if (fillValue == null || fillValue.isEmpty()) {
+                continue;
+            }
+
+            // 统一填充规则：实体字段已有值时保留用户显式赋值，不覆盖、不求值
+            // （Lambda 等无实体路径的探针实体除主键外均为 null，不受此判断影响）
+            if (entity != null && FieldUtils.getValue(entity, field) != null) {
                 continue;
             }
 
             try {
                 // 通过 MethodContext 解析 SpEL 表达式，并注入填充上下文扩展变量
-                Object value = mc.parseExpression(autoFill.expression(), Object.class,
+                Object value = mc.parseExpression(fillValue, ResolvableType.forField(field),
                         wrapper -> addFillContextVars(wrapper, entity, entityClass, scene, methodName));
 
                 // 处理 null 值：跳过填充
@@ -93,12 +100,10 @@ public class DefaultSpELFiller implements Filler {
                     continue;
                 }
 
-                // 类型转换
-                Field field = column.getField();
-                value = convertType(value, field.getType());
-
-                // 回写到实体字段
-                FieldUtils.setValue(entity, field, value);
+                // 有实体时回写字段（INSERT/批量路径依赖实体取值）；无实体路径仅返回映射
+                if (entity != null) {
+                    FieldUtils.setValue(entity, field, value);
+                }
 
                 // 记录到结果中（供后续 SQL 生成采集）
                 result.put(column.getFieldName(), value);
@@ -106,7 +111,7 @@ public class DefaultSpELFiller implements Filler {
             } catch (Exception e) {
                 // 填充失败时不中断整体流程，记录错误日志并跳过该字段
                 log.error("[AuditFill] Failed to fill field '{}' in entity '{}' with expression '{}'",
-                        column.getFieldName(), entityClass.getName(), autoFill.expression(), e);
+                        column.getFieldName(), entityClass.getName(), fillValue, e);
             }
         }
 
@@ -116,27 +121,31 @@ public class DefaultSpELFiller implements Filler {
     /**
      * 向 SpEL 参数包装器中注入填充上下文扩展变量。
      * <p>
-     * 同时写入 rootObject 与 variables，使表达式既可以用 {@code entity}
-     * 属性访问的方式，也可以用 {@code #entity} 变量访问的方式获取上下文。
+     * 向 SpEL 参数包装器的 rootObject 中注入填充上下文扩展变量，
+     * 表达式以属性访问方式（如 {@code entity.id}）获取上下文。
+     * 无实体路径（Lambda 更新等）传入的是主键探针实体；探针创建失败时
+     * entity 为 null，此时不注入 entity 变量，表达式引用 {@code entity}
+     * 将求值失败并按字段跳过处理。
      * </p>
      *
      * @param wrapper     SpEL 参数包装器
-     * @param entity      当前实体对象
+     * @param entity      当前实体对象，可为 null
      * @param entityClass 实体类型
      * @param scene       填充场景
      * @param methodName  方法签名
      */
     private void addFillContextVars(MutableMapParamWrapper wrapper, Object entity,
-                                    Class<?> entityClass, AuditFillScene scene, String methodName) {
+                                    Class<?> entityClass, FillScene scene, String methodName) {
         Map<String, Object> vars = new HashMap<>(4);
-        vars.put("entity", entity);
+        if (entity != null) {
+            vars.put("entity", entity);
+        }
         vars.put("entityClass", entityClass);
         vars.put("scene", scene);
         vars.put("methodName", methodName);
 
         // addFirst 保证扩展变量优先于框架默认变量参与解析
         wrapper.getRootObject().addFirst(Collections.unmodifiableMap(vars));
-        wrapper.getVariables().addFirst(Collections.unmodifiableMap(vars));
     }
 
     /**
@@ -151,88 +160,5 @@ public class DefaultSpELFiller implements Filler {
         } catch (Exception e) {
             return "default";
         }
-    }
-
-    /**
-     * 将 SpEL 返回值转换为目标字段类型。
-     * <p>
-     * 支持的转换：
-     * <ul>
-     *     <li>String → 基本类型包装类（Integer、Long 等）</li>
-     *     <li>Number → 兼容的基本类型包装类（long → Long）</li>
-     *     <li>基本类型与包装类的自动装箱由反射赋值完成</li>
-     * </ul>
-     * </p>
-     *
-     * @param value      SpEL 表达式返回值
-     * @param targetType 目标字段类型
-     * @return 转换后的值
-     */
-    private Object convertType(Object value, Class<?> targetType) {
-        if (value == null || targetType == null) {
-            return value;
-        }
-
-        // 如果类型已匹配，直接返回
-        if (targetType.isInstance(value)) {
-            return value;
-        }
-
-        // String → 数值类型
-        if (value instanceof String) {
-            String str = (String) value;
-            try {
-                if (targetType == Integer.class || targetType == int.class) {
-                    return Integer.valueOf(str);
-                }
-                if (targetType == Long.class || targetType == long.class) {
-                    return Long.valueOf(str);
-                }
-                if (targetType == Double.class || targetType == double.class) {
-                    return Double.valueOf(str);
-                }
-                if (targetType == Float.class || targetType == float.class) {
-                    return Float.valueOf(str);
-                }
-                if (targetType == Short.class || targetType == short.class) {
-                    return Short.valueOf(str);
-                }
-                if (targetType == Byte.class || targetType == byte.class) {
-                    return Byte.valueOf(str);
-                }
-                if (targetType == Boolean.class || targetType == boolean.class) {
-                    return Boolean.valueOf(str);
-                }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Audit fill expression value '" + str
-                        + "' cannot be converted to target type '" + targetType.getName() + "'", e);
-            }
-        }
-
-        // Number → 兼容的包装类型（如表达式返回 int 但字段是 Long）
-        if (value instanceof Number) {
-            Number num = (Number) value;
-            if (targetType == Long.class || targetType == long.class) {
-                return num.longValue();
-            }
-            if (targetType == Integer.class || targetType == int.class) {
-                return num.intValue();
-            }
-            if (targetType == Double.class || targetType == double.class) {
-                return num.doubleValue();
-            }
-            if (targetType == Float.class || targetType == float.class) {
-                return num.floatValue();
-            }
-            if (targetType == Short.class || targetType == short.class) {
-                return num.shortValue();
-            }
-            if (targetType == Byte.class || targetType == byte.class) {
-                return num.byteValue();
-            }
-        }
-
-        // 类型不匹配且无转换规则时原样返回，交由反射赋值校验
-        return value;
     }
 }

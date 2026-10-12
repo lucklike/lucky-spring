@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 全局填充器注册表。
  * <p>
  * 持有所有已注册的 {@link FillHandler}，并提供线程安全的增删查操作。
- * 注册表默认已内置 {@link DefaultSpELFillHandler}（负责 @AutoFill 的 SpEL 表达式求值），
+ * 注册表默认已内置 {@link DefaultSpELFillHandler}（负责 @Column 的 fillValue 表达式求值），
  * 开箱即用；业务可额外调用 {@link #register(FillHandler)} 追加自定义填充处理器，
  * 执行自动填充时按注册顺序依次路由到对应的 Filler 列表。
  * </p>
@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class FillRegistry {
 
     /**
-     * 默认 SpEL 填充处理器（静态初始化，保证 @AutoFill 开箱即用）
+     * 默认 SpEL 填充处理器（静态初始化，保证 @Column 自动填充开箱即用）
      */
     private static final FillHandler DEFAULT_HANDLER = new DefaultSpELFillHandler();
 
@@ -79,7 +79,7 @@ public final class FillRegistry {
     /**
      * 重新注册默认 SpEL 填充处理器。
      * <p>
-     * 在 {@link #clearAll()} 之后可通过此方法恢复默认的 @AutoFill SpEL 求值能力。
+     * 在 {@link #clearAll()} 之后可通过此方法恢复默认的 @Column fillValue SpEL 求值能力。
      * </p>
      */
     public static void registerDefaultHandler() {
@@ -123,7 +123,7 @@ public final class FillRegistry {
      * @param scene       填充场景
      * @return 填充器列表，无可用填充器时返回空列表
      */
-    public static List<Filler> getFillers(Class<?> entityClass, AuditFillScene scene) {
+    public static List<Filler> getFillers(Class<?> entityClass, FillScene scene) {
         String cacheKey = entityClass.getName() + ":" + scene.name();
         
         // 先检查缓存

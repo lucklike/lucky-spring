@@ -21,7 +21,7 @@
 
 **影响范围：**
 - `lucky-httpclient-spring-boot-starter` 模块的 `io.github.lucklike.httpclient.dbclient` 包
-- 新增注解类：`@AutoFill`、`AuditFillScene` 枚举
+- 新增注解类：`@AutoFill`、`FillScene` 枚举
 - 修改元数据层：`ColumnMetadata`、`EntityMetadata`、`EntityMetadataFactory`
 - 修改 SQLFunctions 中的写入生成方法（insertSql、updateById、batchInsert、batchUpdateById 等）
 - 提供 SPI：`FillHandler`、`Filler` 接口

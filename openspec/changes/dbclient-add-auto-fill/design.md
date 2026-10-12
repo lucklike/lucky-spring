@@ -80,7 +80,7 @@ class FillContext {
 
 ### Decision 4: 枚举命名 — AuditFillScene vs FillScene
 
-**选择：** 使用 `AuditFillScene` 枚举名（值：`INSERT`、`UPDATE`、`INSERT_AND_UPDATE`）。
+**选择：** 使用 `FillScene` 枚举名（值：`INSERT`、`UPDATE`、`INSERT_AND_UPDATE`）。
 
 **Rationale:**
 - 明确表达"审计字段"领域语义，与 `@LogicDelete` 同属审计治理范畴
@@ -165,7 +165,7 @@ interface Filler {
 ## Migration Plan
 
 ### Phase 1: 基础架构搭建（第1周）
-1. 创建 `@AutoFill` 注解、`AuditFillScene` 枚举
+1. 创建 `@AutoFill` 注解、`FillScene` 枚举
 2. 扩展 `ColumnMetadata`、`EntityMetadata` 承载填充元数据
 3. `EntityMetadataFactory.buildColumnMetadata()` 增加 `@AutoFill` 解析逻辑
 

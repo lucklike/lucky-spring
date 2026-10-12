@@ -1,6 +1,6 @@
 ## 1. 基础注解与枚举
 
-- [x] 1.1 创建 `AuditFillScene` 枚举（值：INSERT、UPDATE、INSERT_AND_UPDATE）并验证编译通过
+- [x] 1.1 创建 `FillScene` 枚举（值：INSERT、UPDATE、INSERT_AND_UPDATE）并验证编译通过
   - 位置：`io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene`
   - 验证：编译成功，枚举可正常引用和序列化
   

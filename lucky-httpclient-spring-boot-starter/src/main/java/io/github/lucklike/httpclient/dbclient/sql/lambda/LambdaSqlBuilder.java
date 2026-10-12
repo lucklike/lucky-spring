@@ -150,10 +150,11 @@ public class LambdaSqlBuilder<T> implements SQLWrapper {
 
     /**
      * 获取当前构建器绑定的实体类类型
+     * <p>供自动填充等框架级能力在 SQL 执行收口处定位实体元数据</p>
      *
      * @return 实体类类型
      */
-    protected Class<T> getEntityClass() {
+    public Class<T> getEntityClass() {
         return entityClass;
     }
 

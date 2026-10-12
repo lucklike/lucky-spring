@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.metadata;
 
-import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 import io.github.lucklike.httpclient.dbclient.annotation.IdType;
 import io.github.lucklike.httpclient.dbclient.function.Condition;
 
@@ -18,6 +18,7 @@ import java.lang.reflect.Modifier;
  *     <li>{@link #isId()}/{@link #getIdType()}：主键信息</li>
  *     <li>{@link #isLogicDelete()}：@LogicDelete 逻辑删除字段标志与取值配置</li>
  *     <li>{@link #getConditionClass()}：条件拼接策略</li>
+ *     <li>{@link #isFill()}/{@link #getFillScene()}/{@link #getFillValue()}：@Column 自动填充声明（fillScene/fillValue）</li>
  * </ul>
  * 消费方应根据自身语义选择过滤条件，以保持各自原有行为。
  * </p>
@@ -97,14 +98,19 @@ public class ColumnMetadata {
     private final boolean transitory;
 
     /**
-     * 是否带有 @AutoFill 自动填充注解
+     * 自动填充场景（@Column.fillScene()，未声明时为 NOT_FILL）
      */
-    private final AutoFill autoFill;
+    private final FillScene fillScene;
+
+    /**
+     * 自动填充表达式（@Column.fillValue()，未声明时为空串）
+     */
+    private final String fillValue;
 
     ColumnMetadata(Field field, String columnName, boolean exist, boolean columnAnnotated,
                    boolean id, IdType idType, Class<? extends Condition> conditionClass,
                    boolean logicDelete, String logicDeleteDeletedValue, String logicDeleteNotDeletedValue,
-                   AutoFill autoFill) {
+                   FillScene fillScene, String fillValue) {
         this.field = field;
         this.fieldName = field.getName();
         this.columnName = columnName;
@@ -118,7 +124,8 @@ public class ColumnMetadata {
         this.logicDeleteNotDeletedValue = logicDeleteNotDeletedValue;
         this.staticField = Modifier.isStatic(field.getModifiers());
         this.transitory = Modifier.isTransient(field.getModifiers());
-        this.autoFill = autoFill;
+        this.fillScene = fillScene;
+        this.fillValue = fillValue;
     }
 
     /**
@@ -239,11 +246,30 @@ public class ColumnMetadata {
     }
 
     /**
-     * 获取 @AutoFill 自动填充注解（可能为 null）
+     * 判断该列是否声明了自动填充（@Column 的 fillScene 非 NOT_FILL 且 fillValue 非空）
      *
-     * @return @AutoFill 注解实例，未标注时返回 null
+     * @return true 表示是自动填充列
      */
-    public AutoFill getAutoFill() {
-        return autoFill;
+    public boolean isFill() {
+        return fillScene != null && fillScene != FillScene.NOT_FILL
+                && fillValue != null && !fillValue.isEmpty();
+    }
+
+    /**
+     * 获取自动填充场景
+     *
+     * @return 填充场景，未声明时为 {@link FillScene#NOT_FILL}
+     */
+    public FillScene getFillScene() {
+        return fillScene;
+    }
+
+    /**
+     * 获取自动填充表达式
+     *
+     * @return 填充表达式字符串，未声明时为空串
+     */
+    public String getFillValue() {
+        return fillValue;
     }
 }

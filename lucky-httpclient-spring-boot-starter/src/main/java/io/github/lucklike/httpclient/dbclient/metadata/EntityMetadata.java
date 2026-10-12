@@ -1,7 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.metadata;
 
-import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
-import io.github.lucklike.httpclient.dbclient.annotation.AutoFill;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,9 +65,9 @@ public class EntityMetadata {
     private final boolean columnAnnotated;
 
     /**
-     * 按场景索引的自动填充列映射（@AutoFill 标注，顺序与 {@link #columns} 一致）
+     * 按场景索引的自动填充列映射（@Column 的 fillScene/fillValue 声明，顺序与 {@link #columns} 一致）
      */
-    private final Map<AuditFillScene, List<ColumnMetadata>> fillColumnsByScene;
+    private final Map<FillScene, List<ColumnMetadata>> fillColumnsByScene;
 
     EntityMetadata(Class<?> entityClass, String tableName, List<ColumnMetadata> columns) {
         this.entityClass = entityClass;
@@ -77,7 +76,7 @@ public class EntityMetadata {
 
         List<ColumnMetadata> idColumnList = new ArrayList<>();
         List<ColumnMetadata> logicDeleteColumnList = new ArrayList<>();
-        Map<AuditFillScene, List<ColumnMetadata>> fillMap = new ConcurrentHashMap<>(3);
+        Map<FillScene, List<ColumnMetadata>> fillMap = new ConcurrentHashMap<>(3);
         Map<String, ColumnMetadata> index = new HashMap<>(columns.size() * 2);
         boolean annotated = false;
         for (ColumnMetadata column : columns) {
@@ -92,15 +91,20 @@ public class EntityMetadata {
             if (column.isLogicDelete()) {
                 logicDeleteColumnList.add(column);
             }
-            // 按场景分类 @AutoFill 标注的字段
-            AutoFill autoFillAnn = column.getAutoFill();
-            if (autoFillAnn != null) {
-                fillMap.computeIfAbsent(autoFillAnn.scene(), k -> new ArrayList<>()).add(column);
+            // 按场景分类 @Column 声明的自动填充字段（INSERT_AND_UPDATE 同时归入 INSERT 与 UPDATE 两个桶）
+            if (column.isFill()) {
+                FillScene annScene = column.getFillScene();
+                if (annScene == FillScene.INSERT_AND_UPDATE) {
+                    fillMap.computeIfAbsent(FillScene.INSERT, k -> new ArrayList<>()).add(column);
+                    fillMap.computeIfAbsent(FillScene.UPDATE, k -> new ArrayList<>()).add(column);
+                } else {
+                    fillMap.computeIfAbsent(annScene, k -> new ArrayList<>()).add(column);
+                }
             }
         }
         // 将每个场景列表包装为不可变列表
-        Map<AuditFillScene, List<ColumnMetadata>> immutableFillMap = new ConcurrentHashMap<>();
-        for (Map.Entry<AuditFillScene, List<ColumnMetadata>> entry : fillMap.entrySet()) {
+        Map<FillScene, List<ColumnMetadata>> immutableFillMap = new ConcurrentHashMap<>();
+        for (Map.Entry<FillScene, List<ColumnMetadata>> entry : fillMap.entrySet()) {
             immutableFillMap.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
         }
         this.idColumns = Collections.unmodifiableList(idColumnList);
@@ -161,7 +165,7 @@ public class EntityMetadata {
      * @param scene 填充场景
      * @return 不可变的自动填充列元数据列表，该场景下无填充字段时返回空列表
      */
-    public List<ColumnMetadata> getFillColumns(AuditFillScene scene) {
+    public List<ColumnMetadata> getFillColumns(FillScene scene) {
         return fillColumnsByScene.getOrDefault(scene, Collections.emptyList());
     }
 

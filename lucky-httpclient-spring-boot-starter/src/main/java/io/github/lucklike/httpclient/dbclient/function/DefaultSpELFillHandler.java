@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,12 +36,7 @@ public class DefaultSpELFillHandler implements FillHandler {
      * @return 包含 DefaultSpELFiller 的列表
      */
     @Override
-    public List<Filler> getFillers(Class<?> entityClass, AuditFillScene scene) {
+    public List<Filler> getFillers(Class<?> entityClass, FillScene scene) {
         return Collections.singletonList(FILLER);
-    }
-
-    @Override
-    public boolean needsBackfill() {
-        return true; // 单条 insert/updateById 场景需要回写实体供 columnHandler 采集
     }
 }

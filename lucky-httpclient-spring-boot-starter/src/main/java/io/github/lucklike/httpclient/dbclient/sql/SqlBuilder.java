@@ -6,10 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +43,9 @@ public class SqlBuilder implements SQLWrapper {
 
     // 批量参数存储
     private final List<Object[]> batchParams;
+
+    // 已通过 set() 加入 SET 子句的列名集合（用于审计列注入时去重）
+    private final Set<String> setColumns;
 
     // 状态
     private boolean useBatch;
@@ -125,6 +132,7 @@ public class SqlBuilder implements SQLWrapper {
         this.insertColumnsFragments = new ArrayList<>();
         this.insertValuesFragments = new ArrayList<>();
         this.batchParams = new ArrayList<>();
+        this.setColumns = new HashSet<>();
         this.useBatch = false;
         this.isBuilt = false;
         this.sqlType = null;
@@ -363,6 +371,7 @@ public class SqlBuilder implements SQLWrapper {
         } else {
             addFragment(setFragments, ", " + column + " = ?", value);
         }
+        setColumns.add(column);
         return this;
     }
 
@@ -714,6 +723,48 @@ public class SqlBuilder implements SQLWrapper {
 
     // ==================== 其他方法 ====================
 
+    /**
+     * 获取已加入 SET 子句的列名集合（不可变视图）
+     * <p>供自动填充等框架级能力判断某列是否已被显式设置，避免重复注入</p>
+     *
+     * @return 已 set 的列名集合
+     */
+    public Set<String> getSetColumns() {
+        return Collections.unmodifiableSet(setColumns);
+    }
+
+    /**
+     * 判断当前构建的是否为物理 DELETE 语句
+     * <p>DELETE 语义上类型同为 UPDATE，但不应参与审计列 SET 注入，需要此标识区分</p>
+     *
+     * @return true 表示当前构建的是 DELETE 语句
+     */
+    public boolean isDeleteStatement() {
+        return isDeleteStatement;
+    }
+
+    /**
+     * 从 WHERE 条件中查找指定列的等值（column = ?）参数值
+     * <p>
+     * 供自动填充等框架级能力在无实体场景（Lambda 更新等）下提取主键值；
+     * 仅匹配单值等值条件，命中第一个即返回。
+     * </p>
+     *
+     * @param column 列名
+     * @return 等值条件的参数值，未找到时返回 null
+     */
+    public Object findEqValue(String column) {
+        Matcher matcher = Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(column) + "\\s*=\\s*\\?").matcher("");
+        for (SqlFragment fragment : whereFragments) {
+            String sql = fragment.getSql();
+            matcher.reset(sql);
+            if (matcher.find() && !fragment.getParams().isEmpty()) {
+                return fragment.getParams().get(0);
+            }
+        }
+        return null;
+    }
+
     public SqlBuilder clear() {
         selectFragments.clear();
         fromFragments.clear();
@@ -727,6 +778,7 @@ public class SqlBuilder implements SQLWrapper {
         insertColumnsFragments.clear();
         insertValuesFragments.clear();
         batchParams.clear();
+        setColumns.clear();
         useBatch = false;
         isBuilt = false;
         sqlType = null;
@@ -754,6 +806,7 @@ public class SqlBuilder implements SQLWrapper {
         copy.insertIntoFragments.addAll(copyFragments(this.insertIntoFragments));
         copy.insertColumnsFragments.addAll(copyFragments(this.insertColumnsFragments));
         copy.insertValuesFragments.addAll(copyFragments(this.insertValuesFragments));
+        copy.setColumns.addAll(this.setColumns);
 
         // 深拷贝 batchParams（注意内部对象的深浅取决于使用场景）
         for (Object[] batch : this.batchParams) {

@@ -1,6 +1,6 @@
 package io.github.lucklike.httpclient.dbclient.function;
 
-import io.github.lucklike.httpclient.dbclient.annotation.AuditFillScene;
+import io.github.lucklike.httpclient.dbclient.annotation.FillScene;
 
 import java.util.List;
 
@@ -34,22 +34,5 @@ public interface FillHandler {
      * @param scene       填充场景（INSERT 或 UPDATE）
      * @return 填充器列表，无可用填充器时返回空列表（非 null）
      */
-    List<Filler> getFillers(Class<?> entityClass, AuditFillScene scene);
-
-    /**
-     * 判断是否需要将填充结果回写到实体字段。
-     * <p>
-     * 返回 true 时，框架会在填充后通过 columnHandler() 重新扫描实体字段并纳入 SQL 生成；
-     * 返回 false 时，批量操作可直接使用已填充的实体对象集合。
-     * </p>
-     * <p>
-     * 默认返回 true，适用于单条 insert/updateById 场景。
-     * 对于批量操作可实现方可返回 false 以优化性能。
-     * </p>
-     *
-     * @return true=需要回写实体供后续 SQL 生成采集
-     */
-    default boolean needsBackfill() {
-        return true;
-    }
+    List<Filler> getFillers(Class<?> entityClass, FillScene scene);
 }
